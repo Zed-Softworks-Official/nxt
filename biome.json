@@ -8,8 +8,15 @@
     }
   },
   "formatter": {
-    "lineWidth": 120,
-    "indentStyle": "tab",
-    "indentWidth": 2
+    "lineWidth": 80,
+    "indentStyle": "space",
+    "indentWidth": 4
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "trailingCommas": "es5",
+      "semicolons": "asNeeded"
+    }
   }
 }
