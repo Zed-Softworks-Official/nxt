@@ -86,7 +86,7 @@
     },
     "includes": ["**", "!dist/**"]
   },
-  "javascript": { "formatter": { "quoteStyle": "double" }, "globals": [] },
+  "javascript": { "formatter": { "quoteStyle": "single", "trailingCommas": "es5", "semicolons": "asNeeded" }, "globals": [] },
   "overrides": [
     {
       "includes": ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
