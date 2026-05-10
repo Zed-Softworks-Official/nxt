@@ -1,0 +1,21 @@
+{
+  "name": "@nxt/backend",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "convex dev",
+    "build": "echo 'Add build script here'",
+    "test": "echo 'Add test script here'",
+    "lint": "echo 'Add lint script here'"
+  },
+  "devDependencies": {
+    "@nxt/biome-config": "workspace:*",
+    "@nxt/typescript-config": "workspace:*",
+    "@types/node": "^20.14.10"
+  },
+  "dependencies": {
+    "@t3-oss/env-core": "^0.13.11",
+    "convex": "^1.38.0",
+    "zod": "^3.25.76"
+  }
+}
