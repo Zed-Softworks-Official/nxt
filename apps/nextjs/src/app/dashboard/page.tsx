@@ -1,4 +1,4 @@
-import { BellRing, Pause } from "lucide-react"
+import { BellRing, Pause, Radio, Users } from "lucide-react"
 
 import { Button } from "~/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
 export default function DashboardPage() {
 	return (
 		<div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-			<div className="col-span-1 md:col-span-2 flex flex-col gap-2">
+			<div className="col-span-1 md:col-span-2 flex flex-col gap-4">
 				<Card>
 					<CardHeader>
 						<div className="flex items-center gap-2">
@@ -20,10 +20,12 @@ export default function DashboardPage() {
 								{Array.from({ length: 4 }).map((_, i) => (
 									<Button
 										key={`button-${i}`}
-										className="aspect-square border-primary! bg-chart-2/20!"
+										className="aspect-square border-primary! bg-chart-2/20! p-5 py-7"
 										variant="outline"
 									>
-										<span className="text-xl font-medium">{i + 1}</span>
+										<span className="text-2xl font-medium text-chart-2">
+											{i + 1}
+										</span>
 									</Button>
 								))}
 							</div>
@@ -31,14 +33,31 @@ export default function DashboardPage() {
 								12 waiting in queue
 							</span>
 						</div>
-						<Button size="lg">
+						<Button className="p-6" size="lg" variant="outline">
 							<Pause className="size-5" />
-							<span className="text-lg font-bold uppercase">Pause Queue</span>
+							<span className="text-md font-bold uppercase">Pause Queue</span>
 						</Button>
 					</CardContent>
 				</Card>
 			</div>
-			<div className="col-span-4">Rest</div>
+			<div className="col-span-4 flex flex-col gap-4">
+				<Card>
+					<CardHeader>
+						<div className="flex items-center gap-2">
+							<Radio className="size-5 text-chart-2" />
+							<CardTitle>Currently Playing</CardTitle>
+						</div>
+					</CardHeader>
+				</Card>
+				<Card>
+					<CardHeader>
+						<div className="flex items-center gap-2">
+							<Users className="size-5 text-chart-2" />
+							<CardTitle>Queue</CardTitle>
+						</div>
+					</CardHeader>
+				</Card>
+			</div>
 		</div>
 	)
 }
