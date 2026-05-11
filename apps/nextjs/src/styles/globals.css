@@ -166,7 +166,7 @@
   --clerk-color-neutral: #FAFAFA;
   --clerk-color-foreground: #FAFAFA;
   --clerk-color-background: #171717;
-  --clerk-color-input: #FFFFFF;
+  --clerk-color-input: #333333;
   --clerk-color-input-foreground: #FAFAFA;
   --clerk-color-ring: color-mix(in srgb, #737373 50%, transparent);
   --clerk-color-shimmer: #FFFFFF;
@@ -175,6 +175,7 @@
   --clerk-spacing: 1rem;
   --clerk-color-muted: #262626;
   --clerk-color-muted-foreground: #A1A1A1;
+
 }
 
 @theme inline {

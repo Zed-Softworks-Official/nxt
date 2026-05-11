@@ -39,6 +39,7 @@ export default function RootLayout({
 					"dark"
 				)}
 				lang="en"
+				suppressHydrationWarning
 			>
 				<body>{children}</body>
 			</html>

@@ -1,12 +1,22 @@
-import { SidebarProvider, SidebarInset } from "~/components/ui/sidebar"
-import AppSidebar from "~/components/sidebar/app-sidebar"
+import { auth } from "@clerk/nextjs/server"
+import { redirect } from "next/navigation"
 
-export default function DashboardLayout(props: { children: React.ReactNode }) {
+import AppSidebar from "~/components/sidebar/app-sidebar"
+import { SidebarInset, SidebarProvider } from "~/components/ui/sidebar"
+
+export default async function DashboardLayout(props: {
+	children: React.ReactNode
+}) {
+	const authData = await auth()
+	if (!authData.userId) {
+		return redirect("/u/login")
+	}
+
 	return (
 		<SidebarProvider>
 			<AppSidebar />
 			<SidebarInset>
-				<div className="flex flex-1 flex-col">{props.children}</div>
+				<div className="flex flex-1 flex-col p-4">{props.children}</div>
 			</SidebarInset>
 		</SidebarProvider>
 	)
