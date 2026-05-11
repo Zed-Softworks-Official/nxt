@@ -1,6 +1,7 @@
 packages:
   - "apps/*"
   - "packages/*"
+  - "tooling/*"
 allowBuilds:
   '@clerk/shared': true
   esbuild: true

@@ -48,10 +48,10 @@ importers:
     devDependencies:
       '@nxt/biome-config':
         specifier: workspace:^
-        version: link:../../packages/biome-config
+        version: link:../../tooling/biome-config
       '@nxt/typescript-config':
         specifier: workspace:*
-        version: link:../../packages/typescript-config
+        version: link:../../tooling/typescript-config
       '@tailwindcss/postcss':
         specifier: ^4.0.15
         version: 4.3.0
@@ -88,17 +88,17 @@ importers:
     devDependencies:
       '@nxt/biome-config':
         specifier: workspace:*
-        version: link:../biome-config
+        version: link:../../tooling/biome-config
       '@nxt/typescript-config':
         specifier: workspace:*
-        version: link:../typescript-config
+        version: link:../../tooling/typescript-config
       '@types/node':
         specifier: ^20.14.10
         version: 20.19.40
 
-  packages/biome-config: {}
+  tooling/biome-config: {}
 
-  packages/typescript-config: {}
+  tooling/typescript-config: {}
 
 packages:
 

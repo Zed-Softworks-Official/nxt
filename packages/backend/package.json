@@ -1,21 +1,38 @@
 {
-  "name": "@nxt/backend",
-  "version": "0.0.0",
-  "private": true,
-  "scripts": {
-    "dev": "convex dev",
-    "build": "echo 'Add build script here'",
-    "test": "echo 'Add test script here'",
-    "lint": "echo 'Add lint script here'"
-  },
-  "devDependencies": {
-    "@nxt/biome-config": "workspace:*",
-    "@nxt/typescript-config": "workspace:*",
-    "@types/node": "^20.14.10"
-  },
-  "dependencies": {
-    "@t3-oss/env-core": "^0.13.11",
-    "convex": "^1.38.0",
-    "zod": "^3.25.76"
-  }
+	"name": "@nxt/backend",
+	"version": "0.0.0",
+	"private": true,
+	"scripts": {
+		"dev": "convex dev",
+		"build": "echo 'Add build script here'",
+		"test": "echo 'Add test script here'",
+		"lint": "echo 'Add lint script here'"
+	},
+	"type": "module",
+	"exports": {
+		"./api": {
+			"types": "./src/_generated/api.d.ts",
+			"default": "./src/_generated/api.js"
+		},
+		"./dataModel": {
+			"types": "./src/_generated/dataModel.d.ts",
+			"default": "./src/_generated/dataModel.js"
+		},
+		"./server": {
+			"types": "./src/_generated/server.d.ts",
+			"default": "./src/_generated/server.js"
+		},
+		".": "./src/index.ts"
+	},
+	"devDependencies": {
+		"@nxt/biome-config": "workspace:*",
+		"@nxt/typescript-config": "workspace:*",
+		"@types/node": "^20.14.10"
+	},
+	"dependencies": {
+		"@t3-oss/env-core": "^0.13.11",
+		"convex": "^1.38.0",
+		"zod": "^3.25.76"
+	}
 }
+
