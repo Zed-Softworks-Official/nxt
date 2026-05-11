@@ -19,13 +19,13 @@ export default async function AppSidebar() {
 		<Sidebar variant="inset">
 			<SidebarHeader>
 				<SidebarMenu>
-					<SidebarMenuButton asChild>
-						<SidebarMenuItem>
+					<SidebarMenuItem>
+						<SidebarMenuButton asChild>
 							<Link className="font-bold" href="/dashboard">
 								nxtbot
 							</Link>
-						</SidebarMenuItem>
-					</SidebarMenuButton>
+						</SidebarMenuButton>
+					</SidebarMenuItem>
 				</SidebarMenu>
 			</SidebarHeader>
 			<SidebarContent>
@@ -34,8 +34,8 @@ export default async function AppSidebar() {
 			<SidebarFooter>
 				<NavUser
 					user={{
-						username: user.username,
-						imageUrl: user.imageUrl,
+						username: user?.username ?? "",
+						imageUrl: user?.imageUrl ?? "",
 					}}
 				/>
 			</SidebarFooter>

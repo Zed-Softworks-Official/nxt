@@ -1,3 +1,5 @@
+"use client"
+
 import { LayoutDashboard, Link2Icon } from "lucide-react"
 import Link from "next/link"
 
