@@ -1,0 +1,19 @@
+{
+  "name": "@nxt/discord",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "echo 'Add dev script here'",
+    "build": "echo 'Add build script here'",
+    "test": "echo 'Add test script here'",
+    "lint": "echo 'Add lint script here'"
+  },
+  "dependencies": {
+    "@nxt/backend": "workspace:*",
+    "discord.js": "^14.26.4"
+  },
+  "devDependencies": {
+    "@nxt/biome-config": "workspace:*",
+    "@nxt/typescript-config": "workspace:*"
+  }
+}
