@@ -17,14 +17,9 @@ export default defineSchema({
 		platformName: v.string(),
 		accessToken: v.optional(v.string()),
 		refreshToken: v.optional(v.string()),
-	}),
-	queues: defineTable({
-		communityId: v.id('communities'),
-		name: v.string(),
-		isOpen: v.boolean(),
 	}).index('byCommunity', ['communityId']),
 	participants: defineTable({
-		queueId: v.id('queues'),
+		communityId: v.id('communities'),
 		username: v.string(),
 		platform: v.union(
 			v.literal('discord'),
@@ -39,6 +34,6 @@ export default defineSchema({
 			v.literal('done')
 		),
 	})
-		.index('byQueue', ['queueId'])
+		.index('byCommunity', ['communityId'])
 		.index('byPlatformUser', ['platform', 'platformUserId']),
 })

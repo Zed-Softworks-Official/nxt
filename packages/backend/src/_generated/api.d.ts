@@ -9,6 +9,7 @@
  */
 
 import type * as env from "../env.js";
+import type * as http from "../http.js";
 import type * as index from "../index.js";
 
 import type {
@@ -19,6 +20,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   env: typeof env;
+  http: typeof http;
   index: typeof index;
 }>;
 

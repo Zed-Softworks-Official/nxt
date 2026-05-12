@@ -103,6 +103,12 @@ importers:
       convex:
         specifier: ^1.38.0
         version: 1.38.0(@clerk/react@6.6.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)
+      convex-helpers:
+        specifier: ^0.1.116
+        version: 0.1.116(convex@1.38.0(@clerk/react@6.6.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(hono@4.12.18)(react@19.2.0)(typescript@5.9.2)(zod@3.25.76)
+      hono:
+        specifier: ^4.12.18
+        version: 4.12.18
       zod:
         specifier: ^3.25.76
         version: 3.25.76
@@ -1891,6 +1897,28 @@ packages:
 
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
+
+  convex-helpers@0.1.116:
+    resolution: {integrity: sha512-kw+jqwkeXDc9LpiOurJgPiWrnJZKHrE32mpsyPes2UwLtRw3oLi9cXkc37G0dOJp7iaCXDJ8V9OmXDeXcKvEGw==}
+    hasBin: true
+    peerDependencies:
+      '@standard-schema/spec': ^1.0.0
+      convex: ^1.32.0
+      hono: ^4.0.5
+      react: ^17.0.2 || ^18.0.0 || ^19.0.0
+      typescript: ^5.5 || ^6.0.0
+      zod: ^3.25.0 || ^4.0.0
+    peerDependenciesMeta:
+      '@standard-schema/spec':
+        optional: true
+      hono:
+        optional: true
+      react:
+        optional: true
+      typescript:
+        optional: true
+      zod:
+        optional: true
 
   convex@1.38.0:
     resolution: {integrity: sha512-122AC6y5lUS7mr39cluLw9+TOtRX5d/XxeivHhHObs/NTXoVvOnIgDzexVcxaz6Rk0oLFSoydSR1rDCltEz/0A==}
@@ -4828,6 +4856,15 @@ snapshots:
   content-type@1.0.5: {}
 
   convert-source-map@2.0.0: {}
+
+  convex-helpers@0.1.116(convex@1.38.0(@clerk/react@6.6.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0))(hono@4.12.18)(react@19.2.0)(typescript@5.9.2)(zod@3.25.76):
+    dependencies:
+      convex: 1.38.0(@clerk/react@6.6.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)
+    optionalDependencies:
+      hono: 4.12.18
+      react: 19.2.0
+      typescript: 5.9.2
+      zod: 3.25.76
 
   convex@1.38.0(@clerk/react@6.6.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0):
     dependencies:
