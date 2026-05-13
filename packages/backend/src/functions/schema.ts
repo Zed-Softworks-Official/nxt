@@ -8,6 +8,7 @@ export default defineSchema({
 	}).index('byOwner', ['ownerId']),
 	platformLinks: defineTable({
 		communityId: v.id('communities'),
+        enabled: v.boolean(),
 		platform: v.union(
 			v.literal('discord'),
 			v.literal('twitch'),

@@ -39,6 +39,9 @@ importers:
       '@nxt/backend':
         specifier: workspace:*
         version: link:../../packages/backend
+      '@nxt/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       discord.js:
         specifier: ^14.26.4
         version: 14.26.4
@@ -55,6 +58,9 @@ importers:
       '@clerk/nextjs':
         specifier: 'catalog:'
         version: 7.3.3(next@16.2.6(@babel/core@7.29.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@nxt/backend':
+        specifier: workspace:*
+        version: link:../../packages/backend
       '@t3-oss/env-nextjs':
         specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.2)(zod@3.25.76)

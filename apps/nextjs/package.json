@@ -13,10 +13,11 @@
 		"start": "pnpm with-env next start",
 		"typecheck": "tsc --noEmit",
 		"with-env": "dotenv -e ../../.env --",
-        "ui": "shadcn"
+		"ui": "shadcn"
 	},
 	"dependencies": {
 		"@clerk/nextjs": "catalog:",
+		"@nxt/backend": "workspace:*",
 		"@t3-oss/env-nextjs": "^0.12.0",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",

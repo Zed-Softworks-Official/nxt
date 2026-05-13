@@ -7,6 +7,8 @@ import { Geist, Inter } from "next/font/google"
 import { env } from "~/env"
 import { cn } from "~/lib/utils"
 
+import { ConvexProvider } from "~/components/convex-provider"
+
 const geistHeading = Geist({ subsets: ["latin"], variable: "--font-heading" })
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
@@ -30,19 +32,21 @@ export default function RootLayout({
 			appearance={{ theme: "shadcn" }}
 			publishableKey={env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
 		>
-			<html
-				className={cn(
-					geist.variable,
-					"font-sans",
-					inter.variable,
-					geistHeading.variable,
-					"dark"
-				)}
-				lang="en"
-				suppressHydrationWarning
-			>
-				<body>{children}</body>
-			</html>
+			<ConvexProvider>
+				<html
+					className={cn(
+						geist.variable,
+						"font-sans",
+						inter.variable,
+						geistHeading.variable,
+						"dark"
+					)}
+					lang="en"
+					suppressHydrationWarning
+				>
+					<body>{children}</body>
+				</html>
+			</ConvexProvider>
 		</ClerkProvider>
 	)
 }

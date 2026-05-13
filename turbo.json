@@ -7,7 +7,6 @@
             "outputs": [".cache/tsbuildinfo.json", "dist/**"]
         },
         "dev": {
-            "dependsOn": ["^dev"],
             "cache": false,
             "persistent": false
         },
@@ -30,7 +29,7 @@
             "cache": false
         }
     },
-    "globalEnv": ["CLERK_SECRET_KEY", "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"],
+    "globalEnv": ["CLERK_SECRET_KEY", "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "NEXT_PUBLIC_CONVEX_URL"],
     "globalPassThroughEnv": [
         "NODE_ENV",
         "CI",

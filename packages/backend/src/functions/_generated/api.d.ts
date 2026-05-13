@@ -9,9 +9,8 @@
  */
 
 import type * as communities from "../communities.js";
-import type * as env from "../env.js";
 import type * as http from "../http.js";
-import type * as index from "../index.js";
+import type * as platformLinks from "../platformLinks.js";
 
 import type {
   ApiFromModules,
@@ -21,9 +20,8 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   communities: typeof communities;
-  env: typeof env;
   http: typeof http;
-  index: typeof index;
+  platformLinks: typeof platformLinks;
 }>;
 
 /**

@@ -1,4 +1,4 @@
-import { internalMutation } from '@nxt/backend/server'
+import { internalMutation, internalQuery } from '@nxt/backend/server'
 import { v } from 'convex/values'
 
 export const createCommunity = internalMutation({
@@ -21,5 +21,19 @@ export const createCommunity = internalMutation({
 			name: args.name,
 			ownerId: args.clerkId,
 		})
+	},
+})
+
+export const getCommunity = internalQuery({
+	args: {
+		ownerId: v.string(),
+	},
+	handler: async (ctx, args) => {
+		const community = await ctx.db
+			.query('communities')
+			.withIndex('byOwner', (q) => q.eq('ownerId', args.ownerId))
+			.first()
+
+		return community
 	},
 })

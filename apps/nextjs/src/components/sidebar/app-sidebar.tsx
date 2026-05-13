@@ -28,11 +28,11 @@ export default async function AppSidebar() {
 							href="/dashboard"
 						>
 							<SidebarMenuButton
-								className="data-[slot=sidebar-menu-button]:p-1.5!"
+								className="data-[slot=sidebar-menu-button]:p-1.5! text-md"
 							>
 								<SkipForward className="size-4" />
 								nxt
-								<span className="text-chart-2 -ml-1.5">bot</span>
+								<span className="text-chart-2 -ml-1.5 mt-0.5">bot</span>
 							</SidebarMenuButton>
 						</Link>
 					</SidebarMenuItem>
