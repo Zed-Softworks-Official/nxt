@@ -11,6 +11,7 @@
   "dependencies": {
     "@nxt/backend": "workspace:*",
     "discord.js": "^14.26.4"
+    "@nxt/utils": "workspace:*"
   },
   "devDependencies": {
     "@nxt/biome-config": "workspace:*",

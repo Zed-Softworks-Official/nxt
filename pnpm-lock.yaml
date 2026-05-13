@@ -4,6 +4,15 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+catalogs:
+  default:
+    '@clerk/backend':
+      specifier: ^3.4.7
+      version: 3.4.7
+    '@clerk/nextjs':
+      specifier: ^7.3.3
+      version: 7.3.3
+
 importers:
 
   .:
@@ -44,7 +53,7 @@ importers:
   apps/nextjs:
     dependencies:
       '@clerk/nextjs':
-        specifier: ^7.3.3
+        specifier: 'catalog:'
         version: 7.3.3(next@16.2.6(@babel/core@7.29.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@t3-oss/env-nextjs':
         specifier: ^0.12.0
@@ -113,6 +122,12 @@ importers:
 
   packages/backend:
     dependencies:
+      '@clerk/backend':
+        specifier: 'catalog:'
+        version: 3.4.7(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@nxt/utils':
+        specifier: workspace:*
+        version: link:../utils
       '@t3-oss/env-core':
         specifier: ^0.13.11
         version: 0.13.11(typescript@5.9.2)(zod@3.25.76)
@@ -125,6 +140,9 @@ importers:
       hono:
         specifier: ^4.12.18
         version: 4.12.18
+      svix:
+        specifier: ^1.93.0
+        version: 1.93.0
       zod:
         specifier: ^3.25.76
         version: 3.25.76
@@ -138,6 +156,15 @@ importers:
       '@types/node':
         specifier: ^20.14.10
         version: 20.19.40
+
+  packages/utils:
+    devDependencies:
+      '@nxt/biome-config':
+        specifier: workspace:*
+        version: link:../../tooling/biome-config
+      '@nxt/typescript-config':
+        specifier: workspace:*
+        version: link:../../tooling/typescript-config
 
   tooling/biome-config: {}
 
@@ -3107,6 +3134,9 @@ packages:
         optional: true
       babel-plugin-macros:
         optional: true
+
+  svix@1.93.0:
+    resolution: {integrity: sha512-AeCcSs+CrHNejZytBuvD4hw2B14rB7+Sq7ggwYgF22TgXh0uJJ3T4uVJSbSYKFSbO1AA4o470XoGgOYqu2fbSA==}
 
   tagged-tag@1.0.0:
     resolution: {integrity: sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng==}
@@ -6184,6 +6214,10 @@ snapshots:
       react: 19.2.0
     optionalDependencies:
       '@babel/core': 7.29.0
+
+  svix@1.93.0:
+    dependencies:
+      standardwebhooks: 1.0.0
 
   tagged-tag@1.0.0: {}
 

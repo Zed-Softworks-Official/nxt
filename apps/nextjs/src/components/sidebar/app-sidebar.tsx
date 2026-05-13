@@ -16,19 +16,25 @@ import { NavUser } from "./nav-user"
 
 export default async function AppSidebar() {
 	const user = await currentUser()
+	if (!user) return null
 
 	return (
 		<Sidebar variant="inset">
 			<SidebarHeader>
 				<SidebarMenu>
 					<SidebarMenuItem>
-						<SidebarMenuButton asChild>
-							<Link className="font-bold text-xl flex items-center" href="/dashboard">
-                                <SkipForward className="size-4" />
+						<Link
+							className="font-bold text-xl flex items-center"
+							href="/dashboard"
+						>
+							<SidebarMenuButton
+								className="data-[slot=sidebar-menu-button]:p-1.5!"
+							>
+								<SkipForward className="size-4" />
 								nxt
 								<span className="text-chart-2 -ml-1.5">bot</span>
-							</Link>
-						</SidebarMenuButton>
+							</SidebarMenuButton>
+						</Link>
 					</SidebarMenuItem>
 				</SidebarMenu>
 			</SidebarHeader>
@@ -38,8 +44,8 @@ export default async function AppSidebar() {
 			<SidebarFooter>
 				<NavUser
 					user={{
-						username: user?.username ?? "",
-						imageUrl: user?.imageUrl ?? "",
+						username: user.username ?? "Username",
+						imageUrl: user.imageUrl,
 					}}
 				/>
 			</SidebarFooter>

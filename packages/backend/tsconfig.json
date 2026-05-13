@@ -1,6 +1,9 @@
 {
 	"extends": "@nxt/typescript-config/base.json",
 	"compilerOptions": {
+
+"module": "ESNext",
+    "moduleResolution": "Bundler",
 		"baseUrl": ".",
 		"paths": {
 			"~/*": ["./src/*"]
