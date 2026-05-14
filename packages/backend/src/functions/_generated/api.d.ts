@@ -10,6 +10,7 @@
 
 import type * as communities from "../communities.js";
 import type * as http from "../http.js";
+import type * as participants from "../participants.js";
 import type * as platformLinks from "../platformLinks.js";
 
 import type {
@@ -21,6 +22,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   communities: typeof communities;
   http: typeof http;
+  participants: typeof participants;
   platformLinks: typeof platformLinks;
 }>;
 

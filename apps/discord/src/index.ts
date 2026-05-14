@@ -3,7 +3,7 @@ import { Client, Events, GatewayIntentBits } from 'discord.js'
 import { env } from '~/env'
 
 const client = new Client({
-    intents: [GatewayIntentBits.GuildMembers, GatewayIntentBits.Guilds],
+    intents: [],
 })
 
 client.on(Events.ClientReady, (c) => {

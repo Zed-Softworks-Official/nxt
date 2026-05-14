@@ -3,7 +3,8 @@
     "version": "0.0.0",
     "private": true,
     "scripts": {
-        "dev": "echo 'Add dev script here'"
+        "dev": "pnpm with-env tsx watch src/index.ts",
+        "with-env": "dotenv -e ../../.env --"
     },
     "dependencies": {
         "@nxt/backend": "workspace:*",
