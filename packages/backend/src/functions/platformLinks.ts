@@ -1,5 +1,6 @@
-import { internal } from '@nxt/backend/api'
-import { query } from '@nxt/backend/server'
+import { api } from '@nxt/backend/api'
+import type { Id } from '@nxt/backend/dataModel'
+import { query, internalMutation } from '@nxt/backend/server'
 import { v } from 'convex/values'
 
 type PlatformLink = {
@@ -14,12 +15,9 @@ export const getPlatformLinks = query({
 		ownerId: v.string(),
 	},
 	handler: async (ctx, args): Promise<PlatformLink[]> => {
-		const ownerCommunity = await ctx.runQuery(
-			internal.communities.getCommunity,
-			{
-				ownerId: args.ownerId,
-			}
-		)
+		const ownerCommunity = await ctx.runQuery(api.communities.getCommunity, {
+			ownerId: args.ownerId,
+		})
 
 		if (!ownerCommunity) {
 			throw new Error('Owner not found')
@@ -40,5 +38,34 @@ export const getPlatformLinks = query({
 		})
 
 		return result
+	},
+})
+
+export const createPlatformLink = internalMutation({
+	args: {
+		communityId: v.string(),
+		platform: v.union(
+			v.literal('discord'),
+			v.literal('twitch'),
+			v.literal('youtube')
+		),
+		platformId: v.string(),
+		accessToken: v.optional(v.string()),
+		refreshToken: v.optional(v.string()),
+	},
+	handler: async (ctx, args) => {
+		switch (args.platform) {
+			case 'discord':
+				await ctx.db.insert('platformLinks', {
+					platform: 'discord',
+					platformId: args.platformId,
+					platformName: 'Discord',
+					communityId: args.communityId as Id<'communities'>,
+					enabled: true,
+				})
+				break
+			default:
+				throw new Error(`Unsupported platform: ${args.platform}`)
+		}
 	},
 })

@@ -37,6 +37,20 @@ app.post('/clerk', async (ctx) => {
 	return ctx.json({ message: 'Webhook Received' })
 })
 
+app.get('/discord', async (ctx) => {
+	const { state: communityId, guild_id: platformId } = ctx.req.query()
+	if (!communityId || !platformId)
+		return ctx.redirect('localhost:3000/dashboard/connections/error')
+
+	await ctx.env.runMutation(internal.platformLinks.createPlatformLink, {
+		communityId,
+		platform: 'discord',
+		platformId,
+	})
+
+	return ctx.redirect('localhost:3000/dashboard/connections/success')
+})
+
 async function clerkValidateRequest(req: Request) {
 	const payloadString = await req.text()
 	const svixHeaders = {

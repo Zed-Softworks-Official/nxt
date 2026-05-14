@@ -1,4 +1,4 @@
-import { internalMutation, internalQuery } from '@nxt/backend/server'
+import { internalMutation, query } from '@nxt/backend/server'
 import { v } from 'convex/values'
 
 export const createCommunity = internalMutation({
@@ -24,7 +24,7 @@ export const createCommunity = internalMutation({
 	},
 })
 
-export const getCommunity = internalQuery({
+export const getCommunity = query({
 	args: {
 		ownerId: v.string(),
 	},
