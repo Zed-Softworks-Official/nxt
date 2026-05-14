@@ -14,6 +14,8 @@
     },
     "devDependencies": {
         "@nxt/biome-config": "workspace:*",
-        "@nxt/typescript-config": "workspace:*"
+        "@nxt/typescript-config": "workspace:*",
+        "tsup": "^8.5.1",
+        "tsx": "^4.21.0"
     }
 }

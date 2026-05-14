@@ -34,7 +34,8 @@
         "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
         "NEXT_PUBLIC_CONVEX_URL",
         "NEXT_PUBLIC_DISCORD_CLIENT_ID",
-        "NEXT_PUBLIC_DISCORD_REDIRECT_URI"
+        "NEXT_PUBLIC_DISCORD_REDIRECT_URI",
+        "DISCORD_TOKEN"
     ],
     "globalPassThroughEnv": [
         "NODE_ENV",
