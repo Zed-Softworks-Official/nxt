@@ -40,7 +40,7 @@ app.post('/clerk', async (ctx) => {
 app.get('/discord', async (ctx) => {
 	const { state: communityId, guild_id: platformId } = ctx.req.query()
 	if (!communityId || !platformId)
-		return ctx.redirect('localhost:3000/dashboard/connections/error')
+		return ctx.redirect('http://localhost:3000/dashboard/connections?type=error')
 
 	await ctx.env.runMutation(internal.platformLinks.createPlatformLink, {
 		communityId,
@@ -48,7 +48,7 @@ app.get('/discord', async (ctx) => {
 		platformId,
 	})
 
-	return ctx.redirect('localhost:3000/dashboard/connections/success')
+	return ctx.redirect('http://localhost:3000/dashboard/connections?type=success')
 })
 
 async function clerkValidateRequest(req: Request) {

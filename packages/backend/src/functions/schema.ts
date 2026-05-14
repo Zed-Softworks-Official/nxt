@@ -8,7 +8,7 @@ export default defineSchema({
 	}).index('byOwner', ['ownerId']),
 	platformLinks: defineTable({
 		communityId: v.id('communities'),
-        enabled: v.boolean(),
+		enabled: v.boolean(),
 		platform: v.union(
 			v.literal('discord'),
 			v.literal('twitch'),
@@ -18,7 +18,9 @@ export default defineSchema({
 		platformName: v.string(),
 		accessToken: v.optional(v.string()),
 		refreshToken: v.optional(v.string()),
-	}).index('byCommunity', ['communityId']),
+	})
+		.index('byCommunity', ['communityId'])
+		.index('byPlatformId', ['platformId']),
 	participants: defineTable({
 		communityId: v.id('communities'),
 		username: v.string(),
