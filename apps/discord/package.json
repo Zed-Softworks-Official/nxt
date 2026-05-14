@@ -8,11 +8,12 @@
     "dependencies": {
         "@nxt/backend": "workspace:*",
         "@nxt/utils": "workspace:*",
-        "discord.js": "^14.26.4"
+        "@t3-oss/env-core": "^0.13.11",
+        "discord.js": "^14.26.4",
+        "zod": "^4.4.3"
     },
     "devDependencies": {
         "@nxt/biome-config": "workspace:*",
         "@nxt/typescript-config": "workspace:*"
     }
 }
-

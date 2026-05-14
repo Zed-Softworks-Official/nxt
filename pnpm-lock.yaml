@@ -42,9 +42,15 @@ importers:
       '@nxt/utils':
         specifier: workspace:*
         version: link:../../packages/utils
+      '@t3-oss/env-core':
+        specifier: ^0.13.11
+        version: 0.13.11(typescript@5.9.2)(zod@4.4.3)
       discord.js:
         specifier: ^14.26.4
         version: 14.26.4
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
     devDependencies:
       '@nxt/biome-config':
         specifier: workspace:*
@@ -3345,6 +3351,9 @@ packages:
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
+  zod@4.4.3:
+    resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
+
 snapshots:
 
   '@alloc/quick-lru@5.2.0': {}
@@ -4786,6 +4795,11 @@ snapshots:
     optionalDependencies:
       typescript: 5.9.2
       zod: 3.25.76
+
+  '@t3-oss/env-core@0.13.11(typescript@5.9.2)(zod@4.4.3)':
+    optionalDependencies:
+      typescript: 5.9.2
+      zod: 4.4.3
 
   '@t3-oss/env-nextjs@0.12.0(typescript@5.9.2)(zod@3.25.76)':
     dependencies:
@@ -6384,3 +6398,5 @@ snapshots:
       zod: 3.25.76
 
   zod@3.25.76: {}
+
+  zod@4.4.3: {}
