@@ -20,9 +20,13 @@ export default defineSchema({
 		refreshToken: v.optional(v.string()),
 	})
 		.index('byCommunity', ['communityId'])
-		.index('byPlatformId', ['platformId']),
-	participants: defineTable({
+		.index('byPlatform', ['platform', 'platformId']),
+	queues: defineTable({
 		communityId: v.id('communities'),
+		state: v.union(v.literal('open'), v.literal('paused')),
+	}).index('byCommunity', ['communityId']),
+	participants: defineTable({
+		queueId: v.id('queues'),
 		username: v.string(),
 		platform: v.union(
 			v.literal('discord'),
@@ -37,6 +41,6 @@ export default defineSchema({
 			v.literal('done')
 		),
 	})
-		.index('byCommunity', ['communityId'])
-		.index('byPlatformUser', ['platform', 'platformUserId']),
+		.index('byQueue', ['queueId'])
+		.index('byUser', ['platformUserId', 'platform', 'queueId']),
 })

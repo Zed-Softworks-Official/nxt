@@ -7,10 +7,10 @@ import { tryCatch } from '@nxt/utils'
 import { convex } from '~/lib/convex'
 import type { Command } from '~/lib/types'
 
-export const joinQ: Command = {
+export const leaveQ: Command = {
     data: new SlashCommandBuilder()
-        .setName('joinq')
-        .setDescription('Join the queue'),
+        .setName('leaveq')
+        .setDescription('Leave the queue'),
     async execute(interaction: CommandInteraction) {
         if (!interaction.guildId) {
             await interaction.reply('This command can only be used in a server')
@@ -18,18 +18,17 @@ export const joinQ: Command = {
         }
 
         const { error } = await tryCatch(
-            convex.mutation(api.discord.joinQ, {
-                username: interaction.user.username,
+            convex.mutation(api.discord.leaveQ, {
                 platformUserId: interaction.user.id,
                 platformId: interaction.guildId,
             })
         )
 
         if (error) {
-            await interaction.reply('Error joining the queue')
+            await interaction.reply('Error leaving the queue')
             return
         }
 
-        await interaction.reply('Joined the queue')
+        await interaction.reply('Left the queue')
     },
 }
