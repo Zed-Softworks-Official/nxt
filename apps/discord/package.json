@@ -4,6 +4,7 @@
     "private": true,
     "scripts": {
         "dev": "pnpm with-env tsx watch src/index.ts",
+        "deploy:discord": "pnpm with-env tsx src/scripts/deploy-commands.ts",
         "with-env": "dotenv -e ../../.env --"
     },
     "dependencies": {

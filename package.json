@@ -3,6 +3,7 @@
     "private": true,
     "scripts": {
         "build": "turbo run build",
+        "deploy:discord": "turbo run deploy:discord",
         "dev": "turbo run dev",
         "lint": "turbo run lint",
         "check:write": "turbo run check:write",
