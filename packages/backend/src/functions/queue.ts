@@ -26,3 +26,4 @@ export const getParticipants = query({
 		return participants
 	},
 })
+
