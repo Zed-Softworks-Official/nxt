@@ -1,10 +1,9 @@
 import { currentUser } from "@clerk/nextjs/server"
-
-import { Radio } from "lucide-react"
 import { redirect } from "next/navigation"
 
-import { Card, CardHeader, CardTitle } from "~/components/ui/card"
-
+import { ActivityLog } from "./_components/activity-log"
+import { CurrentlyPlaying } from "./_components/currently-playing"
+import { Pinged } from "./_components/pinged"
 import { Queue } from "./_components/queue"
 import { QuickPing } from "./_components/quick-ping"
 
@@ -16,16 +15,11 @@ export default async function DashboardPage() {
 		<div className="grid grid-cols-1 md:grid-cols-6 gap-4">
 			<div className="col-span-1 md:col-span-2 flex flex-col gap-4">
 				<QuickPing userId={user.id} />
+				<ActivityLog userId={user.id} />
 			</div>
 			<div className="col-span-4 flex flex-col gap-4">
-				<Card>
-					<CardHeader>
-						<div className="flex items-center gap-2">
-							<Radio className="size-5 text-chart-2" />
-							<CardTitle>Currently Playing</CardTitle>
-						</div>
-					</CardHeader>
-				</Card>
+				<CurrentlyPlaying userId={user.id} />
+				<Pinged userId={user.id} />
 				<Queue userId={user.id} />
 			</div>
 		</div>

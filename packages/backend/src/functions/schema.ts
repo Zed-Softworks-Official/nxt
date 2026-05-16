@@ -2,6 +2,22 @@ import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
 
 export default defineSchema({
+	activityLog: defineTable({
+		queueId: v.id('queues'),
+		username: v.string(),
+		platform: v.union(
+			v.literal('discord'),
+			v.literal('twitch'),
+			v.literal('youtube')
+		),
+		platformUserId: v.string(),
+		// What happened to this player
+		event: v.union(
+			v.literal('pinged'),           // moved waiting → notified
+			v.literal('returned_to_queue'), // moved notified → waiting (no-show)
+			v.literal('finished')          // session completed
+		),
+	}).index('byQueue', ['queueId']),
 	communities: defineTable({
 		name: v.string(),
 		ownerId: v.string(),
