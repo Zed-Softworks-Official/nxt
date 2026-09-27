@@ -182,9 +182,6 @@ importers:
       '@biomejs/biome':
         specifier: 2.3.8
         version: 2.3.8
-      prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
       turbo:
         specifier: ^2.11.4
         version: 2.11.4
@@ -210,9 +207,6 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
-      '@nxt/biome-config':
-        specifier: workspace:*
-        version: link:../../tooling/biome-config
       '@nxt/typescript-config':
         specifier: workspace:*
         version: link:../../tooling/typescript-config
@@ -268,9 +262,6 @@ importers:
         specifier: ^3.24.2
         version: 3.25.76
     devDependencies:
-      '@nxt/biome-config':
-        specifier: workspace:^
-        version: link:../../tooling/biome-config
       '@nxt/typescript-config':
         specifier: workspace:*
         version: link:../../tooling/typescript-config
@@ -323,9 +314,6 @@ importers:
         specifier: ^3.25.76
         version: 3.25.76
     devDependencies:
-      '@nxt/biome-config':
-        specifier: workspace:*
-        version: link:../../tooling/biome-config
       '@nxt/typescript-config':
         specifier: workspace:*
         version: link:../../tooling/typescript-config
@@ -335,14 +323,9 @@ importers:
 
   packages/utils:
     devDependencies:
-      '@nxt/biome-config':
-        specifier: workspace:*
-        version: link:../../tooling/biome-config
       '@nxt/typescript-config':
         specifier: workspace:*
         version: link:../../tooling/typescript-config
-
-  tooling/biome-config: {}
 
   tooling/typescript-config: {}
 

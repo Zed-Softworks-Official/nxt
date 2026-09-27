@@ -8,7 +8,6 @@
         "./try-catch": "./src/try-catch.ts"
     },
     "devDependencies": {
-        "@nxt/biome-config": "workspace:*",
         "@nxt/typescript-config": "workspace:*"
     }
 }

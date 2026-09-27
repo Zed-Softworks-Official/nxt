@@ -5,15 +5,12 @@
         "build": "turbo run build",
         "deploy:discord": "turbo run deploy:discord",
         "dev": "turbo run dev",
-        "lint": "turbo run lint",
         "check:write": "turbo run check:write",
-        "format": "prettier --write \"**/*.{ts,tsx,md}\"",
         "check-types": "turbo run check-types",
         "ui": "pnpm --filter @nxt/nextjs run ui"
     },
     "devDependencies": {
         "@biomejs/biome": "2.3.8",
-        "prettier": "^3.6.2",
         "turbo": "^2.11.4",
         "typescript": "5.9.2"
     },
