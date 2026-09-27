@@ -1,7 +1,7 @@
-import { mutation } from '@nxt/backend/server'
+import { internalMutation } from '@nxt/backend/server'
 import { v } from 'convex/values'
 
-export const setCommandChannel = mutation({
+export const setCommandChannel = internalMutation({
 	args: {
 		guildId: v.string(),
 		channelId: v.string(),

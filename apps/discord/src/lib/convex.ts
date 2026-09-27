@@ -1,13 +1,13 @@
-import { ConvexHttpClient } from '@nxt/backend'
+import { type TrustedConvexClient, trustedConvexClient } from '@nxt/backend'
 import { env } from '~/env'
 
-export type QueueConvex = Pick<ConvexHttpClient, 'query' | 'mutation'>
+export type QueueConvex = TrustedConvexClient
 
 let client: QueueConvex | undefined
 
 export function getConvex(): QueueConvex {
     if (!client) {
-        client = new ConvexHttpClient(env.CONVEX_URL)
+        client = trustedConvexClient(env.CONVEX_URL, env.CONVEX_DEPLOY_KEY)
     }
     return client
 }

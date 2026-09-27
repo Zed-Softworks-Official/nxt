@@ -1,4 +1,4 @@
-import { api } from '@nxt/backend/api'
+import { internal } from '@nxt/backend/api'
 import { tryCatch } from '@nxt/utils'
 import {
     ChannelType,
@@ -37,7 +37,7 @@ export const channel: Command = {
                 }
 
                 const result = await convex.mutation(
-                    api.commandChannel.setCommandChannel,
+                    internal.commandChannel.setCommandChannel,
                     {
                         guildId,
                         channelId: target.id,

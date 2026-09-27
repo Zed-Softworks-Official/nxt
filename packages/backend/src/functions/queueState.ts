@@ -1,5 +1,5 @@
 import type { Id } from '@nxt/backend/dataModel'
-import { type MutationCtx, mutation } from '@nxt/backend/server'
+import { internalMutation, type MutationCtx } from '@nxt/backend/server'
 import { v } from 'convex/values'
 
 import { queueForCommunity } from '../model/pausedQueue'
@@ -16,7 +16,7 @@ async function requireQueue(
 	return queue
 }
 
-export const openQueue = mutation({
+export const openQueue = internalMutation({
 	args: {
 		communityId: v.id('communities'),
 	},
@@ -30,7 +30,7 @@ export const openQueue = mutation({
 	},
 })
 
-export const pauseQueue = mutation({
+export const pauseQueue = internalMutation({
 	args: {
 		communityId: v.id('communities'),
 	},

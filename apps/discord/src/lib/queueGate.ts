@@ -1,4 +1,4 @@
-import { api } from '@nxt/backend/api'
+import { api, internal } from '@nxt/backend/api'
 import type { Id } from '@nxt/backend/dataModel'
 import { type CommandInteraction, PermissionFlagsBits } from 'discord.js'
 
@@ -50,7 +50,7 @@ export async function runQueueCommand(
         return
     }
 
-    await client.mutation(api.queue.ensureQueueForCommunity, {
+    await client.mutation(internal.queue.ensureQueueForCommunity, {
         communityId: link.communityId,
     })
 

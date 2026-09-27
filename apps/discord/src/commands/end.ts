@@ -1,4 +1,4 @@
-import { api } from '@nxt/backend/api'
+import { internal } from '@nxt/backend/api'
 import type { CommandInteraction } from 'discord.js'
 import { PermissionFlagsBits, SlashCommandBuilder } from 'discord.js'
 
@@ -17,7 +17,7 @@ export const endQ: Command = {
             kind: 'admin',
             run: async ({ communityId }) => {
                 const result = await convex.mutation(
-                    api.queueState.pauseQueue,
+                    internal.queueState.pauseQueue,
                     {
                         communityId,
                     }

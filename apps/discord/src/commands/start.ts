@@ -1,4 +1,4 @@
-import { api } from '@nxt/backend/api'
+import { internal } from '@nxt/backend/api'
 import type { CommandInteraction } from 'discord.js'
 import { PermissionFlagsBits, SlashCommandBuilder } from 'discord.js'
 
@@ -16,9 +16,12 @@ export const startQ: Command = {
         await runQueueCommand(interaction, convex, {
             kind: 'admin',
             run: async ({ communityId }) => {
-                const result = await convex.mutation(api.queueState.openQueue, {
-                    communityId,
-                })
+                const result = await convex.mutation(
+                    internal.queueState.openQueue,
+                    {
+                        communityId,
+                    }
+                )
 
                 if (result === 'already') {
                     await interaction.reply('The queue is already open.')

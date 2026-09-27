@@ -1,9 +1,9 @@
-import { mutation } from '@nxt/backend/server'
+import { internalMutation } from '@nxt/backend/server'
 import { v } from 'convex/values'
 
 import { queueForCommunity } from '../model/pausedQueue'
 
-export const clearWaiting = mutation({
+export const clearWaiting = internalMutation({
 	args: {
 		communityId: v.id('communities'),
 	},

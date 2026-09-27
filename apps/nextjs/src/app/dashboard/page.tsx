@@ -1,6 +1,6 @@
 import { currentUser } from "@clerk/nextjs/server"
-import { ConvexHttpClient } from "@nxt/backend"
-import { api } from "@nxt/backend/api"
+import { trustedConvexClient } from "@nxt/backend"
+import { api, internal } from "@nxt/backend/api"
 import { redirect } from "next/navigation"
 
 import { env } from "~/env"
@@ -15,12 +15,15 @@ export default async function DashboardPage() {
 	const user = await currentUser()
 	if (!user) return redirect("/u/login")
 
-	const convex = new ConvexHttpClient(env.NEXT_PUBLIC_CONVEX_URL)
+	const convex = trustedConvexClient(
+		env.NEXT_PUBLIC_CONVEX_URL,
+		env.CONVEX_DEPLOY_KEY,
+	)
 	const community = await convex.query(api.communities.getCommunity, {
 		ownerId: user.id,
 	})
 	if (community) {
-		await convex.mutation(api.queue.ensureQueueForCommunity, {
+		await convex.mutation(internal.queue.ensureQueueForCommunity, {
 			communityId: community._id,
 		})
 	}

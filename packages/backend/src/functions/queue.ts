@@ -1,4 +1,4 @@
-import { mutation, query } from '@nxt/backend/server'
+import { internalMutation, mutation, query } from '@nxt/backend/server'
 import { v } from 'convex/values'
 
 import {
@@ -150,9 +150,9 @@ export const markDone = mutation({
 })
 
 // Discord commands know the guild's Community, not the Clerk owner.
-// The bot calls this with ConvexHttpClient and no user JWT.
+// Trusted servers call this with a deploy key.
 // Insert a Paused Queue when this Community has none. An existing Queue is left as it is.
-export const ensureQueueForCommunity = mutation({
+export const ensureQueueForCommunity = internalMutation({
 	args: {
 		communityId: v.id('communities'),
 	},
