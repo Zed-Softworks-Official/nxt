@@ -15,6 +15,7 @@ import type * as http from "../http.js";
 import type * as platformLinks from "../platformLinks.js";
 import type * as queue from "../queue.js";
 import type * as queueState from "../queueState.js";
+import type * as viewQueue from "../viewQueue.js";
 
 import type {
   ApiFromModules,
@@ -30,6 +31,7 @@ declare const fullApi: ApiFromModules<{
   platformLinks: typeof platformLinks;
   queue: typeof queue;
   queueState: typeof queueState;
+  viewQueue: typeof viewQueue;
 }>;
 
 /**
