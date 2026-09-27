@@ -1,12 +1,10 @@
+import { tryCatch } from '@nxt/utils'
 import type { Interaction } from 'discord.js'
 import { Client, Collection, Events } from 'discord.js'
 
-import { tryCatch } from '@nxt/utils'
-
 import { commands } from '~/commands'
-import type { ExtendedClient } from '~/lib/types'
-
 import { env } from '~/env'
+import type { ExtendedClient } from '~/lib/types'
 
 const client = new Client({
     intents: [],
