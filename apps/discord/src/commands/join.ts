@@ -1,8 +1,7 @@
-import type { CommandInteraction } from 'discord.js'
-import { SlashCommandBuilder } from 'discord.js'
-
 import { api } from '@nxt/backend/api'
 import { tryCatch } from '@nxt/utils'
+import type { CommandInteraction } from 'discord.js'
+import { SlashCommandBuilder } from 'discord.js'
 
 import { convex } from '~/lib/convex'
 import type { Command } from '~/lib/types'
