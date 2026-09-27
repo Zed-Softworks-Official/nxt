@@ -5,9 +5,14 @@ import type {
     SlashCommandBuilder,
 } from 'discord.js'
 
+import type { QueueConvex } from '~/lib/convex'
+
 export interface Command {
     data: SlashCommandBuilder
-    execute: (interaction: CommandInteraction) => Promise<void>
+    execute: (
+        interaction: CommandInteraction,
+        client?: QueueConvex
+    ) => Promise<void>
 }
 
 export interface ExtendedClient extends Client {

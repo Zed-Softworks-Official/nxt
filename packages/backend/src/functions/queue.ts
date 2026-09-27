@@ -172,6 +172,29 @@ export const ensureQueue = mutation({
 	},
 })
 
+// Discord commands know the guild's Community, not the Clerk owner.
+// The bot calls this with ConvexHttpClient and no user JWT.
+export const ensureQueueForCommunity = mutation({
+	args: {
+		communityId: v.id('communities'),
+	},
+	returns: v.id('queues'),
+	handler: async (ctx, args) => {
+		const community = await ctx.db.get('communities', args.communityId)
+		if (!community) throw new Error('Community not found')
+
+		const existing = await ctx.db
+			.query('queues')
+			.withIndex('byCommunity', (q) =>
+				q.eq('communityId', args.communityId),
+			)
+			.first()
+		if (existing) return existing._id
+
+		return await insertPausedQueue(ctx, args.communityId)
+	},
+})
+
 // Toggle queue state between open and paused
 export const toggleQueueState = mutation({
 	args: {

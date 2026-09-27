@@ -4,7 +4,11 @@ import { Client, Collection, Events } from 'discord.js'
 
 import { commands } from '~/commands'
 import { env } from '~/env'
+import { getConvex } from '~/lib/convex'
 import type { ExtendedClient } from '~/lib/types'
+
+// A missing Convex URL should fail before Discord login.
+getConvex()
 
 const client = new Client({
     intents: [],

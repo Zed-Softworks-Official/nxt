@@ -1,5 +1,48 @@
-import { mutation } from '@nxt/backend/server'
+import type { Id } from '@nxt/backend/dataModel'
+import { type MutationCtx, mutation } from '@nxt/backend/server'
 import { v } from 'convex/values'
+
+const joinResult = v.union(
+	v.literal('joined'),
+	v.literal('paused'),
+	v.literal('already'),
+)
+
+const leaveResult = v.union(v.literal('left'), v.literal('absent'))
+
+async function requireDiscordQueue(ctx: MutationCtx, platformId: string) {
+	const link = await ctx.db
+		.query('platformLinks')
+		.withIndex('byPlatform', (q) =>
+			q.eq('platform', 'discord').eq('platformId', platformId),
+		)
+		.first()
+	if (!link) throw new Error('Community not found')
+
+	const queue = await ctx.db
+		.query('queues')
+		.withIndex('byCommunity', (q) => q.eq('communityId', link.communityId))
+		.first()
+	if (!queue) throw new Error('Queue not found')
+
+	return queue
+}
+
+async function participantInQueue(
+	ctx: MutationCtx,
+	queueId: Id<'queues'>,
+	platformUserId: string,
+) {
+	return await ctx.db
+		.query('participants')
+		.withIndex('byUser', (q) =>
+			q
+				.eq('platformUserId', platformUserId)
+				.eq('platform', 'discord')
+				.eq('queueId', queueId),
+		)
+		.first()
+}
 
 export const joinQ = mutation({
 	args: {
@@ -7,36 +50,17 @@ export const joinQ = mutation({
 		platformUserId: v.string(),
 		platformId: v.string(),
 	},
+	returns: joinResult,
 	handler: async (ctx, args) => {
-		// Get the Community from the platform ID
-		const community = await ctx.db
-			.query('platformLinks')
-			.withIndex('byPlatform', (q) =>
-				q.eq('platform', 'discord').eq('platformId', args.platformId)
-			)
-			.first()
-		if (!community) throw new Error('Community not found')
+		const queue = await requireDiscordQueue(ctx, args.platformId)
+		const participant = await participantInQueue(
+			ctx,
+			queue._id,
+			args.platformUserId,
+		)
+		if (participant) return 'already' as const
+		if (queue.state !== 'open') return 'paused' as const
 
-		// Get the Queue ID from the community ID
-		const queue = await ctx.db
-			.query('queues')
-			.withIndex('byCommunity', (q) =>
-				q.eq('communityId', community.communityId)
-			)
-			.first()
-		if (!queue) throw new Error('Queue not found')
-
-		// Check if the queue is open
-		if (queue.state !== 'open') throw new Error('Queue is not open')
-
-		// Check if the user is already in the queue
-		const participant = await ctx.db
-			.query('participants')
-			.withIndex('byUser', (q) => q.eq('platformUserId', args.platformUserId))
-			.first()
-		if (participant) throw new Error('User is already in the queue')
-
-		// Add the user to the queue (participants table)
 		await ctx.db.insert('participants', {
 			queueId: queue._id,
 			username: args.username,
@@ -44,6 +68,7 @@ export const joinQ = mutation({
 			platformUserId: args.platformUserId,
 			status: 'waiting',
 		})
+		return 'joined' as const
 	},
 })
 
@@ -52,35 +77,17 @@ export const leaveQ = mutation({
 		platformUserId: v.string(),
 		platformId: v.string(),
 	},
+	returns: leaveResult,
 	handler: async (ctx, args) => {
-		// Get the Community from the platform ID
-		const community = await ctx.db
-			.query('platformLinks')
-			.withIndex('byPlatform', (q) =>
-				q.eq('platform', 'discord').eq('platformId', args.platformId)
-			)
-			.first()
-		if (!community) throw new Error('Community not found')
-
-		// Get the Queue ID from the community ID
-		const queue = await ctx.db
-			.query('queues')
-			.withIndex('byCommunity', (q) =>
-				q.eq('communityId', community.communityId)
-			)
-			.first()
-		if (!queue) throw new Error('Queue not found')
-
-		// Check if the queue is open
-		if (queue.state !== 'open') throw new Error('Queue is not open')
-
-		// Check if the user is already in the queue
-		const participant = await ctx.db
-			.query('participants')
-			.withIndex('byUser', (q) => q.eq('platformUserId', args.platformUserId))
-			.first()
-		if (!participant) throw new Error('User is not in the queue')
+		const queue = await requireDiscordQueue(ctx, args.platformId)
+		const participant = await participantInQueue(
+			ctx,
+			queue._id,
+			args.platformUserId,
+		)
+		if (!participant) return 'absent' as const
 
 		await ctx.db.delete('participants', participant._id)
+		return 'left' as const
 	},
 })

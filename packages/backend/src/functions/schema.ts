@@ -32,6 +32,7 @@ export default defineSchema({
 		),
 		platformId: v.string(),
 		platformName: v.string(),
+		commandChannelId: v.optional(v.string()),
 		accessToken: v.optional(v.string()),
 		refreshToken: v.optional(v.string()),
 	})

@@ -5,6 +5,7 @@
     "scripts": {
         "dev": "pnpm with-env tsx watch src/index.ts",
         "deploy:discord": "pnpm with-env tsx src/scripts/deploy-commands.ts",
+        "test": "vitest run",
         "with-env": "dotenv -e ../../.env --"
     },
     "dependencies": {
@@ -15,8 +16,11 @@
         "zod": "^4.4.3"
     },
     "devDependencies": {
+        "@edge-runtime/vm": "^5.0.0",
         "@nxt/typescript-config": "workspace:*",
+        "convex-test": "^0.0.60",
         "tsup": "^8.5.1",
-        "tsx": "^4.21.0"
+        "tsx": "^4.21.0",
+        "vitest": "^5.0.2"
     }
 }
