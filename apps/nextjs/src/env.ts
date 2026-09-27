@@ -9,6 +9,7 @@ export const env = createEnv({
 	server: {
 		NODE_ENV: z.enum(["development", "test", "production"]),
 		CLERK_SECRET_KEY: z.string(),
+		CONVEX_DEPLOY_KEY: z.string(),
 	},
 
 	/**
@@ -32,6 +33,7 @@ export const env = createEnv({
 	runtimeEnv: {
 		NODE_ENV: process.env.NODE_ENV,
 		CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
+		CONVEX_DEPLOY_KEY: process.env.CONVEX_DEPLOY_KEY,
 		NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:
 			process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
 		NEXT_PUBLIC_CONVEX_URL: process.env.NEXT_PUBLIC_CONVEX_URL,

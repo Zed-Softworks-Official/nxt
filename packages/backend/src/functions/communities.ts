@@ -1,6 +1,8 @@
 import { internalMutation, query } from '@nxt/backend/server'
 import { v } from 'convex/values'
 
+import { insertPausedQueue } from '../model/pausedQueue'
+
 export const createCommunity = internalMutation({
 	args: {
 		name: v.string(),
@@ -17,10 +19,11 @@ export const createCommunity = internalMutation({
 			return
 		}
 
-		await ctx.db.insert('communities', {
+		const communityId = await ctx.db.insert('communities', {
 			name: args.name,
 			ownerId: args.clerkId,
 		})
+		await insertPausedQueue(ctx, communityId)
 	},
 })
 

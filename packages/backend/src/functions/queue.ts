@@ -1,5 +1,10 @@
-import { mutation, query } from '@nxt/backend/server'
+import { internalMutation, mutation, query } from '@nxt/backend/server'
 import { v } from 'convex/values'
+
+import {
+	insertPausedQueue,
+	queueForCommunity,
+} from '../model/pausedQueue'
 
 // Helper: resolve ownerId → community → queue
 async function resolveQueue(ctx: any, ownerId: string) {
@@ -9,10 +14,7 @@ async function resolveQueue(ctx: any, ownerId: string) {
 		.first()
 	if (!community) throw new Error('Community not found')
 
-	const queue = await ctx.db
-		.query('queues')
-		.withIndex('byCommunity', (q: any) => q.eq('communityId', community._id))
-		.first()
+	const queue = await queueForCommunity(ctx, community._id)
 	if (!queue) throw new Error('Queue not found')
 
 	return queue
@@ -144,6 +146,25 @@ export const markDone = mutation({
 
 		await logEvent(ctx, participant, 'finished')
 		await ctx.db.delete(args.participantId)
+	},
+})
+
+// Discord commands know the guild's Community, not the Clerk owner.
+// Trusted servers call this with a deploy key.
+// Insert a Paused Queue when this Community has none. An existing Queue is left as it is.
+export const ensureQueueForCommunity = internalMutation({
+	args: {
+		communityId: v.id('communities'),
+	},
+	returns: v.id('queues'),
+	handler: async (ctx, args) => {
+		const community = await ctx.db.get('communities', args.communityId)
+		if (!community) throw new Error('Community not found')
+
+		const existing = await queueForCommunity(ctx, args.communityId)
+		if (existing) return existing._id
+
+		return await insertPausedQueue(ctx, args.communityId)
 	},
 })
 
