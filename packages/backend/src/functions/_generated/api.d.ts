@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as commandChannel from "../commandChannel.js";
 import type * as communities from "../communities.js";
 import type * as discord from "../discord.js";
 import type * as discordGuild from "../discordGuild.js";
@@ -22,6 +23,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  commandChannel: typeof commandChannel;
   communities: typeof communities;
   discord: typeof discord;
   discordGuild: typeof discordGuild;
