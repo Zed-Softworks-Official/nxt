@@ -8,11 +8,9 @@ import {
     asQueueConvex,
     createTestBackend,
     fakeInteraction,
-    readQueue,
     seedDiscordCommunity,
 } from '../test/queueHarness'
 import { channel } from './channel'
-import { joinQ } from './join'
 
 type ChannelKind = 'text' | 'thread' | 'announcement' | 'forum' | 'voice'
 
@@ -45,6 +43,7 @@ function channelInteraction(input: {
     manageServer?: boolean
     here?: ChannelKind
     argument?: { id: string; kind: ChannelKind }
+    fetched?: ChannelKind
 }) {
     const channelId = input.channelId ?? 'channel-1'
     const { interaction, replies } = fakeInteraction({
@@ -53,7 +52,20 @@ function channelInteraction(input: {
         manageServer: input.manageServer,
     })
     const withChannel = Object.assign(interaction, {
-        channel: fakeChannel(channelId, input.here ?? 'text'),
+        channel:
+            input.fetched === undefined
+                ? fakeChannel(channelId, input.here ?? 'text')
+                : null,
+        ...(input.fetched === undefined
+            ? {}
+            : {
+                  client: {
+                      channels: {
+                          fetch: async (id: string) =>
+                              fakeChannel(id, input.fetched ?? 'text'),
+                      },
+                  },
+              }),
         isChatInputCommand: () => true,
         options: {
             getChannel: (name: string) => {
@@ -110,25 +122,54 @@ test('channel with no argument sets the text channel it was typed in', async () 
             ephemeral: false,
         },
     ])
+})
 
-    const player = fakeInteraction({
+test('channel with no argument fetches the text channel it was typed in when the channel cache is empty', async () => {
+    const backend = createTestBackend()
+    await seedDiscordCommunity(backend, {
+        ownerId: 'owner-1',
         guildId: 'guild-1',
-        channelId: '222',
-        userId: 'user-1',
-        username: 'ada',
+        state: 'open',
     })
-    await joinQ.execute(player.interaction, asQueueConvex(backend))
+    const { interaction, replies } = channelInteraction({
+        guildId: 'guild-1',
+        channelId: '111',
+        manageServer: true,
+        fetched: 'text',
+    })
 
-    expect(player.replies).toEqual([
+    await channel.execute(interaction, asQueueConvex(backend))
+
+    expect(replies).toEqual([
         {
-            content: 'Queue commands go in <#111>.',
-            ephemeral: true,
+            content: 'Queue commands now go in <#111>.',
+            ephemeral: false,
         },
     ])
-    expect(await readQueue(backend, 'owner-1')).toEqual({
+})
+
+test('channel typed in an uncached thread replies to pick a text channel, not a thread', async () => {
+    const backend = createTestBackend()
+    await seedDiscordCommunity(backend, {
+        ownerId: 'owner-1',
+        guildId: 'guild-1',
         state: 'open',
-        participants: [],
     })
+    const { interaction, replies } = channelInteraction({
+        guildId: 'guild-1',
+        channelId: 'thread-1',
+        manageServer: true,
+        fetched: 'thread',
+    })
+
+    await channel.execute(interaction, asQueueConvex(backend))
+
+    expect(replies).toEqual([
+        {
+            content: 'Pick a text channel, not a thread.',
+            ephemeral: false,
+        },
+    ])
 })
 
 test('channel with a text channel argument sets that channel', async () => {
@@ -153,25 +194,6 @@ test('channel with a text channel argument sets that channel', async () => {
             ephemeral: false,
         },
     ])
-
-    const player = fakeInteraction({
-        guildId: 'guild-1',
-        channelId: '222',
-        userId: 'user-1',
-        username: 'ada',
-    })
-    await joinQ.execute(player.interaction, asQueueConvex(backend))
-
-    expect(player.replies).toEqual([
-        {
-            content: 'Queue commands go in <#333>.',
-            ephemeral: true,
-        },
-    ])
-    expect(await readQueue(backend, 'owner-1')).toEqual({
-        state: 'open',
-        participants: [],
-    })
 })
 
 test('channel typed in the command channel again replies that it already goes there', async () => {

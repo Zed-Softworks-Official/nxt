@@ -2,6 +2,8 @@ import type { Id } from '@nxt/backend/dataModel'
 import { type MutationCtx, mutation } from '@nxt/backend/server'
 import { v } from 'convex/values'
 
+import { queueForCommunity } from '../model/pausedQueue'
+
 const openResult = v.union(v.literal('opened'), v.literal('already'))
 const pauseResult = v.union(v.literal('paused'), v.literal('already'))
 
@@ -9,10 +11,7 @@ async function requireQueue(
 	ctx: MutationCtx,
 	communityId: Id<'communities'>,
 ) {
-	const queue = await ctx.db
-		.query('queues')
-		.withIndex('byCommunity', (q) => q.eq('communityId', communityId))
-		.first()
+	const queue = await queueForCommunity(ctx, communityId)
 	if (!queue) throw new Error('Queue not found')
 	return queue
 }

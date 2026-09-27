@@ -16,11 +16,13 @@ export default async function DashboardPage() {
 	if (!user) return redirect("/u/login")
 
 	const convex = new ConvexHttpClient(env.NEXT_PUBLIC_CONVEX_URL)
-	try {
-		await convex.mutation(api.queue.ensureQueue, { ownerId: user.id })
-	} catch (error) {
-		const message = error instanceof Error ? error.message : ""
-		if (!message.includes("Community not found")) throw error
+	const community = await convex.query(api.communities.getCommunity, {
+		ownerId: user.id,
+	})
+	if (community) {
+		await convex.mutation(api.queue.ensureQueueForCommunity, {
+			communityId: community._id,
+		})
 	}
 
 	return (

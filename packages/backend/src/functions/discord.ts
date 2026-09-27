@@ -2,6 +2,8 @@ import type { Id } from '@nxt/backend/dataModel'
 import { type MutationCtx, mutation } from '@nxt/backend/server'
 import { v } from 'convex/values'
 
+import { queueForCommunity } from '../model/pausedQueue'
+
 const joinResult = v.union(
 	v.literal('joined'),
 	v.literal('paused'),
@@ -19,10 +21,7 @@ async function requireDiscordQueue(ctx: MutationCtx, platformId: string) {
 		.first()
 	if (!link) throw new Error('Community not found')
 
-	const queue = await ctx.db
-		.query('queues')
-		.withIndex('byCommunity', (q) => q.eq('communityId', link.communityId))
-		.first()
+	const queue = await queueForCommunity(ctx, link.communityId)
 	if (!queue) throw new Error('Queue not found')
 
 	return queue

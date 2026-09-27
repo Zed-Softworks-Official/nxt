@@ -2,6 +2,8 @@ import type { Id } from '@nxt/backend/dataModel'
 import { type QueryCtx, query } from '@nxt/backend/server'
 import { v } from 'convex/values'
 
+import { queueForCommunity } from '../model/pausedQueue'
+
 const positionResult = v.union(
 	v.object({
 		outcome: v.literal('waiting'),
@@ -34,10 +36,7 @@ async function readPosition(
 	communityId: Id<'communities'>,
 	platformUserId: string,
 ) {
-	const queue = await ctx.db
-		.query('queues')
-		.withIndex('byCommunity', (q) => q.eq('communityId', communityId))
-		.first()
+	const queue = await queueForCommunity(ctx, communityId)
 	if (!queue) return { outcome: 'absent' as const }
 
 	const participant = await ctx.db

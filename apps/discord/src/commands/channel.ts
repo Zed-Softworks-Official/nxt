@@ -29,7 +29,7 @@ export const channel: Command = {
         await runQueueCommand(interaction, convex, {
             kind: 'admin',
             run: async ({ guildId }) => {
-                const target = resolveTarget(interaction)
+                const target = await resolveTarget(interaction)
                 if ('reply' in target) {
                     await interaction.reply(target.reply)
                     return
@@ -56,15 +56,22 @@ export const channel: Command = {
     },
 }
 
-function resolveTarget(
+type ChannelChoice = {
+    id: string
+    type: ChannelType
+}
+
+async function resolveTarget(
     interaction: CommandInteraction
-): { id: string } | { reply: string } {
+): Promise<{ id: string } | { reply: string }> {
     if (!interaction.isChatInputCommand()) {
         return { reply: 'Pick a text channel.' }
     }
 
     const selected = interaction.options.getChannel('channel')
-    const chosen = selected ?? interaction.channel
+    const chosen = selected
+        ? channelChoice(selected)
+        : await channelWhereTyped(interaction)
     if (!chosen) return { reply: 'Pick a text channel.' }
     if (isThread(chosen.type)) {
         return { reply: 'Pick a text channel, not a thread.' }
@@ -73,6 +80,27 @@ function resolveTarget(
         return { reply: 'Pick a text channel.' }
     }
     return { id: chosen.id }
+}
+
+function channelChoice(channel: {
+    id: string
+    type: ChannelType
+}): ChannelChoice {
+    return { id: channel.id, type: channel.type }
+}
+
+// BaseInteraction.channel is only the channel cache, which stays empty with intents: [].
+async function channelWhereTyped(
+    interaction: CommandInteraction
+): Promise<ChannelChoice | null> {
+    if (interaction.channel) return channelChoice(interaction.channel)
+    if (!interaction.channelId) return null
+
+    const fetched = await interaction.client.channels.fetch(
+        interaction.channelId
+    )
+    if (!fetched) return null
+    return channelChoice(fetched)
 }
 
 function isThread(type: ChannelType): boolean {
