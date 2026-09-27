@@ -14,7 +14,7 @@
     "devDependencies": {
         "@biomejs/biome": "2.3.8",
         "prettier": "^3.6.2",
-        "turbo": "^2.9.12",
+        "turbo": "^2.11.4",
         "typescript": "5.9.2"
     },
     "packageManager": "pnpm@12.6.0",
