@@ -1,5 +1,5 @@
 import { convexTest } from 'convex-test'
-import type { CommandInteraction } from 'discord.js'
+import { type CommandInteraction, PermissionFlagsBits } from 'discord.js'
 import type { QueueConvex } from '~/lib/convex'
 import schema from '../../../../packages/backend/src/functions/schema'
 
@@ -27,8 +27,10 @@ export function fakeInteraction(input: {
     channelId?: string | null
     userId?: string
     username?: string
+    manageServer?: boolean
 }) {
     const replies: SeenReply[] = []
+    const manageServer = input.manageServer === true
     const interaction = {
         guildId: input.guildId ?? null,
         channelId: input.channelId ?? 'channel-1',
@@ -36,7 +38,10 @@ export function fakeInteraction(input: {
             id: input.userId ?? 'user-1',
             username: input.username ?? 'ada',
         },
-        memberPermissions: null,
+        memberPermissions: {
+            has: (permission: bigint) =>
+                manageServer && permission === PermissionFlagsBits.ManageGuild,
+        },
         reply: async (
             message: string | { content?: string; ephemeral?: boolean }
         ) => {
