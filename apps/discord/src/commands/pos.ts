@@ -3,7 +3,7 @@ import type { CommandInteraction } from 'discord.js'
 import { SlashCommandBuilder } from 'discord.js'
 
 import { getConvex, type QueueConvex } from '~/lib/convex'
-import { runQueueCommand } from '~/lib/queueGate'
+import { editDeferred, runQueueCommand } from '~/lib/queueGate'
 import type { Command } from '~/lib/types'
 
 type PositionResult =
@@ -20,12 +20,13 @@ export const pos: Command = {
         const convex = client ?? getConvex()
         await runQueueCommand(interaction, convex, {
             kind: 'player',
+            ephemeral: true,
             run: async ({ communityId }) => {
                 const result = await convex.query(api.position.getPosition, {
                     communityId,
                     platformUserId: interaction.user.id,
                 })
-                await interaction.reply({
+                await editDeferred(interaction, {
                     content: positionReply(result),
                     ephemeral: true,
                 })

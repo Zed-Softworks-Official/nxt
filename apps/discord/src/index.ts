@@ -4,6 +4,7 @@ import { Client, Collection, Events } from 'discord.js'
 
 import { commands } from '~/commands'
 import { env } from '~/env'
+import { editDeferred } from '~/lib/queueGate'
 import type { ExtendedClient } from '~/lib/types'
 
 const client = new Client({
@@ -37,7 +38,9 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
             ephemeral: true,
         }
 
-        if (interaction.replied || interaction.deferred) {
+        if (interaction.deferred && !interaction.replied) {
+            await editDeferred(interaction, errorMessage)
+        } else if (interaction.replied) {
             await interaction.followUp(errorMessage)
         } else {
             await interaction.reply(errorMessage)

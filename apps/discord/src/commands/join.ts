@@ -4,7 +4,7 @@ import type { CommandInteraction } from 'discord.js'
 import { SlashCommandBuilder } from 'discord.js'
 
 import { getConvex, type QueueConvex } from '~/lib/convex'
-import { runQueueCommand } from '~/lib/queueGate'
+import { editDeferred, runQueueCommand } from '~/lib/queueGate'
 import type { Command } from '~/lib/types'
 
 export const joinQ: Command = {
@@ -25,16 +25,16 @@ export const joinQ: Command = {
                 )
 
                 if (error || data === 'already') {
-                    await interaction.reply('Error joining the queue.')
+                    await editDeferred(interaction, 'Error joining the queue.')
                     return
                 }
 
                 if (data === 'paused') {
-                    await interaction.reply('The queue is paused.')
+                    await editDeferred(interaction, 'The queue is paused.')
                     return
                 }
 
-                await interaction.reply('Joined the queue.')
+                await editDeferred(interaction, 'Joined the queue.')
             },
         })
     },

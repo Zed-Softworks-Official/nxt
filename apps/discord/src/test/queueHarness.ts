@@ -34,6 +34,9 @@ export function fakeInteraction(input: {
     const interaction = {
         guildId: input.guildId ?? null,
         channelId: input.channelId ?? 'channel-1',
+        ephemeral: null as boolean | null,
+        deferred: false,
+        replied: false,
         user: {
             id: input.userId ?? 'user-1',
             username: input.username ?? 'ada',
@@ -42,13 +45,42 @@ export function fakeInteraction(input: {
             has: (permission: bigint) =>
                 manageServer && permission === PermissionFlagsBits.ManageGuild,
         },
-        reply: async (
+        deferReply: async (options?: { ephemeral?: boolean }) => {
+            interaction.deferred = true
+            interaction.ephemeral = options?.ephemeral === true
+        },
+        editReply: async (message: string | { content?: string }) => {
+            interaction.replied = true
+            const content =
+                typeof message === 'string' ? message : (message.content ?? '')
+            replies.push({
+                content,
+                ephemeral: interaction.ephemeral === true,
+            })
+        },
+        deleteReply: async () => undefined,
+        followUp: async (
             message: string | { content?: string; ephemeral?: boolean }
         ) => {
+            interaction.replied = true
             if (typeof message === 'string') {
                 replies.push({ content: message, ephemeral: false })
                 return
             }
+            replies.push({
+                content: message.content ?? '',
+                ephemeral: message.ephemeral === true,
+            })
+        },
+        reply: async (
+            message: string | { content?: string; ephemeral?: boolean }
+        ) => {
+            interaction.replied = true
+            if (typeof message === 'string') {
+                replies.push({ content: message, ephemeral: false })
+                return
+            }
+            interaction.ephemeral = message.ephemeral === true
             replies.push({
                 content: message.content ?? '',
                 ephemeral: message.ephemeral === true,

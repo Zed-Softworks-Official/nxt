@@ -4,7 +4,7 @@ import type { CommandInteraction } from 'discord.js'
 import { SlashCommandBuilder } from 'discord.js'
 
 import { getConvex, type QueueConvex } from '~/lib/convex'
-import { runQueueCommand } from '~/lib/queueGate'
+import { editDeferred, runQueueCommand } from '~/lib/queueGate'
 import type { Command } from '~/lib/types'
 
 export const leaveQ: Command = {
@@ -24,11 +24,11 @@ export const leaveQ: Command = {
                 )
 
                 if (error || data === 'absent') {
-                    await interaction.reply('Error leaving the queue.')
+                    await editDeferred(interaction, 'Error leaving the queue.')
                     return
                 }
 
-                await interaction.reply('Left the queue.')
+                await editDeferred(interaction, 'Left the queue.')
             },
         })
     },

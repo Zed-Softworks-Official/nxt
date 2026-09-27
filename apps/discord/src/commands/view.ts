@@ -3,7 +3,7 @@ import type { CommandInteraction } from 'discord.js'
 import { SlashCommandBuilder } from 'discord.js'
 
 import { getConvex, type QueueConvex } from '~/lib/convex'
-import { runQueueCommand } from '~/lib/queueGate'
+import { editDeferred, runQueueCommand } from '~/lib/queueGate'
 import type { Command } from '~/lib/types'
 
 const DISCORD_MESSAGE_LIMIT = 2000
@@ -46,7 +46,8 @@ export const viewQ: Command = {
                 const line = await convex.query(api.viewQueue.viewQueue, {
                     communityId,
                 })
-                await interaction.reply(
+                await editDeferred(
+                    interaction,
                     formatWaitingLine(line.state, line.usernames)
                 )
             },

@@ -6,7 +6,7 @@ import { defineConfig } from 'vitest/config'
 const root = path.dirname(fileURLToPath(import.meta.url))
 
 process.env.CONVEX_URL ??= 'https://test.convex.cloud'
-process.env.CONVEX_DEPLOY_KEY ??= 'test-deploy-key'
+process.env.CONVEX_DEPLOY_KEY ||= 'test-deploy-key'
 process.env.DISCORD_TOKEN ??= 'test-token'
 process.env.DISCORD_CLIENT_ID ??= 'test-client'
 

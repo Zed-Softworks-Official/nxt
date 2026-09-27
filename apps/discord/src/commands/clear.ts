@@ -3,7 +3,7 @@ import type { CommandInteraction } from 'discord.js'
 import { PermissionFlagsBits, SlashCommandBuilder } from 'discord.js'
 
 import { getConvex, type QueueConvex } from '~/lib/convex'
-import { runQueueCommand } from '~/lib/queueGate'
+import { editDeferred, runQueueCommand } from '~/lib/queueGate'
 import type { Command } from '~/lib/types'
 
 export const clearQ: Command = {
@@ -21,10 +21,16 @@ export const clearQ: Command = {
                     { communityId }
                 )
                 if (cleared === 0) {
-                    await interaction.reply('The queue is already empty.')
+                    await editDeferred(
+                        interaction,
+                        'The queue is already empty.'
+                    )
                     return
                 }
-                await interaction.reply(`Cleared ${cleared} from the queue.`)
+                await editDeferred(
+                    interaction,
+                    `Cleared ${cleared} from the queue.`
+                )
             },
         })
     },

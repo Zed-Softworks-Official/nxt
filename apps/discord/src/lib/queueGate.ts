@@ -6,11 +6,32 @@ import type { QueueConvex } from '~/lib/convex'
 
 export type QueueCommandKind = 'player' | 'admin'
 
+type QueueReply = string | { content: string; ephemeral?: boolean }
+
+export async function editDeferred(
+    interaction: CommandInteraction,
+    message: QueueReply
+): Promise<void> {
+    const content = typeof message === 'string' ? message : message.content
+    const wantsPrivate =
+        typeof message !== 'string' && message.ephemeral === true
+    // Ephemeral is fixed at defer time. A private result after a public
+    // defer replaces that placeholder with a private follow-up.
+    if (wantsPrivate && interaction.ephemeral !== true) {
+        await interaction.deleteReply()
+        await interaction.followUp({ content, ephemeral: true })
+        return
+    }
+
+    await interaction.editReply(content)
+}
+
 export async function runQueueCommand(
     interaction: CommandInteraction,
     client: QueueConvex,
     command: {
         kind: QueueCommandKind
+        ephemeral?: boolean
         run: (ctx: {
             guildId: string
             communityId: Id<'communities'>
@@ -30,11 +51,18 @@ export async function runQueueCommand(
         return
     }
 
+    await interaction.deferReply(
+        command.ephemeral ? { ephemeral: true } : undefined
+    )
+
     const link = await client.query(api.discordGuild.getLinkedCommunity, {
         guildId: interaction.guildId,
     })
     if (!link) {
-        await interaction.reply("This server isn't connected to a community.")
+        await editDeferred(
+            interaction,
+            "This server isn't connected to a community."
+        )
         return
     }
 
@@ -43,7 +71,7 @@ export async function runQueueCommand(
         link.commandChannelId !== null &&
         interaction.channelId !== link.commandChannelId
     ) {
-        await interaction.reply({
+        await editDeferred(interaction, {
             content: `Queue commands go in <#${link.commandChannelId}>.`,
             ephemeral: true,
         })

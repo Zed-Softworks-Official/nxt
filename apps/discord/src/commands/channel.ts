@@ -8,7 +8,7 @@ import {
 } from 'discord.js'
 
 import { getConvex, type QueueConvex } from '~/lib/convex'
-import { runQueueCommand } from '~/lib/queueGate'
+import { editDeferred, runQueueCommand } from '~/lib/queueGate'
 import type { Command } from '~/lib/types'
 
 const data = new SlashCommandBuilder()
@@ -32,7 +32,7 @@ export const channel: Command = {
             run: async ({ guildId }) => {
                 const target = await resolveTarget(interaction)
                 if ('reply' in target) {
-                    await interaction.reply(target.reply)
+                    await editDeferred(interaction, target.reply)
                     return
                 }
 
@@ -45,13 +45,17 @@ export const channel: Command = {
                 )
                 const mention = `<#${target.id}>`
                 if (result === 'already') {
-                    await interaction.reply(
+                    await editDeferred(
+                        interaction,
                         `Queue commands already go in ${mention}.`
                     )
                     return
                 }
 
-                await interaction.reply(`Queue commands now go in ${mention}.`)
+                await editDeferred(
+                    interaction,
+                    `Queue commands now go in ${mention}.`
+                )
             },
         })
     },
