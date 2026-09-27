@@ -44,6 +44,7 @@ function channelInteraction(input: {
     here?: ChannelKind
     argument?: { id: string; kind: ChannelKind }
     fetched?: ChannelKind
+    fetchRejects?: boolean
 }) {
     const channelId = input.channelId ?? 'channel-1'
     const { interaction, replies } = fakeInteraction({
@@ -51,21 +52,23 @@ function channelInteraction(input: {
         channelId,
         manageServer: input.manageServer,
     })
+    const lookup = input.fetched !== undefined || input.fetchRejects === true
     const withChannel = Object.assign(interaction, {
-        channel:
-            input.fetched === undefined
-                ? fakeChannel(channelId, input.here ?? 'text')
-                : null,
-        ...(input.fetched === undefined
-            ? {}
-            : {
+        channel: lookup ? null : fakeChannel(channelId, input.here ?? 'text'),
+        ...(lookup
+            ? {
                   client: {
                       channels: {
-                          fetch: async (id: string) =>
-                              fakeChannel(id, input.fetched ?? 'text'),
+                          fetch: async (id: string) => {
+                              if (input.fetchRejects) {
+                                  throw new Error('Unknown Channel')
+                              }
+                              return fakeChannel(id, input.fetched ?? 'text')
+                          },
                       },
                   },
-              }),
+              }
+            : {}),
         isChatInputCommand: () => true,
         options: {
             getChannel: (name: string) => {
@@ -145,6 +148,27 @@ test('channel with no argument fetches the text channel it was typed in when the
             content: 'Queue commands now go in <#111>.',
             ephemeral: false,
         },
+    ])
+})
+
+test('channel typed in an uncached channel replies to pick a text channel when the lookup is rejected', async () => {
+    const backend = createTestBackend()
+    await seedDiscordCommunity(backend, {
+        ownerId: 'owner-1',
+        guildId: 'guild-1',
+        state: 'open',
+    })
+    const { interaction, replies } = channelInteraction({
+        guildId: 'guild-1',
+        channelId: '111',
+        manageServer: true,
+        fetchRejects: true,
+    })
+
+    await channel.execute(interaction, asQueueConvex(backend))
+
+    expect(replies).toEqual([
+        { content: 'Pick a text channel.', ephemeral: false },
     ])
 })
 

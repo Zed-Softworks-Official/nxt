@@ -1,4 +1,5 @@
 import { api } from '@nxt/backend/api'
+import { tryCatch } from '@nxt/utils'
 import {
     ChannelType,
     type CommandInteraction,
@@ -96,10 +97,11 @@ async function channelWhereTyped(
     if (interaction.channel) return channelChoice(interaction.channel)
     if (!interaction.channelId) return null
 
-    const fetched = await interaction.client.channels.fetch(
-        interaction.channelId
+    const { data: fetched, error } = await tryCatch(
+        interaction.client.channels.fetch(interaction.channelId)
     )
-    if (!fetched) return null
+    if (error || !fetched) return null
+
     return channelChoice(fetched)
 }
 
