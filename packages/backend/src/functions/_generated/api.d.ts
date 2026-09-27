@@ -9,6 +9,7 @@
  */
 
 import type * as clearQueue from "../clearQueue.js";
+import type * as commandChannel from "../commandChannel.js";
 import type * as communities from "../communities.js";
 import type * as discord from "../discord.js";
 import type * as discordGuild from "../discordGuild.js";
@@ -27,6 +28,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   clearQueue: typeof clearQueue;
+  commandChannel: typeof commandChannel;
   communities: typeof communities;
   discord: typeof discord;
   discordGuild: typeof discordGuild;
