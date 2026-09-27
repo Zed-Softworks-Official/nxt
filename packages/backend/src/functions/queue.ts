@@ -1,6 +1,8 @@
 import { mutation, query } from '@nxt/backend/server'
 import { v } from 'convex/values'
 
+import { insertPausedQueue } from '../model/pausedQueue'
+
 // Helper: resolve ownerId → community → queue
 async function resolveQueue(ctx: any, ownerId: string) {
 	const community = await ctx.db
@@ -144,6 +146,29 @@ export const markDone = mutation({
 
 		await logEvent(ctx, participant, 'finished')
 		await ctx.db.delete(args.participantId)
+	},
+})
+
+// Insert a Paused Queue when this Community has none. An existing Queue is left as it is.
+export const ensureQueue = mutation({
+	args: {
+		ownerId: v.string(),
+	},
+	returns: v.id('queues'),
+	handler: async (ctx, args) => {
+		const community = await ctx.db
+			.query('communities')
+			.withIndex('byOwner', (q) => q.eq('ownerId', args.ownerId))
+			.first()
+		if (!community) throw new Error('Community not found')
+
+		const existing = await ctx.db
+			.query('queues')
+			.withIndex('byCommunity', (q) => q.eq('communityId', community._id))
+			.first()
+		if (existing) return existing._id
+
+		return await insertPausedQueue(ctx, community._id)
 	},
 })
 

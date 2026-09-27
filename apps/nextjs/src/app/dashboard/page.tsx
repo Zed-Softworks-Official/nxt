@@ -1,5 +1,9 @@
 import { currentUser } from "@clerk/nextjs/server"
+import { ConvexHttpClient } from "@nxt/backend"
+import { api } from "@nxt/backend/api"
 import { redirect } from "next/navigation"
+
+import { env } from "~/env"
 
 import { ActivityLog } from "./_components/activity-log"
 import { CurrentlyPlaying } from "./_components/currently-playing"
@@ -10,6 +14,14 @@ import { QuickPing } from "./_components/quick-ping"
 export default async function DashboardPage() {
 	const user = await currentUser()
 	if (!user) return redirect("/u/login")
+
+	const convex = new ConvexHttpClient(env.NEXT_PUBLIC_CONVEX_URL)
+	try {
+		await convex.mutation(api.queue.ensureQueue, { ownerId: user.id })
+	} catch (error) {
+		const message = error instanceof Error ? error.message : ""
+		if (!message.includes("Community not found")) throw error
+	}
 
 	return (
 		<div className="grid grid-cols-1 md:grid-cols-6 gap-4">
