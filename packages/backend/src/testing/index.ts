@@ -2,6 +2,11 @@
 import { convexTest } from 'convex-test'
 
 import schema from '../functions/schema'
+import {
+    setTwitchClient,
+    type TwitchClient,
+    type TwitchUser,
+} from '../model/twitchClient'
 
 // Vitest-only harness shared by the backend and every platform adapter.
 // It runs the real schema and functions in memory through convex-test.
@@ -235,5 +240,62 @@ function platformName(platform: Platform) {
             return 'Twitch'
         case 'youtube':
             return 'YouTube'
+    }
+}
+
+// ---- Twitch linking ---------------------------------------------------------
+
+export type FakeTwitchSignIn = {
+    user: TwitchUser
+    // Scopes the user granted. Defaults to the broadcaster's `channel:bot`.
+    scopes?: string[]
+}
+
+// A fake Twitch, installed as the backend's Twitch client. Each authorization
+// `code` signs in one user; an unknown code fails the exchange. It records
+// which broadcasters' chats have an active EventSub subscription.
+export function installFakeTwitch(signIns: Record<string, FakeTwitchSignIn>) {
+    const subscriptions = new Map<string, string>()
+    let nextSubscription = 0
+    const tokens = new Map<string, FakeTwitchSignIn>()
+
+    const client: TwitchClient = {
+        async exchangeCode(code) {
+            const signIn = signIns[code]
+            if (!signIn) throw new Error('Invalid authorization code')
+            const accessToken = `access-${code}`
+            tokens.set(accessToken, signIn)
+            return {
+                accessToken,
+                refreshToken: `refresh-${code}`,
+                scopes: signIn.scopes ?? ['channel:bot'],
+                expiresAt: Date.now() + 4 * 60 * 60 * 1000,
+            }
+        },
+        async getUser(accessToken) {
+            const signIn = tokens.get(accessToken)
+            if (!signIn) throw new Error('Invalid access token')
+            return signIn.user
+        },
+        async subscribeToChat(broadcasterId) {
+            const existing = subscriptions.get(broadcasterId)
+            if (existing) return existing
+            nextSubscription += 1
+            const id = `subscription-${nextSubscription}`
+            subscriptions.set(broadcasterId, id)
+            return id
+        },
+        async deleteSubscription(subscriptionId) {
+            for (const [broadcasterId, id] of subscriptions) {
+                if (id === subscriptionId) subscriptions.delete(broadcasterId)
+            }
+        },
+    }
+    setTwitchClient(client)
+
+    return {
+        // Broadcaster IDs whose chat Nxt is subscribed to.
+        subscribedChannels: () => [...subscriptions.keys()].sort(),
+        uninstall: () => setTwitchClient(null),
     }
 }

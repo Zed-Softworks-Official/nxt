@@ -1,7 +1,7 @@
 "use client"
 
 import { api } from "@nxt/backend/api"
-import { useMutation, useQuery } from "@nxt/backend/react"
+import { useAction, useMutation, useQuery } from "@nxt/backend/react"
 
 import { useState } from "react"
 
@@ -25,22 +25,13 @@ export function Connections(props: { clerkId: string }) {
 
 	if (!platforms) return <>Loading...</>
 
-	if (platforms.length === 0) {
-		return <NoConnections />
-	}
-
-	return (
-		<ItemGroup>
-			{platforms.map((platform) => (
-				<Item key={platform.platformId}>
-					<ItemTitle>{platform.platformName}</ItemTitle>
-				</Item>
-			))}
-		</ItemGroup>
+	const discord = platforms.find(
+		(link) => link.platform === "discord" && link.enabled
 	)
-}
+	const twitch = platforms.find(
+		(link) => link.platform === "twitch" && link.enabled
+	)
 
-function NoConnections() {
 	return (
 		<ItemGroup>
 			<Item>
@@ -48,11 +39,29 @@ function NoConnections() {
 				<ItemContent>
 					<ItemTitle>Discord</ItemTitle>
 					<ItemDescription>
-						Connect your Discord account to use the bot.
+						{discord
+							? "Your Discord server is connected."
+							: "Connect your Discord account to use the bot."}
+					</ItemDescription>
+				</ItemContent>
+				{!discord && (
+					<ItemActions>
+						<DiscordConnection />
+					</ItemActions>
+				)}
+			</Item>
+			<Item>
+				<ItemMedia>T</ItemMedia>
+				<ItemContent>
+					<ItemTitle>Twitch</ItemTitle>
+					<ItemDescription>
+						{twitch
+							? `Linked to ${twitch.channelName ?? twitch.platformName}.`
+							: "Sign in as your channel's broadcaster to let your Twitch chat join the Queue."}
 					</ItemDescription>
 				</ItemContent>
 				<ItemActions>
-					<DiscordConnection />
+					{twitch ? <TwitchUnlink /> : <TwitchConnection />}
 				</ItemActions>
 			</Item>
 		</ItemGroup>
@@ -98,6 +107,70 @@ function DiscordConnection() {
 	return (
 		<Button disabled={pending} onClick={() => void connect()}>
 			Connect
+		</Button>
+	)
+}
+
+function TwitchConnection() {
+	const mintLinkState = useMutation(api.linkStates.mintLinkState)
+	const [pending, setPending] = useState(false)
+
+	async function connect() {
+		setPending(true)
+		try {
+			const state = await mintLinkState({ platform: "twitch" })
+
+			// Authorization-code flow (ADR-0002). The broadcaster who signs in
+			// decides the channel; `channel:bot` lets the Nxt bot account into
+			// their chat.
+			const authorizeUrl = new URL("https://id.twitch.tv/oauth2/authorize")
+			authorizeUrl.searchParams.set(
+				"client_id",
+				env.NEXT_PUBLIC_TWITCH_CLIENT_ID
+			)
+			authorizeUrl.searchParams.set(
+				"redirect_uri",
+				env.NEXT_PUBLIC_TWITCH_REDIRECT_URI
+			)
+			authorizeUrl.searchParams.set("response_type", "code")
+			authorizeUrl.searchParams.set("scope", "channel:bot")
+			authorizeUrl.searchParams.set("force_verify", "true")
+			authorizeUrl.searchParams.set("state", state)
+
+			window.location.href = authorizeUrl.toString()
+		} catch (error) {
+			setPending(false)
+			throw error
+		}
+	}
+
+	return (
+		<Button disabled={pending} onClick={() => void connect()}>
+			Connect
+		</Button>
+	)
+}
+
+function TwitchUnlink() {
+	const unlink = useAction(api.twitchLink.unlink)
+	const [pending, setPending] = useState(false)
+
+	async function disconnect() {
+		setPending(true)
+		try {
+			await unlink({})
+		} finally {
+			setPending(false)
+		}
+	}
+
+	return (
+		<Button
+			variant="outline"
+			disabled={pending}
+			onClick={() => void disconnect()}
+		>
+			Unlink
 		</Button>
 	)
 }
