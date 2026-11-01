@@ -3,7 +3,8 @@
 	"version": "0.0.0",
 	"private": true,
 	"scripts": {
-		"dev": "convex dev"
+		"dev": "convex dev",
+		"test": "vitest run"
 	},
 	"type": "module",
 	"exports": {
@@ -23,8 +24,11 @@
 		"./react": "./src/react.ts"
 	},
 	"devDependencies": {
+		"@edge-runtime/vm": "^5.0.0",
 		"@nxt/typescript-config": "workspace:*",
-		"@types/node": "^20.14.10"
+		"@types/node": "^20.14.10",
+		"convex-test": "^0.0.60",
+		"vitest": "^5.0.2"
 	},
 	"dependencies": {
 		"@clerk/backend": "catalog:",

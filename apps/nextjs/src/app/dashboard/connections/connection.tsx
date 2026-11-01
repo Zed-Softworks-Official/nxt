@@ -1,10 +1,9 @@
 "use client"
 
 import { api } from "@nxt/backend/api"
-import { useQuery } from "@nxt/backend/react"
+import { useMutation, useQuery } from "@nxt/backend/react"
 
-import Link from "next/link"
-import { useMemo } from "react"
+import { useState } from "react"
 
 import { Button } from "~/components/ui/button"
 import {
@@ -27,7 +26,7 @@ export function Connections(props: { clerkId: string }) {
 	if (!platforms) return <>Loading...</>
 
 	if (platforms.length === 0) {
-		return <NoConnections clerkId={props.clerkId} />
+		return <NoConnections />
 	}
 
 	return (
@@ -41,7 +40,7 @@ export function Connections(props: { clerkId: string }) {
 	)
 }
 
-function NoConnections(props: { clerkId: string }) {
+function NoConnections() {
 	return (
 		<ItemGroup>
 			<Item>
@@ -53,42 +52,52 @@ function NoConnections(props: { clerkId: string }) {
 					</ItemDescription>
 				</ItemContent>
 				<ItemActions>
-					<DiscordConnection clerkId={props.clerkId} />
+					<DiscordConnection />
 				</ItemActions>
 			</Item>
 		</ItemGroup>
 	)
 }
 
-function DiscordConnection(props: { clerkId: string }) {
-	const communityId = useQuery(api.communities.getCommunity, {
-		ownerId: props.clerkId,
-	})
+function DiscordConnection() {
+	const mintLinkState = useMutation(api.linkStates.mintLinkState)
+	const [pending, setPending] = useState(false)
 
-	const discordUrl = useMemo(() => {
-		if (!communityId) return null
+	async function connect() {
+		// Open the tab synchronously so the popup blocker allows it, then point
+		// it at Discord once the owner-bound state is minted.
+		const tab = window.open("", "_blank")
+		setPending(true)
+		try {
+			const state = await mintLinkState({ platform: "discord" })
 
-		const inviteUrl = new URL("https://discord.com/oauth2/authorize")
-		inviteUrl.searchParams.set("client_id", env.NEXT_PUBLIC_DISCORD_CLIENT_ID)
-		inviteUrl.searchParams.set("permissions", "2048")
-		inviteUrl.searchParams.set("response_type", "code")
-		inviteUrl.searchParams.set(
-			"redirect_uri",
-			env.NEXT_PUBLIC_DISCORD_REDIRECT_URI
-		)
-		inviteUrl.searchParams.set("scope", "bot")
-		inviteUrl.searchParams.set("state", communityId._id)
+			const inviteUrl = new URL("https://discord.com/oauth2/authorize")
+			inviteUrl.searchParams.set(
+				"client_id",
+				env.NEXT_PUBLIC_DISCORD_CLIENT_ID
+			)
+			inviteUrl.searchParams.set("permissions", "2048")
+			inviteUrl.searchParams.set("response_type", "code")
+			inviteUrl.searchParams.set(
+				"redirect_uri",
+				env.NEXT_PUBLIC_DISCORD_REDIRECT_URI
+			)
+			inviteUrl.searchParams.set("scope", "bot")
+			inviteUrl.searchParams.set("state", state)
 
-		return inviteUrl
-	}, [communityId])
-
-	if (!discordUrl) return null
+			if (tab) tab.location.href = inviteUrl.toString()
+			else window.location.href = inviteUrl.toString()
+		} catch (error) {
+			tab?.close()
+			throw error
+		} finally {
+			setPending(false)
+		}
+	}
 
 	return (
-		<Button asChild>
-			<Link href={discordUrl.toString()} target="_blank">
-				Connect
-			</Link>
+		<Button disabled={pending} onClick={() => void connect()}>
+			Connect
 		</Button>
 	)
 }

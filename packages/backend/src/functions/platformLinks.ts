@@ -1,7 +1,8 @@
 import { api } from '@nxt/backend/api'
-import type { Id } from '@nxt/backend/dataModel'
 import { query, internalMutation } from '@nxt/backend/server'
 import { v } from 'convex/values'
+
+import { consumeLinkState } from '../model/linkState'
 
 type PlatformLink = {
 	enabled: boolean
@@ -41,31 +42,34 @@ export const getPlatformLinks = query({
 	},
 })
 
-export const createPlatformLink = internalMutation({
+/**
+ * Link a Discord guild from the Discord link callback. The `state` must be a
+ * link state minted by the Community owner (see model/linkState.ts); the guild
+ * is linked to that owner's Community. A forged, expired, or reused `state`
+ * links nothing.
+ */
+export const linkDiscordGuild = internalMutation({
 	args: {
-		communityId: v.string(),
-		platform: v.union(
-			v.literal('discord'),
-			v.literal('twitch'),
-			v.literal('youtube')
-		),
-		platformId: v.string(),
-		accessToken: v.optional(v.string()),
-		refreshToken: v.optional(v.string()),
+		state: v.string(),
+		guildId: v.string(),
 	},
-	handler: async (ctx, args) => {
-		switch (args.platform) {
-			case 'discord':
-				await ctx.db.insert('platformLinks', {
-					platform: 'discord',
-					platformId: args.platformId,
-					platformName: 'Discord',
-					communityId: args.communityId as Id<'communities'>,
-					enabled: true,
-				})
-				break
-			default:
-				throw new Error(`Unsupported platform: ${args.platform}`)
-		}
+	handler: async (
+		ctx,
+		args
+	): Promise<{ ok: true } | { ok: false; reason: 'invalid' | 'expired' }> => {
+		const linkState = await consumeLinkState(ctx, {
+			platform: 'discord',
+			token: args.state,
+		})
+		if (!linkState.ok) return linkState
+
+		await ctx.db.insert('platformLinks', {
+			platform: 'discord',
+			platformId: args.guildId,
+			platformName: 'Discord',
+			communityId: linkState.communityId,
+			enabled: true,
+		})
+		return { ok: true }
 	},
 })
