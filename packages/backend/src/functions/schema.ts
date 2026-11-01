@@ -2,6 +2,36 @@ import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
 
 export default defineSchema({
+	// The Announcement outbox (ADR-0004). Written in the same mutation as the
+	// Queue change; the platform's adapter posts it and marks it settled.
+	announcements: defineTable({
+		communityId: v.id('communities'),
+		platform: v.union(
+			v.literal('discord'),
+			v.literal('twitch'),
+			v.literal('youtube')
+		),
+		// The platform space to announce in (guild ID, broadcaster ID).
+		platformId: v.string(),
+		participant: v.object({
+			platformUserId: v.string(),
+			username: v.string(),
+			reference: v.number(),
+		}),
+		// The channel the Participant last used, if the platform needs one.
+		fallbackChannelId: v.optional(v.string()),
+		kind: v.literal('pinged'),
+		// Set once the Announcement is settled: posted, or dropped unposted.
+		deliveredAt: v.optional(v.number()),
+		dropped: v.optional(v.boolean()),
+	})
+		.index('byPlatformAndDelivered', ['platform', 'deliveredAt'])
+		.index('byDelivered', ['deliveredAt'])
+		.index('byCommunityAndPlatform', [
+			'communityId',
+			'platform',
+			'deliveredAt',
+		]),
 	activityLog: defineTable({
 		queueId: v.id('queues'),
 		username: v.string(),
@@ -67,6 +97,9 @@ export default defineSchema({
 			v.literal('youtube')
 		),
 		platformUserId: v.string(),
+		// Where this Participant last ran a Queue command (a Discord channel).
+		// Announcements fall back to it when the guild has no Command channel.
+		lastChannelId: v.optional(v.string()),
 		status: v.union(
 			v.literal('waiting'),
 			v.literal('notified'),

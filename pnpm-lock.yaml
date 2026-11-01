@@ -240,7 +240,7 @@ importers:
         version: link:../../tooling/typescript-config
       convex-test:
         specifier: ^0.0.60
-        version: 0.0.60(convex@1.46.0(@clerk/react@6.6.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0))
+        version: 0.0.60(convex@1.49.0(@clerk/react@6.6.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0))
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.23)(tsx@4.21.0)(typescript@5.9.2)
@@ -379,11 +379,11 @@ importers:
         specifier: ^0.13.11
         version: 0.13.11(typescript@5.9.2)(zod@3.25.76)
       convex:
-        specifier: ^1.46.0
-        version: 1.46.0(@clerk/react@6.6.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)
+        specifier: ^1.49.0
+        version: 1.49.0(@clerk/react@6.6.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)
       convex-helpers:
         specifier: ^0.1.116
-        version: 0.1.116(convex@1.46.0(@clerk/react@6.6.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0))(hono@4.12.18)(react@19.3.0)(typescript@5.9.2)(zod@3.25.76)
+        version: 0.1.116(convex@1.49.0(@clerk/react@6.6.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0))(hono@4.12.18)(react@19.3.0)(typescript@5.9.2)(zod@3.25.76)
       hono:
         specifier: ^4.12.18
         version: 4.12.18
@@ -405,7 +405,7 @@ importers:
         version: 20.19.40
       convex-test:
         specifier: ^0.0.60
-        version: 0.0.60(convex@1.46.0(@clerk/react@6.6.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0))
+        version: 0.0.60(convex@1.49.0(@clerk/react@6.6.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0))
       vitest:
         specifier: ^5.0.2
         version: 5.0.2(@edge-runtime/vm@5.0.0)(@types/node@20.19.40)(vite@8.3.1(@types/node@20.19.40)(esbuild@0.27.0)(jiti@2.7.0)(tsx@4.21.0))
@@ -2643,9 +2643,9 @@ packages:
     peerDependencies:
       convex: ^1.43.0
 
-  convex@1.46.0:
-    resolution: {integrity: sha512-dhBwDQTZDOhi5SUGAX17EWNehCdNq6/UFrSL0eLZuGfMkdsQbCVWVRZCzbZ5CF+/pgvoGxtApbEoTSipqL4JTw==}
-    engines: {node: '>=20.0.0', npm: '>=7.0.0'}
+  convex@1.49.0:
+    resolution: {integrity: sha512-mkr9oXF8/arkCI1kvYyGytWd62oVXNABh4uwLeI4UQVN6Zuudm4DlmSzNUJKF63djk6f/uUXC+6ffuVSkPLvzA==}
+    engines: {node: '>=22.0.0', npm: '>=7.0.0'}
     hasBin: true
     peerDependencies:
       '@auth0/auth0-react': ^2.0.1
@@ -6385,20 +6385,20 @@ snapshots:
 
   convert-source-map@2.0.0: {}
 
-  convex-helpers@0.1.116(convex@1.46.0(@clerk/react@6.6.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0))(hono@4.12.18)(react@19.3.0)(typescript@5.9.2)(zod@3.25.76):
+  convex-helpers@0.1.116(convex@1.49.0(@clerk/react@6.6.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0))(hono@4.12.18)(react@19.3.0)(typescript@5.9.2)(zod@3.25.76):
     dependencies:
-      convex: 1.46.0(@clerk/react@6.6.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)
+      convex: 1.49.0(@clerk/react@6.6.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)
     optionalDependencies:
       hono: 4.12.18
       react: 19.3.0
       typescript: 5.9.2
       zod: 3.25.76
 
-  convex-test@0.0.60(convex@1.46.0(@clerk/react@6.6.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)):
+  convex-test@0.0.60(convex@1.49.0(@clerk/react@6.6.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)):
     dependencies:
-      convex: 1.46.0(@clerk/react@6.6.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)
+      convex: 1.49.0(@clerk/react@6.6.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)
 
-  convex@1.46.0(@clerk/react@6.6.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0):
+  convex@1.49.0(@clerk/react@6.6.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0):
     dependencies:
       esbuild: 0.27.0
       prettier: 3.6.2

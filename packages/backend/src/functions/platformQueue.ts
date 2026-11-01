@@ -13,6 +13,8 @@ export const join = internalMutation({
         link: Queue.platformLink,
         platformUserId: v.string(),
         username: v.string(),
+        // The channel the command ran in, kept as the Announcement fallback.
+        channelId: v.optional(v.string()),
     },
     returns: v.union(Queue.joinResult, Queue.unlinked),
     handler: async (ctx, args) => {
@@ -22,6 +24,7 @@ export const join = internalMutation({
             platform: args.link.platform,
             platformUserId: args.platformUserId,
             username: args.username,
+            channelId: args.channelId,
         })
     },
 })
