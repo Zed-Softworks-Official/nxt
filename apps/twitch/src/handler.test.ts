@@ -101,3 +101,14 @@ test('a channel with no enabled Platform Link gets no reply', async () => {
     expect(sent).toEqual([])
     expect((await readQueue(backend, 'owner-1'))?.participants).toEqual([])
 })
+
+test('an unknown subcommand from a Twitch Admin lists the Admin commands too', async () => {
+    const backend = await openChannel()
+    const { handle, sent } = twitchBot(backend)
+
+    await handle(chatMessage('!nxt dance', { badges: { moderator: '1' } }))
+
+    expect(sent.map((entry) => entry.text)).toEqual([
+        '@Ada Usage: !nxt join | leave | pos | view. Admins: open | pause | clear | ping [count] | play <ref> | return <ref> | done <ref>',
+    ])
+})

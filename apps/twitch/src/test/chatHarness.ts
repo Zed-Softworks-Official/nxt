@@ -1,5 +1,6 @@
 import {
     createTestBackend,
+    readActivityLog,
     readQueue,
     type SeedParticipant,
     seedCommunity,
@@ -12,7 +13,13 @@ import type { QueueConvex } from '~/lib/convex'
 
 // The backend harness is shared with every platform adapter; this file adds
 // only the Twitch-specific fakes. No Twurple types appear here.
-export { createTestBackend, readQueue, seedCommunity, seedTwitchCommunity }
+export {
+    createTestBackend,
+    readActivityLog,
+    readQueue,
+    seedCommunity,
+    seedTwitchCommunity,
+}
 export type { SeedParticipant }
 
 export const BOT_USER_ID = 'bot-1'

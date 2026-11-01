@@ -12,6 +12,8 @@ export type CommandContext = {
 }
 
 export interface TwitchCommand {
+    // Only a Twitch Admin (the broadcaster or a moderator) may run it.
+    admin?: boolean
     // Subject to the per-user cooldown (for read-only commands that could
     // flood chat).
     cooldown?: boolean

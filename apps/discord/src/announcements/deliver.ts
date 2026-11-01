@@ -46,26 +46,3 @@ export async function deliverPending(
         })
     }
 }
-
-// Runs deliverPending whenever `trigger` is called, never two at once. A
-// trigger during a run queues exactly one more run afterwards.
-export function serialDeliverer(run: () => Promise<void>) {
-    let running = false
-    let again = false
-    const loop = async () => {
-        running = true
-        do {
-            again = false
-            const { error } = await tryCatch(run())
-            if (error) console.error('Announcement delivery failed', error)
-        } while (again)
-        running = false
-    }
-    return () => {
-        if (running) {
-            again = true
-            return
-        }
-        void loop()
-    }
-}
