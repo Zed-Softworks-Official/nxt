@@ -8,7 +8,7 @@ import { Webhook } from 'svix'
 import { Hono } from 'hono'
 import { HonoWithConvex, HttpRouterWithHono } from 'convex-helpers/server/hono'
 
-import { env } from '~/env'
+import { env } from '../env'
 
 const app: HonoWithConvex<ActionCtx> = new Hono()
 
@@ -38,15 +38,16 @@ app.post('/clerk', async (ctx) => {
 })
 
 app.get('/discord', async (ctx) => {
-	const { state: communityId, guild_id: platformId } = ctx.req.query()
-	if (!communityId || !platformId)
+	const { state, guild_id: guildId } = ctx.req.query()
+	if (!state || !guildId)
 		return ctx.redirect('http://localhost:3000/dashboard/connections?type=error')
 
-	await ctx.env.runMutation(internal.platformLinks.createPlatformLink, {
-		communityId,
-		platform: 'discord',
-		platformId,
-	})
+	const result = await ctx.env.runMutation(
+		internal.platformLinks.linkDiscordGuild,
+		{ state, guildId }
+	)
+	if (!result.ok)
+		return ctx.redirect('http://localhost:3000/dashboard/connections?type=error')
 
 	return ctx.redirect('http://localhost:3000/dashboard/connections?type=success')
 })

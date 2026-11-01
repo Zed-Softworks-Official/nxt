@@ -12,6 +12,7 @@ import type * as commandChannel from "../commandChannel.js";
 import type * as communities from "../communities.js";
 import type * as discordGuild from "../discordGuild.js";
 import type * as http from "../http.js";
+import type * as linkStates from "../linkStates.js";
 import type * as platformLinks from "../platformLinks.js";
 import type * as platformQueue from "../platformQueue.js";
 import type * as queue from "../queue.js";
@@ -27,6 +28,7 @@ declare const fullApi: ApiFromModules<{
   communities: typeof communities;
   discordGuild: typeof discordGuild;
   http: typeof http;
+  linkStates: typeof linkStates;
   platformLinks: typeof platformLinks;
   platformQueue: typeof platformQueue;
   queue: typeof queue;

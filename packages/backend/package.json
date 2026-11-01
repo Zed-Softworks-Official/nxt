@@ -26,9 +26,9 @@
 		"./reference": "./src/reference.ts"
 	},
 	"devDependencies": {
+		"@edge-runtime/vm": "^5.0.0",
 		"@nxt/typescript-config": "workspace:*",
 		"@types/node": "^20.14.10",
-		"@edge-runtime/vm": "^5.0.0",
 		"convex-test": "^0.0.60",
 		"vitest": "^5.0.2"
 	},
