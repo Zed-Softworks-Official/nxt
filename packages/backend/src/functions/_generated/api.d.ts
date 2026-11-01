@@ -8,8 +8,10 @@
  * @module
  */
 
+import type * as announcements from "../announcements.js";
 import type * as commandChannel from "../commandChannel.js";
 import type * as communities from "../communities.js";
+import type * as crons from "../crons.js";
 import type * as discordGuild from "../discordGuild.js";
 import type * as http from "../http.js";
 import type * as linkStates from "../linkStates.js";
@@ -24,8 +26,10 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  announcements: typeof announcements;
   commandChannel: typeof commandChannel;
   communities: typeof communities;
+  crons: typeof crons;
   discordGuild: typeof discordGuild;
   http: typeof http;
   linkStates: typeof linkStates;
