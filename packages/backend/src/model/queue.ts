@@ -2,6 +2,7 @@ import type { Doc, Id } from '@nxt/backend/dataModel'
 import type { MutationCtx, QueryCtx } from '@nxt/backend/server'
 import { v } from 'convex/values'
 
+import { announcePinged } from './announcement'
 import { insertPausedQueue, queueForCommunity } from './pausedQueue'
 
 // The platform-neutral Queue module. Every entry point (platform adapters
@@ -114,10 +115,15 @@ async function nextReference(ctx: MutationCtx, communityId: Id<'communities'>) {
 export async function join(
     ctx: MutationCtx,
     queue: QueueDoc,
-    who: Who & { username: string }
+    who: Who & { username: string; channelId?: string }
 ) {
     const existing = await findParticipant(ctx, queue._id, who)
     if (existing) {
+        if (who.channelId && existing.lastChannelId !== who.channelId) {
+            await ctx.db.patch('participants', existing._id, {
+                lastChannelId: who.channelId,
+            })
+        }
         return { kind: 'already' as const, reference: existing.reference }
     }
     if (queue.state !== 'open') return { kind: 'paused' as const }
@@ -129,6 +135,7 @@ export async function join(
         username: who.username,
         platform: who.platform,
         platformUserId: who.platformUserId,
+        ...(who.channelId ? { lastChannelId: who.channelId } : {}),
         status: 'waiting',
     })
     return { kind: 'ok' as const, reference }
@@ -256,6 +263,7 @@ export async function ping(ctx: MutationCtx, queue: QueueDoc, count: number) {
             status: 'notified',
         })
         await logTurn(ctx, participant, 'pinged')
+        await announcePinged(ctx, queue.communityId, participant)
     }
     return { kind: 'ok' as const, pinged: front.map(toEntry) }
 }
