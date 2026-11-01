@@ -6,6 +6,9 @@ import type { QueueConvex } from '~/lib/convex'
 
 export type QueueCommandKind = 'player' | 'admin'
 
+// The Platform Link the Queue module resolves this guild's Queue through.
+export type DiscordLink = { platform: 'discord'; platformId: string }
+
 type QueueReply = string | { content: string; ephemeral?: boolean }
 
 export async function editDeferred(
@@ -26,6 +29,8 @@ export async function editDeferred(
     await interaction.editReply(content)
 }
 
+export const NOT_CONNECTED = "This server isn't connected to a community."
+
 export async function runQueueCommand(
     interaction: CommandInteraction,
     client: QueueConvex,
@@ -35,6 +40,7 @@ export async function runQueueCommand(
         run: (ctx: {
             guildId: string
             communityId: Id<'communities'>
+            link: DiscordLink
         }) => Promise<void>
     }
 ): Promise<void> {
@@ -59,10 +65,7 @@ export async function runQueueCommand(
         guildId: interaction.guildId,
     })
     if (!link) {
-        await editDeferred(
-            interaction,
-            "This server isn't connected to a community."
-        )
+        await editDeferred(interaction, NOT_CONNECTED)
         return
     }
 
@@ -85,5 +88,6 @@ export async function runQueueCommand(
     await command.run({
         guildId: interaction.guildId,
         communityId: link.communityId,
+        link: { platform: 'discord', platformId: interaction.guildId },
     })
 }

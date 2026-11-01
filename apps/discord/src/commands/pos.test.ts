@@ -62,36 +62,42 @@ test('a waiting participant sees their position and only they see it', async () 
         state: 'open',
         participants: [
             {
+                reference: 1,
                 username: 'pat',
                 platform: 'discord',
                 platformUserId: 'playing-1',
                 status: 'playing',
             },
             {
+                reference: 2,
                 username: 'bea',
                 platform: 'discord',
                 platformUserId: 'wait-1',
                 status: 'waiting',
             },
             {
+                reference: 3,
                 username: 'cy',
                 platform: 'discord',
                 platformUserId: 'ping-1',
                 status: 'notified',
             },
             {
+                reference: 4,
                 username: 'dee',
                 platform: 'discord',
                 platformUserId: 'wait-2',
                 status: 'waiting',
             },
             {
+                reference: 5,
                 username: 'ada',
                 platform: 'discord',
                 platformUserId: 'user-1',
                 status: 'waiting',
             },
             {
+                reference: 6,
                 username: 'eve',
                 platform: 'discord',
                 platformUserId: 'wait-3',
@@ -135,12 +141,14 @@ test('a pinged participant sees that they have been pinged', async () => {
         state: 'open',
         participants: [
             {
+                reference: 1,
                 username: 'bea',
                 platform: 'discord',
                 platformUserId: 'wait-1',
                 status: 'waiting',
             },
             {
+                reference: 2,
                 username: 'ada',
                 platform: 'discord',
                 platformUserId: 'user-1',
@@ -172,13 +180,12 @@ test('a playing participant sees that they are playing', async () => {
 
     await pos.execute(interaction, asQueueConvex(backend))
 
-    expect(replies).toEqual([
-        { content: 'You are playing.', ephemeral: true },
-    ])
+    expect(replies).toEqual([{ content: 'You are playing.', ephemeral: true }])
     expect(await readQueue(backend, 'owner-1')).toEqual({
         state: 'open',
         participants: [
             {
+                reference: 1,
                 username: 'ada',
                 platform: 'discord',
                 platformUserId: 'user-1',
@@ -229,6 +236,7 @@ test('a member with no row in this community is not in the queue', async () => {
         state: 'open',
         participants: [
             {
+                reference: 1,
                 username: 'ada',
                 platform: 'discord',
                 platformUserId: 'user-1',
@@ -240,6 +248,7 @@ test('a member with no row in this community is not in the queue', async () => {
         state: 'open',
         participants: [
             {
+                reference: 1,
                 username: 'bea',
                 platform: 'discord',
                 platformUserId: 'wait-1',
@@ -310,24 +319,28 @@ test('position ignores waiting rows in another community', async () => {
         state: 'open',
         participants: [
             {
+                reference: 1,
                 username: 'bea',
                 platform: 'discord',
                 platformUserId: 'wait-1',
                 status: 'waiting',
             },
             {
+                reference: 2,
                 username: 'cy',
                 platform: 'discord',
                 platformUserId: 'wait-2',
                 status: 'waiting',
             },
             {
+                reference: 3,
                 username: 'dee',
                 platform: 'discord',
                 platformUserId: 'wait-3',
                 status: 'waiting',
             },
             {
+                reference: 4,
                 username: 'ada',
                 platform: 'discord',
                 platformUserId: 'user-1',
@@ -339,12 +352,14 @@ test('position ignores waiting rows in another community', async () => {
         state: 'open',
         participants: [
             {
+                reference: 1,
                 username: 'eve',
                 platform: 'discord',
                 platformUserId: 'wait-4',
                 status: 'waiting',
             },
             {
+                reference: 2,
                 username: 'ada',
                 platform: 'discord',
                 platformUserId: 'user-1',
@@ -388,12 +403,14 @@ test('a waiting participant still sees their position while the queue is paused'
         state: 'paused',
         participants: [
             {
+                reference: 1,
                 username: 'bea',
                 platform: 'discord',
                 platformUserId: 'wait-1',
                 status: 'waiting',
             },
             {
+                reference: 2,
                 username: 'ada',
                 platform: 'discord',
                 platformUserId: 'user-1',

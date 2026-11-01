@@ -3,7 +3,7 @@ import type { CommandInteraction } from 'discord.js'
 import { PermissionFlagsBits, SlashCommandBuilder } from 'discord.js'
 
 import { getConvex, type QueueConvex } from '~/lib/convex'
-import { editDeferred, runQueueCommand } from '~/lib/queueGate'
+import { editDeferred, NOT_CONNECTED, runQueueCommand } from '~/lib/queueGate'
 import type { Command } from '~/lib/types'
 
 export const clearQ: Command = {
@@ -15,12 +15,16 @@ export const clearQ: Command = {
         const convex = client ?? getConvex()
         await runQueueCommand(interaction, convex, {
             kind: 'admin',
-            run: async ({ communityId }) => {
-                const cleared = await convex.mutation(
-                    internal.clearQueue.clearWaiting,
-                    { communityId }
+            run: async ({ link }) => {
+                const result = await convex.mutation(
+                    internal.platformQueue.clear,
+                    { link }
                 )
-                if (cleared === 0) {
+                if (result.kind === 'unlinked') {
+                    await editDeferred(interaction, NOT_CONNECTED)
+                    return
+                }
+                if (result.kind === 'empty') {
                     await editDeferred(
                         interaction,
                         'The queue is already empty.'
@@ -29,7 +33,7 @@ export const clearQ: Command = {
                 }
                 await editDeferred(
                     interaction,
-                    `Cleared ${cleared} from the queue.`
+                    `Cleared ${result.cleared} from the queue.`
                 )
             },
         })

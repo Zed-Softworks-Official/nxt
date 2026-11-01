@@ -205,6 +205,7 @@ test('leaveq does not remove a participant who is only in another community', as
         state: 'open',
         participants: [
             {
+                reference: 1,
                 username: 'ada',
                 platform: 'discord',
                 platformUserId: 'user-1',
@@ -310,6 +311,7 @@ test('leaveq in the wrong channel is only visible to the invoker and removes nob
         state: 'open',
         participants: [
             {
+                reference: 1,
                 username: 'ada',
                 platform: 'discord',
                 platformUserId: 'user-1',

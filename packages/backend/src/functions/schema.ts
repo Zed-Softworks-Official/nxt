@@ -21,6 +21,8 @@ export default defineSchema({
 	communities: defineTable({
 		name: v.string(),
 		ownerId: v.string(),
+		// The last Participant reference handed out. Only ever increases.
+		lastReference: v.optional(v.number()),
 	}).index('byOwner', ['ownerId']),
 	platformLinks: defineTable({
 		communityId: v.id('communities'),
@@ -44,6 +46,8 @@ export default defineSchema({
 	}).index('byCommunity', ['communityId']),
 	participants: defineTable({
 		queueId: v.id('queues'),
+		// Participant reference, shown as `q-<reference>`. Unique per Community.
+		reference: v.number(),
 		username: v.string(),
 		platform: v.union(
 			v.literal('discord'),
@@ -59,5 +63,6 @@ export default defineSchema({
 		),
 	})
 		.index('byQueue', ['queueId'])
+		.index('byQueueAndReference', ['queueId', 'reference'])
 		.index('byUser', ['platformUserId', 'platform', 'queueId']),
 })

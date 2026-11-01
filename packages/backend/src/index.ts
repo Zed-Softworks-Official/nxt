@@ -6,6 +6,7 @@ import type {
 } from 'convex/server'
 
 export * from 'convex/browser'
+export type { FunctionReturnType } from 'convex/server'
 
 export type TrustedConvexClient = {
 	query<Query extends FunctionReference<'query', 'public' | 'internal'>>(
