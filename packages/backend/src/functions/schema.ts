@@ -22,6 +22,18 @@ export default defineSchema({
 		name: v.string(),
 		ownerId: v.string(),
 	}).index('byOwner', ['ownerId']),
+	// Single-use, short-lived link states minted by a Community owner when they
+	// start linking a platform. See model/linkState.ts.
+	linkStates: defineTable({
+		communityId: v.id('communities'),
+		ownerId: v.string(),
+		platform: v.union(
+			v.literal('discord'),
+			v.literal('twitch'),
+			v.literal('youtube')
+		),
+		expiresAt: v.number(),
+	}),
 	platformLinks: defineTable({
 		communityId: v.id('communities'),
 		enabled: v.boolean(),

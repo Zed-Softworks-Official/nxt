@@ -14,6 +14,7 @@ import type * as communities from "../communities.js";
 import type * as discord from "../discord.js";
 import type * as discordGuild from "../discordGuild.js";
 import type * as http from "../http.js";
+import type * as linkStates from "../linkStates.js";
 import type * as platformLinks from "../platformLinks.js";
 import type * as position from "../position.js";
 import type * as queue from "../queue.js";
@@ -33,6 +34,7 @@ declare const fullApi: ApiFromModules<{
   discord: typeof discord;
   discordGuild: typeof discordGuild;
   http: typeof http;
+  linkStates: typeof linkStates;
   platformLinks: typeof platformLinks;
   position: typeof position;
   queue: typeof queue;
