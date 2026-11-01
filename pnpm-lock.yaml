@@ -348,12 +348,21 @@ importers:
         specifier: ^3.25.76
         version: 3.25.76
     devDependencies:
+      '@edge-runtime/vm':
+        specifier: ^5.0.0
+        version: 5.0.0
       '@nxt/typescript-config':
         specifier: workspace:*
         version: link:../../tooling/typescript-config
       '@types/node':
         specifier: ^20.14.10
         version: 20.19.40
+      convex-test:
+        specifier: ^0.0.60
+        version: 0.0.60(convex@1.46.0(@clerk/react@6.6.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0))
+      vitest:
+        specifier: ^5.0.2
+        version: 5.0.2(@edge-runtime/vm@5.0.0)(@types/node@20.19.40)(vite@8.3.1(@types/node@20.19.40)(esbuild@0.27.0)(jiti@2.7.0)(tsx@4.21.0))
 
   packages/utils:
     devDependencies:
@@ -5998,7 +6007,7 @@ snapshots:
       magic-string: 1.4.2
     optionalDependencies:
       msw: 2.14.5(@types/node@20.19.40)(typescript@5.9.2)
-      vite: 8.3.1(esbuild@0.27.0)(jiti@2.7.0)(tsx@4.21.0)
+      vite: 8.3.1(@types/node@20.19.40)(esbuild@0.27.0)(jiti@2.7.0)(tsx@4.21.0)
 
   '@vitest/spy@5.0.2': {}
 
@@ -7727,7 +7736,7 @@ snapshots:
 
   vary@1.1.2: {}
 
-  vite@8.3.1(esbuild@0.27.0)(jiti@2.7.0)(tsx@4.21.0):
+  vite@8.3.1(@types/node@20.19.40)(esbuild@0.27.0)(jiti@2.7.0)(tsx@4.21.0):
     dependencies:
       lightningcss: 1.33.0
       picomatch: 4.0.7
@@ -7735,10 +7744,33 @@ snapshots:
       rolldown: 1.2.11
       tinyglobby: 0.2.17
     optionalDependencies:
+      '@types/node': 20.19.40
       esbuild: 0.27.0
       fsevents: 2.3.3
       jiti: 2.7.0
       tsx: 4.21.0
+
+  vitest@5.0.2(@edge-runtime/vm@5.0.0)(@types/node@20.19.40)(vite@8.3.1(@types/node@20.19.40)(esbuild@0.27.0)(jiti@2.7.0)(tsx@4.21.0)):
+    dependencies:
+      '@types/chai': 5.2.3
+      '@vitest/mocker': 5.0.2(msw@2.14.5(typescript@5.9.2))(vite@8.3.1(esbuild@0.27.0)(jiti@2.7.0)(tsx@4.21.0))
+      chai: 6.2.2
+      es-module-lexer: 2.3.2
+      expect-type: 1.4.0
+      magic-string: 1.4.2
+      obug: 2.2.1
+      picomatch: 4.0.7
+      std-env: 4.2.0
+      tinybench: 6.2.0
+      tinyexec: 1.3.1
+      tinyglobby: 0.2.17
+      vite: 8.3.1(@types/node@20.19.40)(esbuild@0.27.0)(jiti@2.7.0)(tsx@4.21.0)
+      why-is-node-running: 3.2.2
+    optionalDependencies:
+      '@edge-runtime/vm': 5.0.0
+      '@types/node': 20.19.40
+    transitivePeerDependencies:
+      - msw
 
   vitest@5.0.2(@edge-runtime/vm@5.0.0)(msw@2.14.5(typescript@5.9.2))(vite@8.3.1(esbuild@0.27.0)(jiti@2.7.0)(tsx@4.21.0)):
     dependencies:
@@ -7754,7 +7786,7 @@ snapshots:
       tinybench: 6.2.0
       tinyexec: 1.3.1
       tinyglobby: 0.2.17
-      vite: 8.3.1(esbuild@0.27.0)(jiti@2.7.0)(tsx@4.21.0)
+      vite: 8.3.1(@types/node@20.19.40)(esbuild@0.27.0)(jiti@2.7.0)(tsx@4.21.0)
       why-is-node-running: 3.2.2
     optionalDependencies:
       '@edge-runtime/vm': 5.0.0
