@@ -8,18 +8,14 @@
  * @module
  */
 
-import type * as clearQueue from "../clearQueue.js";
 import type * as commandChannel from "../commandChannel.js";
 import type * as communities from "../communities.js";
-import type * as discord from "../discord.js";
 import type * as discordGuild from "../discordGuild.js";
 import type * as http from "../http.js";
 import type * as linkStates from "../linkStates.js";
 import type * as platformLinks from "../platformLinks.js";
-import type * as position from "../position.js";
+import type * as platformQueue from "../platformQueue.js";
 import type * as queue from "../queue.js";
-import type * as queueState from "../queueState.js";
-import type * as viewQueue from "../viewQueue.js";
 
 import type {
   ApiFromModules,
@@ -28,18 +24,14 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
-  clearQueue: typeof clearQueue;
   commandChannel: typeof commandChannel;
   communities: typeof communities;
-  discord: typeof discord;
   discordGuild: typeof discordGuild;
   http: typeof http;
   linkStates: typeof linkStates;
   platformLinks: typeof platformLinks;
-  position: typeof position;
+  platformQueue: typeof platformQueue;
   queue: typeof queue;
-  queueState: typeof queueState;
-  viewQueue: typeof viewQueue;
 }>;
 
 /**

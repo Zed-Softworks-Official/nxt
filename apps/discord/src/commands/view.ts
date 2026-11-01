@@ -1,22 +1,38 @@
-import { api } from '@nxt/backend/api'
+import { internal } from '@nxt/backend/api'
+import { formatReference } from '@nxt/backend/reference'
 import type { CommandInteraction } from 'discord.js'
 import { SlashCommandBuilder } from 'discord.js'
 
 import { getConvex, type QueueConvex } from '~/lib/convex'
-import { editDeferred, runQueueCommand } from '~/lib/queueGate'
+import { editDeferred, NOT_CONNECTED, runQueueCommand } from '~/lib/queueGate'
 import type { Command } from '~/lib/types'
 
 const DISCORD_MESSAGE_LIMIT = 2000
 
-function formatWaitingLine(state: 'open' | 'paused', usernames: string[]) {
+type Platform = 'discord' | 'twitch' | 'youtube'
+
+const PLATFORM_LABELS: Record<Platform, string> = {
+    discord: 'Discord',
+    twitch: 'Twitch',
+    youtube: 'YouTube',
+}
+
+type WaitingEntry = {
+    reference: number
+    username: string
+    platform: Platform
+}
+
+function formatWaitingLine(state: 'open' | 'paused', waiting: WaitingEntry[]) {
     const stateLine =
         state === 'open' ? 'The queue is open.' : 'The queue is paused.'
-    if (usernames.length === 0) {
+    if (waiting.length === 0) {
         return `${stateLine}\nNobody is waiting.`
     }
 
-    const lines = usernames.map(
-        (username, index) => `${index + 1}. ${username}`
+    const lines = waiting.map(
+        (entry, index) =>
+            `${index + 1}. ${formatReference(entry.reference)} ${entry.username} (${PLATFORM_LABELS[entry.platform]})`
     )
     const full = [stateLine, ...lines].join('\n')
     if (full.length <= DISCORD_MESSAGE_LIMIT) return full
@@ -42,13 +58,17 @@ export const viewQ: Command = {
         const convex = client ?? getConvex()
         await runQueueCommand(interaction, convex, {
             kind: 'player',
-            run: async ({ communityId }) => {
-                const line = await convex.query(api.viewQueue.viewQueue, {
-                    communityId,
+            run: async ({ link }) => {
+                const view = await convex.query(internal.platformQueue.view, {
+                    link,
                 })
+                if (view.kind === 'unlinked') {
+                    await editDeferred(interaction, NOT_CONNECTED)
+                    return
+                }
                 await editDeferred(
                     interaction,
-                    formatWaitingLine(line.state, line.usernames)
+                    formatWaitingLine(view.state, view.waiting)
                 )
             },
         })

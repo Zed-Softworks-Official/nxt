@@ -39,6 +39,7 @@ test('clearq without Manage Server refuses and leaves the waiting line', async (
         state: 'open',
         participants: [
             {
+                reference: 1,
                 username: 'ada',
                 platform: 'discord',
                 platformUserId: 'user-1',
@@ -108,18 +109,21 @@ test('clearq removes waiting participants and leaves pinged and playing', async 
         state: 'open',
         participants: [
             {
+                reference: 5,
                 username: 'eve',
                 platform: 'discord',
                 platformUserId: 'user-5',
                 status: 'notified',
             },
             {
+                reference: 6,
                 username: 'frank',
                 platform: 'discord',
                 platformUserId: 'user-6',
                 status: 'playing',
             },
             {
+                reference: 7,
                 username: 'gus',
                 platform: 'discord',
                 platformUserId: 'user-7',
@@ -162,6 +166,7 @@ test('clearq removes waiting participants while the queue is paused', async () =
         state: 'paused',
         participants: [
             {
+                reference: 2,
                 username: 'bea',
                 platform: 'discord',
                 platformUserId: 'user-2',
@@ -204,12 +209,14 @@ test('clearq on an empty waiting line replies that the queue is already empty', 
         state: 'open',
         participants: [
             {
+                reference: 1,
                 username: 'ada',
                 platform: 'discord',
                 platformUserId: 'user-1',
                 status: 'notified',
             },
             {
+                reference: 2,
                 username: 'bea',
                 platform: 'discord',
                 platformUserId: 'user-2',

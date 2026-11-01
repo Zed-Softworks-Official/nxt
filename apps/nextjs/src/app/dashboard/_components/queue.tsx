@@ -2,6 +2,7 @@
 
 import { api } from "@nxt/backend/api"
 import { useQuery } from "@nxt/backend/react"
+import { formatReference } from "@nxt/backend/reference"
 
 import { useEffect, useMemo, useState } from "react"
 import { Users, Timer } from "lucide-react"
@@ -18,7 +19,7 @@ import {
 	EmptyDescription,
 } from "~/components/ui/empty"
 
-export function Queue(props: { userId: string }) {
+export function Queue() {
 	const [now, setNow] = useState<number | null>(null)
 
 	useEffect(() => {
@@ -30,9 +31,7 @@ export function Queue(props: { userId: string }) {
 		return () => window.clearInterval(intervalId)
 	}, [])
 
-	const data = useQuery(api.queue.getParticipants, {
-		ownerId: props.userId,
-	})
+	const data = useQuery(api.queue.view, {})
 
 	if (!data) return null
 
@@ -68,7 +67,7 @@ export function Queue(props: { userId: string }) {
 					<ItemGroup>
 						{waiting.map((participant, i) => (
 							<Item
-								key={participant._id}
+								key={participant.reference}
 								variant="outline"
 								className="group border-border/60 bg-card/50 shadow-xs transition-all hover:border-primary/35 hover:bg-accent/30"
 							>
@@ -78,6 +77,7 @@ export function Queue(props: { userId: string }) {
 											<div className="flex size-7 shrink-0 items-center justify-center rounded-full border border-chart-2/30 bg-chart-2/10 text-xs font-semibold text-chart-2">
 												{i + 1}
 											</div>
+											<ReferenceBadge reference={participant.reference} />
 											<ItemTitle className="text-sm font-semibold">
 												{participant.username}
 											</ItemTitle>
@@ -87,7 +87,7 @@ export function Queue(props: { userId: string }) {
 									<div className="ml-10 flex items-center gap-2 text-muted-foreground">
 										<div className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-background/80 px-2 py-1 text-xs">
 											<Timer className="size-3.5" />
-											{formatElapsedTime(participant._creationTime, now)}
+											{formatElapsedTime(participant.joinedAt, now)}
 										</div>
 									</div>
 								</ItemContent>
@@ -97,6 +97,14 @@ export function Queue(props: { userId: string }) {
 				)}
 			</CardContent>
 		</Card>
+	)
+}
+
+function ReferenceBadge(props: { reference: number }) {
+	return (
+		<span className="shrink-0 rounded-md border border-border/70 bg-background/80 px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
+			{formatReference(props.reference)}
+		</span>
 	)
 }
 

@@ -21,7 +21,9 @@
 			"default": "./src/functions/_generated/server.js"
 		},
 		".": "./src/index.ts",
-		"./react": "./src/react.ts"
+		"./react": "./src/react.ts",
+		"./testing": "./src/testing/index.ts",
+		"./reference": "./src/reference.ts"
 	},
 	"devDependencies": {
 		"@edge-runtime/vm": "^5.0.0",

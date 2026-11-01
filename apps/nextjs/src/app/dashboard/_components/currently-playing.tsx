@@ -2,6 +2,7 @@
 
 import { api } from "@nxt/backend/api"
 import { useMutation, useQuery } from "@nxt/backend/react"
+import { formatReference } from "@nxt/backend/reference"
 
 import { Radio, CheckCheck } from "lucide-react"
 import { useMemo } from "react"
@@ -24,11 +25,10 @@ import {
 	EmptyDescription,
 } from "~/components/ui/empty"
 import { cn } from "~/lib/utils"
-import type { Id } from "@nxt/backend/dataModel"
 
-export function CurrentlyPlaying(props: { userId: string }) {
-	const data = useQuery(api.queue.getParticipants, { ownerId: props.userId })
-	const markDone = useMutation(api.queue.markDone)
+export function CurrentlyPlaying() {
+	const data = useQuery(api.queue.view, {})
+	const done = useMutation(api.queue.done)
 
 	if (!data) return null
 
@@ -64,7 +64,7 @@ export function CurrentlyPlaying(props: { userId: string }) {
 					<ItemGroup>
 						{playing.map((participant) => (
 							<Item
-								key={participant._id}
+								key={participant.reference}
 								variant="outline"
 								className="border-chart-2/30 bg-chart-2/5 shadow-xs transition-all hover:border-chart-2/50 hover:bg-chart-2/10"
 							>
@@ -72,6 +72,7 @@ export function CurrentlyPlaying(props: { userId: string }) {
 									<div className="flex items-center justify-between gap-3">
 										<div className="flex min-w-0 items-center gap-3">
 											<div className="flex size-2 shrink-0 rounded-full bg-chart-2 ring-2 ring-chart-2/30" />
+											<ReferenceBadge reference={participant.reference} />
 											<ItemTitle className="text-sm font-semibold">
 												{participant.username}
 											</ItemTitle>
@@ -85,9 +86,7 @@ export function CurrentlyPlaying(props: { userId: string }) {
 										variant="outline"
 										className="h-7 gap-1.5 border-emerald-500/40 bg-emerald-500/10 px-2 text-xs text-emerald-400 hover:border-emerald-500/60 hover:bg-emerald-500/20 hover:text-emerald-300"
 										onClick={() =>
-											markDone({
-												participantId: participant._id as Id<"participants">,
-											})
+											done({ reference: participant.reference })
 										}
 									>
 										<CheckCheck className="size-3" />
@@ -100,6 +99,14 @@ export function CurrentlyPlaying(props: { userId: string }) {
 				)}
 			</CardContent>
 		</Card>
+	)
+}
+
+function ReferenceBadge(props: { reference: number }) {
+	return (
+		<span className="shrink-0 rounded-md border border-border/70 bg-background/80 px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
+			{formatReference(props.reference)}
+		</span>
 	)
 }
 

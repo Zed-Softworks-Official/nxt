@@ -10,6 +10,7 @@ import {
 import { startQ } from './start'
 
 const waiting = {
+    reference: 1,
     username: 'ada',
     platform: 'discord' as const,
     platformUserId: 'user-1',

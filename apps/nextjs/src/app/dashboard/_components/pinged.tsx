@@ -2,6 +2,7 @@
 
 import { api } from "@nxt/backend/api"
 import { useMutation, useQuery } from "@nxt/backend/react"
+import { formatReference } from "@nxt/backend/reference"
 
 import { BellRing, ArrowUp, Undo2 } from "lucide-react"
 
@@ -24,16 +25,15 @@ import {
 } from "~/components/ui/empty"
 import { cn } from "~/lib/utils"
 import { useMemo } from "react"
-import type { Id } from "@nxt/backend/dataModel"
 
-export function Pinged(props: { userId: string }) {
-	const data = useQuery(api.queue.getParticipants, { ownerId: props.userId })
-	const moveToPlaying = useMutation(api.queue.moveToPlaying)
-	const moveBackToQueue = useMutation(api.queue.moveBackToQueue)
+export function Pinged() {
+	const data = useQuery(api.queue.view, {})
+	const play = useMutation(api.queue.play)
+	const returnToQueue = useMutation(api.queue.returnToQueue)
 
 	if (!data) return null
 
-	const { notified } = data
+	const notified = data.pinged
 
 	return (
 		<Card>
@@ -65,7 +65,7 @@ export function Pinged(props: { userId: string }) {
 					<ItemGroup>
 						{notified.map((participant) => (
 							<Item
-								key={participant._id}
+								key={participant.reference}
 								variant="outline"
 								className="group border-border/60 bg-card/50 shadow-xs transition-all hover:border-primary/35 hover:bg-accent/30"
 							>
@@ -73,6 +73,7 @@ export function Pinged(props: { userId: string }) {
 									<div className="flex items-center justify-between gap-3">
 										<div className="flex min-w-0 items-center gap-3">
 											<div className="flex size-2 shrink-0 animate-pulse rounded-full bg-amber-400 ring-2 ring-amber-400/30" />
+											<ReferenceBadge reference={participant.reference} />
 											<ItemTitle className="text-sm font-semibold">
 												{participant.username}
 											</ItemTitle>
@@ -86,9 +87,7 @@ export function Pinged(props: { userId: string }) {
 										variant="outline"
 										className="h-7 gap-1.5 border-red-500/40 bg-red-500/10 px-2 text-xs text-red-400 hover:border-red-500/60 hover:bg-red-500/20 hover:text-red-300"
 										onClick={() =>
-											moveBackToQueue({
-												participantId: participant._id as Id<"participants">,
-											})
+											returnToQueue({ reference: participant.reference })
 										}
 									>
 										<Undo2 className="size-3" />
@@ -99,9 +98,7 @@ export function Pinged(props: { userId: string }) {
 										variant="outline"
 										className="h-7 gap-1.5 border-chart-2/40 bg-chart-2/10 px-2 text-xs text-chart-2 hover:border-chart-2/60 hover:bg-chart-2/20"
 										onClick={() =>
-											moveToPlaying({
-												participantId: participant._id as Id<"participants">,
-											})
+											play({ reference: participant.reference })
 										}
 									>
 										<ArrowUp className="size-3" />
@@ -114,6 +111,14 @@ export function Pinged(props: { userId: string }) {
 				)}
 			</CardContent>
 		</Card>
+	)
+}
+
+function ReferenceBadge(props: { reference: number }) {
+	return (
+		<span className="shrink-0 rounded-md border border-border/70 bg-background/80 px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
+			{formatReference(props.reference)}
+		</span>
 	)
 }
 

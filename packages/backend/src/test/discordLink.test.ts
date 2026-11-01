@@ -5,7 +5,7 @@ import {
     readPlatformLinks,
     seedCommunity,
     type TestBackend,
-} from './backend'
+} from '../testing'
 
 async function mintDiscordState(backend: TestBackend, ownerId: string) {
     return await backend
@@ -25,8 +25,8 @@ function redirectType(response: Response) {
 
 test('a valid state links the guild to the Community of the owner who minted it', async () => {
     const backend = createTestBackend()
-    await seedCommunity(backend, 'owner-1')
-    await seedCommunity(backend, 'owner-2')
+    await seedCommunity(backend, { ownerId: 'owner-1', state: 'none' })
+    await seedCommunity(backend, { ownerId: 'owner-2', state: 'none' })
     const state = await mintDiscordState(backend, 'owner-1')
 
     const response = await backend.fetch(discordCallback(state), {
@@ -42,7 +42,7 @@ test('a valid state links the guild to the Community of the owner who minted it'
 
 test('a forged state is refused and links nothing', async () => {
     const backend = createTestBackend()
-    await seedCommunity(backend, 'owner-1')
+    await seedCommunity(backend, { ownerId: 'owner-1', state: 'none' })
     const state = await mintDiscordState(backend, 'owner-1')
     const [id] = state.split('.')
 
@@ -62,7 +62,10 @@ test('a forged state is refused and links nothing', async () => {
 
 test('a community ID passed as the state is refused', async () => {
     const backend = createTestBackend()
-    const communityId = await seedCommunity(backend, 'owner-1')
+    const communityId = await seedCommunity(backend, {
+        ownerId: 'owner-1',
+        state: 'none',
+    })
 
     const response = await backend.fetch(discordCallback(communityId), {
         redirect: 'manual',
@@ -74,7 +77,7 @@ test('a community ID passed as the state is refused', async () => {
 
 test('a reused state is refused and leaves the first link alone', async () => {
     const backend = createTestBackend()
-    await seedCommunity(backend, 'owner-1')
+    await seedCommunity(backend, { ownerId: 'owner-1', state: 'none' })
     const state = await mintDiscordState(backend, 'owner-1')
     await backend.fetch(discordCallback(state, 'guild-1'), {
         redirect: 'manual',
@@ -94,7 +97,7 @@ test('an expired state is refused and links nothing', async () => {
     vi.useFakeTimers()
     try {
         const backend = createTestBackend()
-        await seedCommunity(backend, 'owner-1')
+        await seedCommunity(backend, { ownerId: 'owner-1', state: 'none' })
         const state = await mintDiscordState(backend, 'owner-1')
         vi.advanceTimersByTime(11 * 60 * 1000)
 
@@ -111,7 +114,7 @@ test('an expired state is refused and links nothing', async () => {
 
 test('a state minted for another platform is refused for Discord', async () => {
     const backend = createTestBackend()
-    await seedCommunity(backend, 'owner-1')
+    await seedCommunity(backend, { ownerId: 'owner-1', state: 'none' })
     const state = await backend
         .withIdentity({ subject: 'owner-1' })
         .mutation(api.linkStates.mintLinkState, { platform: 'twitch' })
@@ -126,7 +129,7 @@ test('a state minted for another platform is refused for Discord', async () => {
 
 test('a callback with no state is refused', async () => {
     const backend = createTestBackend()
-    await seedCommunity(backend, 'owner-1')
+    await seedCommunity(backend, { ownerId: 'owner-1', state: 'none' })
 
     const response = await backend.fetch('/discord?guild_id=guild-1', {
         redirect: 'manual',
@@ -138,7 +141,7 @@ test('a callback with no state is refused', async () => {
 
 test('only a signed-in Community owner can mint a state', async () => {
     const backend = createTestBackend()
-    await seedCommunity(backend, 'owner-1')
+    await seedCommunity(backend, { ownerId: 'owner-1', state: 'none' })
 
     await expect(
         backend.mutation(api.linkStates.mintLinkState, { platform: 'discord' })

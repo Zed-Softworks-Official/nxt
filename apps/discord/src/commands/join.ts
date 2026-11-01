@@ -1,4 +1,4 @@
-import { api } from '@nxt/backend/api'
+import { internal } from '@nxt/backend/api'
 import { tryCatch } from '@nxt/utils'
 import type { CommandInteraction } from 'discord.js'
 import { SlashCommandBuilder } from 'discord.js'
@@ -15,21 +15,25 @@ export const joinQ: Command = {
         const convex = client ?? getConvex()
         await runQueueCommand(interaction, convex, {
             kind: 'player',
-            run: async ({ guildId }) => {
+            run: async ({ link }) => {
                 const { data, error } = await tryCatch(
-                    convex.mutation(api.discord.joinQ, {
+                    convex.mutation(internal.platformQueue.join, {
+                        link,
                         username: interaction.user.username,
                         platformUserId: interaction.user.id,
-                        platformId: guildId,
                     })
                 )
 
-                if (error || data === 'already') {
+                if (
+                    error ||
+                    data.kind === 'already' ||
+                    data.kind === 'unlinked'
+                ) {
                     await editDeferred(interaction, 'Error joining the queue.')
                     return
                 }
 
-                if (data === 'paused') {
+                if (data.kind === 'paused') {
                     await editDeferred(interaction, 'The queue is paused.')
                     return
                 }
