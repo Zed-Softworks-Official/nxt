@@ -1,17 +1,13 @@
 import { internal } from '@nxt/backend/api'
 import { formatReference } from '@nxt/backend/reference'
 
+import { platformLabel } from '~/lib/participant'
+
 import type { TwitchCommand } from './types'
 
 // Twitch chat messages are capped at 500 characters, so view shows only the
 // front of the Queue.
 const SHOWN = 5
-
-const PLATFORM_LABELS = {
-    discord: 'Discord',
-    twitch: 'Twitch',
-    youtube: 'YouTube',
-} as const
 
 export const view: TwitchCommand = {
     cooldown: true,
@@ -33,7 +29,7 @@ export const view: TwitchCommand = {
             .slice(0, SHOWN)
             .map(
                 (entry, index) =>
-                    `${index + 1}. ${formatReference(entry.reference)} ${entry.username} (${PLATFORM_LABELS[entry.platform]})`
+                    `${index + 1}. ${formatReference(entry.reference)} ${entry.username} (${platformLabel(entry.platform)})`
             )
             .join(', ')
         const hidden = result.waiting.length - SHOWN
