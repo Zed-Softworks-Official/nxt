@@ -8,13 +8,14 @@ import { BellRing, Pause, Play } from "lucide-react"
 import { Button } from "~/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
 
-export function QuickPing(props: { userId: string }) {
-	const data = useQuery(api.queue.getParticipants, { ownerId: props.userId })
-	const pingParticipants = useMutation(api.queue.pingParticipants)
-	const toggleQueueState = useMutation(api.queue.toggleQueueState)
+export function QuickPing() {
+	const data = useQuery(api.queue.view, {})
+	const ping = useMutation(api.queue.ping)
+	const open = useMutation(api.queue.open)
+	const pause = useMutation(api.queue.pause)
 
 	const waitingCount = data?.waiting.length ?? 0
-	const queueState = data?.queueState ?? "open"
+	const queueState = data?.state ?? "open"
 
 	return (
 		<Card>
@@ -35,12 +36,7 @@ export function QuickPing(props: { userId: string }) {
 									key={amount}
 									amount={amount}
 									disabled={isDisabled}
-									onClick={() =>
-										pingParticipants({
-											ownerId: props.userId,
-											count: amount,
-										})
-									}
+									onClick={() => ping({ count: amount })}
 								/>
 							)
 						})}
@@ -55,7 +51,7 @@ export function QuickPing(props: { userId: string }) {
 				</div>
 				<PauseButton
 					queueState={queueState}
-					onClick={() => toggleQueueState({ ownerId: props.userId })}
+					onClick={() => (queueState === "open" ? pause({}) : open({}))}
 				/>
 			</CardContent>
 		</Card>

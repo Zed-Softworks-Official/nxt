@@ -48,8 +48,8 @@ function isKnownEvent(value: unknown): value is Event {
 	)
 }
 
-export function ActivityLog(props: { userId: string }) {
-	const entries = useQuery(api.queue.getActivityLog, { ownerId: props.userId })
+export function ActivityLog() {
+	const entries = useQuery(api.queue.getActivityLog, {})
 
 	if (!entries) return null
 
