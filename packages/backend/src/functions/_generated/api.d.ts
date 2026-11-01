@@ -18,6 +18,7 @@ import type * as linkStates from "../linkStates.js";
 import type * as platformLinks from "../platformLinks.js";
 import type * as platformQueue from "../platformQueue.js";
 import type * as queue from "../queue.js";
+import type * as twitchChannels from "../twitchChannels.js";
 
 import type {
   ApiFromModules,
@@ -36,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   platformLinks: typeof platformLinks;
   platformQueue: typeof platformQueue;
   queue: typeof queue;
+  twitchChannels: typeof twitchChannels;
 }>;
 
 /**

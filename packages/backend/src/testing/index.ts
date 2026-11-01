@@ -113,6 +113,35 @@ export async function seedDiscordCommunity(
     })
 }
 
+// A Community linked to one Twitch channel. The broadcaster's user ID is the
+// Platform Link's platformId. Participants default to the Twitch platform.
+export async function seedTwitchCommunity(
+    backend: TestBackend,
+    input: {
+        ownerId: string
+        broadcasterId: string
+        state: 'open' | 'paused' | 'none'
+        enabled?: boolean
+        participants?: SeedParticipant[]
+    }
+) {
+    return await seedCommunity(backend, {
+        ownerId: input.ownerId,
+        state: input.state,
+        participants: input.participants?.map((participant) => ({
+            ...participant,
+            platform: participant.platform ?? 'twitch',
+        })),
+        links: [
+            {
+                platform: 'twitch',
+                platformId: input.broadcasterId,
+                enabled: input.enabled,
+            },
+        ],
+    })
+}
+
 // The Community's Queue as an outsider sees it: state plus every Participant
 // in join order, with their Participant reference number.
 export async function readQueue(backend: TestBackend, ownerId: string) {
