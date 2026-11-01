@@ -9,6 +9,8 @@ import { Hono } from 'hono'
 import { HonoWithConvex, HttpRouterWithHono } from 'convex-helpers/server/hono'
 
 import { env } from '../env'
+import { twitchClient } from '../model/twitchClient'
+import { completeTwitchLink } from '../model/twitchLink'
 
 const app: HonoWithConvex<ActionCtx> = new Hono()
 
@@ -48,6 +50,25 @@ app.get('/discord', async (ctx) => {
 	)
 	if (!result.ok)
 		return ctx.redirect('http://localhost:3000/dashboard/connections?type=error')
+
+	return ctx.redirect('http://localhost:3000/dashboard/connections?type=success')
+})
+
+// Twitch redirects the broadcaster here after the OAuth sign-in started from
+// the dashboard (ADR-0002).
+app.get('/twitch', async (ctx) => {
+	const { state, code, error } = ctx.req.query()
+	const result = await completeTwitchLink(ctx.env, twitchClient(), {
+		state,
+		code,
+		error,
+	})
+	if (!result.ok) {
+		console.warn('Twitch link refused: ', result.reason)
+		return ctx.redirect(
+			`http://localhost:3000/dashboard/connections?type=error&reason=${result.reason}`
+		)
+	}
 
 	return ctx.redirect('http://localhost:3000/dashboard/connections?type=success')
 })

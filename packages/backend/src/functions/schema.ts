@@ -79,6 +79,25 @@ export default defineSchema({
 		commandChannelId: v.optional(v.string()),
 		accessToken: v.optional(v.string()),
 		refreshToken: v.optional(v.string()),
+		// Twitch links only (ADR-0002). platformId is the broadcaster's user
+		// ID; this holds the channel's names, the broadcaster's grant, and the
+		// `channel.chat.message` EventSub subscription read as the Nxt bot
+		// account. A Twitch channel has at most one row, so it belongs to at
+		// most one Community.
+		twitch: v.optional(
+			v.object({
+				login: v.string(),
+				displayName: v.string(),
+				grant: v.object({
+					accessToken: v.string(),
+					refreshToken: v.string(),
+					scopes: v.array(v.string()),
+					expiresAt: v.number(),
+				}),
+				// Absent once unlinked.
+				subscriptionId: v.optional(v.string()),
+			})
+		),
 	})
 		.index('byCommunity', ['communityId'])
 		.index('byPlatform', ['platform', 'platformId']),

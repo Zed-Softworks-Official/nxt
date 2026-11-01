@@ -9,6 +9,8 @@ type PlatformLink = {
 	platform: string
 	platformName: string
 	platformId: string
+	// The linked channel's display name (Twitch only).
+	channelName?: string
 }
 
 export const getPlatformLinks = query({
@@ -35,6 +37,9 @@ export const getPlatformLinks = query({
 				platform: platformLink.platform,
 				platformName: platformLink.platformName,
 				platformId: platformLink.platformId,
+				...(platformLink.twitch
+					? { channelName: platformLink.twitch.displayName }
+					: {}),
 			}
 		})
 
