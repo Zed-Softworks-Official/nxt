@@ -35,6 +35,7 @@ export function fakeInteraction(input: {
     userId?: string
     username?: string
     manageServer?: boolean
+    options?: Record<string, string | number>
 }) {
     const replies: SeenReply[] = []
     const manageServer = input.manageServer === true
@@ -47,6 +48,17 @@ export function fakeInteraction(input: {
         user: {
             id: input.userId ?? 'user-1',
             username: input.username ?? 'ada',
+        },
+        isChatInputCommand: () => true,
+        options: {
+            getString: (name: string) => {
+                const value = input.options?.[name]
+                return typeof value === 'string' ? value : null
+            },
+            getInteger: (name: string) => {
+                const value = input.options?.[name]
+                return typeof value === 'number' ? value : null
+            },
         },
         memberPermissions: {
             has: (permission: bigint) =>

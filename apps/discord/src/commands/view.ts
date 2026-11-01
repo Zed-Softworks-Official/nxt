@@ -1,21 +1,13 @@
 import { internal } from '@nxt/backend/api'
-import { formatReference } from '@nxt/backend/reference'
 import type { CommandInteraction } from 'discord.js'
 import { SlashCommandBuilder } from 'discord.js'
 
 import { getConvex, type QueueConvex } from '~/lib/convex'
+import { describeParticipant, type Platform } from '~/lib/participant'
 import { editDeferred, NOT_CONNECTED, runQueueCommand } from '~/lib/queueGate'
 import type { Command } from '~/lib/types'
 
 const DISCORD_MESSAGE_LIMIT = 2000
-
-type Platform = 'discord' | 'twitch' | 'youtube'
-
-const PLATFORM_LABELS: Record<Platform, string> = {
-    discord: 'Discord',
-    twitch: 'Twitch',
-    youtube: 'YouTube',
-}
 
 type WaitingEntry = {
     reference: number
@@ -31,8 +23,7 @@ function formatWaitingLine(state: 'open' | 'paused', waiting: WaitingEntry[]) {
     }
 
     const lines = waiting.map(
-        (entry, index) =>
-            `${index + 1}. ${formatReference(entry.reference)} ${entry.username} (${PLATFORM_LABELS[entry.platform]})`
+        (entry, index) => `${index + 1}. ${describeParticipant(entry)}`
     )
     const full = [stateLine, ...lines].join('\n')
     if (full.length <= DISCORD_MESSAGE_LIMIT) return full

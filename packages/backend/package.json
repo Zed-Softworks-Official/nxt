@@ -36,7 +36,7 @@
 		"@clerk/backend": "catalog:",
 		"@nxt/utils": "workspace:*",
 		"@t3-oss/env-core": "^0.13.11",
-		"convex": "^1.46.0",
+		"convex": "^1.49.0",
 		"convex-helpers": "^0.1.116",
 		"hono": "^4.12.18",
 		"svix": "^1.93.0",
