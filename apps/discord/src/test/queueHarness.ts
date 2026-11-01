@@ -11,6 +11,7 @@ import type { QueueConvex } from '~/lib/convex'
 
 // The backend harness is shared with every platform adapter; this file adds
 // only the Discord-specific fakes.
+export type { TestBackend }
 export {
     createTestBackend,
     readActivityLog,

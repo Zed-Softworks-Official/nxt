@@ -21,6 +21,9 @@ export const joinQ: Command = {
                         link,
                         username: interaction.user.username,
                         platformUserId: interaction.user.id,
+                        ...(interaction.channelId
+                            ? { channelId: interaction.channelId }
+                            : {}),
                     })
                 )
 
