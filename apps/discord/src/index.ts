@@ -1,12 +1,11 @@
 import { internal } from '@nxt/backend/api'
-import { tryCatch } from '@nxt/utils'
+import { serialRunner, tryCatch } from '@nxt/utils'
 import type { Interaction } from 'discord.js'
 import { Client, Collection, Events } from 'discord.js'
 
 import {
     type AnnouncementSender,
     deliverPending,
-    serialDeliverer,
 } from '~/announcements/deliver'
 import { commands } from '~/commands'
 import { env } from '~/env'
@@ -42,7 +41,7 @@ const discordSender: AnnouncementSender = {
 
 // Post pending Announcements now and whenever the set of pending ones changes.
 function startAnnouncements() {
-    const deliver = serialDeliverer(() =>
+    const deliver = serialRunner(() =>
         deliverPending(getConvex(), discordSender)
     )
     getConvexSubscriber().onUpdate(
