@@ -1,0 +1,28 @@
+{
+    "name": "@nxt/twitch",
+    "version": "0.0.0",
+    "private": true,
+    "scripts": {
+        "dev": "pnpm with-env tsx watch src/index.ts",
+        "test": "vitest run",
+        "with-env": "dotenv -e ../../.env --"
+    },
+    "dependencies": {
+        "@nxt/backend": "workspace:*",
+        "@nxt/utils": "workspace:*",
+        "@t3-oss/env-core": "^0.13.11",
+        "@twurple/api": "^8.2.0",
+        "@twurple/auth": "^8.2.0",
+        "@twurple/eventsub-base": "^8.2.0",
+        "@twurple/eventsub-http": "^8.2.0",
+        "zod": "^4.4.3"
+    },
+    "devDependencies": {
+        "@edge-runtime/vm": "^5.0.0",
+        "@nxt/typescript-config": "workspace:*",
+        "convex-test": "^0.0.60",
+        "tsup": "^8.5.1",
+        "tsx": "^4.21.0",
+        "vitest": "^5.0.2"
+    }
+}

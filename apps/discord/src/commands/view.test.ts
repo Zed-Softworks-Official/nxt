@@ -4,11 +4,12 @@ import {
     createTestBackend,
     fakeInteraction,
     readQueue,
+    seedCommunity,
     seedDiscordCommunity,
 } from '../test/queueHarness'
 import { viewQ } from './view'
 
-test('viewq while the queue is open lists waiting usernames in join order', async () => {
+test('viewq while the queue is open lists waiting references, usernames, and platforms in join order', async () => {
     const backend = createTestBackend()
     await seedDiscordCommunity(backend, {
         ownerId: 'owner-1',
@@ -36,7 +37,8 @@ test('viewq while the queue is open lists waiting usernames in join order', asyn
 
     expect(replies).toEqual([
         {
-            content: 'The queue is open.\n1. ada\n2. bob',
+            content:
+                'The queue is open.\n1. q-1 ada (Discord)\n2. q-2 bob (Discord)',
             ephemeral: false,
         },
     ])
@@ -44,12 +46,14 @@ test('viewq while the queue is open lists waiting usernames in join order', asyn
         state: 'open',
         participants: [
             {
+                reference: 1,
                 username: 'ada',
                 platform: 'discord',
                 platformUserId: 'user-1',
                 status: 'waiting',
             },
             {
+                reference: 2,
                 username: 'bob',
                 platform: 'discord',
                 platformUserId: 'user-2',
@@ -84,9 +88,10 @@ test('viewq on an empty queue says nobody is waiting', async () => {
 
 test('viewq stops before the Discord message limit and keeps real positions', async () => {
     const backend = createTestBackend()
-    const ada = 'a'.repeat(981)
-    const bob = 'b'.repeat(981)
-    const cy = 'c'.repeat(981)
+    // Each line is 984 characters: two fit alone, but not with "…and 1 more."
+    const ada = 'a'.repeat(967)
+    const bob = 'b'.repeat(967)
+    const cy = 'c'.repeat(967)
     await seedDiscordCommunity(backend, {
         ownerId: 'owner-1',
         guildId: 'guild-1',
@@ -103,7 +108,7 @@ test('viewq stops before the Discord message limit and keeps real positions', as
 
     expect(replies).toEqual([
         {
-            content: `The queue is open.\n1. ${ada}\n…and 2 more.`,
+            content: `The queue is open.\n1. q-1 ${ada} (Discord)\n…and 2 more.`,
             ephemeral: false,
         },
     ])
@@ -111,18 +116,21 @@ test('viewq stops before the Discord message limit and keeps real positions', as
         state: 'open',
         participants: [
             {
+                reference: 1,
                 username: ada,
                 platform: 'discord',
                 platformUserId: 'user-1',
                 status: 'waiting',
             },
             {
+                reference: 2,
                 username: bob,
                 platform: 'discord',
                 platformUserId: 'user-2',
                 status: 'waiting',
             },
             {
+                reference: 3,
                 username: cy,
                 platform: 'discord',
                 platformUserId: 'user-3',
@@ -152,7 +160,7 @@ test('viewq while the queue is paused still lists who is waiting', async () => {
 
     expect(replies).toEqual([
         {
-            content: 'The queue is paused.\n1. ada',
+            content: 'The queue is paused.\n1. q-1 ada (Discord)',
             ephemeral: false,
         },
     ])
@@ -160,6 +168,7 @@ test('viewq while the queue is paused still lists who is waiting', async () => {
         state: 'paused',
         participants: [
             {
+                reference: 1,
                 username: 'ada',
                 platform: 'discord',
                 platformUserId: 'user-1',
@@ -204,7 +213,8 @@ test('viewq numbers only the waiting line and leaves pinged and playing in place
 
     expect(replies).toEqual([
         {
-            content: 'The queue is open.\n1. ada\n2. bob',
+            content:
+                'The queue is open.\n1. q-2 ada (Discord)\n2. q-4 bob (Discord)',
             ephemeral: false,
         },
     ])
@@ -212,24 +222,28 @@ test('viewq numbers only the waiting line and leaves pinged and playing in place
         state: 'open',
         participants: [
             {
+                reference: 1,
                 username: 'pinged',
                 platform: 'discord',
                 platformUserId: 'user-pinged',
                 status: 'notified',
             },
             {
+                reference: 2,
                 username: 'ada',
                 platform: 'discord',
                 platformUserId: 'user-1',
                 status: 'waiting',
             },
             {
+                reference: 3,
                 username: 'playing',
                 platform: 'discord',
                 platformUserId: 'user-playing',
                 status: 'playing',
             },
             {
+                reference: 4,
                 username: 'bob',
                 platform: 'discord',
                 platformUserId: 'user-2',
@@ -294,6 +308,7 @@ test('viewq in the wrong channel is only visible to the invoker', async () => {
         state: 'open',
         participants: [
             {
+                reference: 1,
                 username: 'ada',
                 platform: 'discord',
                 platformUserId: 'user-1',
@@ -301,4 +316,36 @@ test('viewq in the wrong channel is only visible to the invoker', async () => {
             },
         ],
     })
+})
+
+test('viewq shows Twitch Participants sharing the Queue with their platform', async () => {
+    const backend = createTestBackend()
+    await seedCommunity(backend, {
+        ownerId: 'owner-1',
+        state: 'open',
+        links: [
+            { platform: 'discord', platformId: 'guild-1' },
+            { platform: 'twitch', platformId: 'broadcaster-1' },
+        ],
+        participants: [
+            {
+                platformUserId: 't-1',
+                username: 'bob_tv',
+                status: 'waiting',
+                platform: 'twitch',
+            },
+            { platformUserId: 'user-1', username: 'ada', status: 'waiting' },
+        ],
+    })
+    const { interaction, replies } = fakeInteraction({ guildId: 'guild-1' })
+
+    await viewQ.execute(interaction, asQueueConvex(backend))
+
+    expect(replies).toEqual([
+        {
+            content:
+                'The queue is open.\n1. q-1 bob_tv (Twitch)\n2. q-2 ada (Discord)',
+            ephemeral: false,
+        },
+    ])
 })

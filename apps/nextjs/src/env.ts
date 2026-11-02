@@ -24,6 +24,9 @@ export const env = createEnv({
 
 		NEXT_PUBLIC_DISCORD_CLIENT_ID: z.string(),
 		NEXT_PUBLIC_DISCORD_REDIRECT_URI: z.string(),
+
+		NEXT_PUBLIC_TWITCH_CLIENT_ID: z.string(),
+		NEXT_PUBLIC_TWITCH_REDIRECT_URI: z.string(),
 	},
 
 	/**
@@ -41,6 +44,10 @@ export const env = createEnv({
 		NEXT_PUBLIC_DISCORD_CLIENT_ID: process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID,
 		NEXT_PUBLIC_DISCORD_REDIRECT_URI:
 			process.env.NEXT_PUBLIC_DISCORD_REDIRECT_URI,
+
+		NEXT_PUBLIC_TWITCH_CLIENT_ID: process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID,
+		NEXT_PUBLIC_TWITCH_REDIRECT_URI:
+			process.env.NEXT_PUBLIC_TWITCH_REDIRECT_URI,
 	},
 	/**
 	 * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

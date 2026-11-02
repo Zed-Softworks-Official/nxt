@@ -9,6 +9,7 @@ import {
 import { joinQ } from './join'
 
 const waiting = {
+    reference: 1,
     username: 'ada',
     platform: 'discord' as const,
     platformUserId: 'user-1',
@@ -147,6 +148,7 @@ test('a second joinq while pinged replies with the generic join error', async ()
         state: 'open',
         participants: [
             {
+                reference: 1,
                 username: 'ada',
                 platform: 'discord',
                 platformUserId: 'user-1',
@@ -184,6 +186,7 @@ test('a second joinq while playing replies with the generic join error', async (
         state: 'open',
         participants: [
             {
+                reference: 1,
                 username: 'ada',
                 platform: 'discord',
                 platformUserId: 'user-1',

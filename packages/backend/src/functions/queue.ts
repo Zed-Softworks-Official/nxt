@@ -1,204 +1,124 @@
-import { internalMutation, mutation, query } from '@nxt/backend/server'
-import { v } from 'convex/values'
-
 import {
-	insertPausedQueue,
-	queueForCommunity,
-} from '../model/pausedQueue'
+    internalMutation,
+    type MutationCtx,
+    mutation,
+    type QueryCtx,
+    query,
+} from '@nxt/backend/server'
+import { v } from 'convex/values'
+import { ownedCommunity, requireOwnedCommunity } from '../model/community'
+import { queueForCommunity } from '../model/pausedQueue'
+import * as Queue from '../model/queue'
+import schema from './schema'
 
-// Helper: resolve ownerId → community → queue
-async function resolveQueue(ctx: any, ownerId: string) {
-	const community = await ctx.db
-		.query('communities')
-		.withIndex('byOwner', (q: any) => q.eq('ownerId', ownerId))
-		.first()
-	if (!community) throw new Error('Community not found')
+// Queue operations for the dashboard. The caller is the Community owner,
+// identified by their Clerk session, never by an argument.
 
-	const queue = await queueForCommunity(ctx, community._id)
-	if (!queue) throw new Error('Queue not found')
-
-	return queue
+async function requireOwnedQueue(ctx: MutationCtx) {
+    const community = await requireOwnedCommunity(ctx)
+    return await Queue.ensureQueue(ctx, community._id)
 }
 
-// Helper: write a single event to the activity log
-async function logEvent(
-	ctx: any,
-	participant: {
-		queueId: any
-		username: string
-		platform: 'discord' | 'twitch' | 'youtube'
-		platformUserId: string
-	},
-	event: 'pinged' | 'returned_to_queue' | 'finished'
-) {
-	await ctx.db.insert('activityLog', {
-		queueId: participant.queueId,
-		username: participant.username,
-		platform: participant.platform,
-		platformUserId: participant.platformUserId,
-		event,
-	})
+async function ownedQueueForRead(ctx: QueryCtx) {
+    const community = await ownedCommunity(ctx)
+    if (!community) return null
+    return { queue: await queueForCommunity(ctx, community._id) }
 }
 
-export const getParticipants = query({
-	args: {
-		ownerId: v.string(),
-	},
-	handler: async (ctx, args) => {
-		const queue = await resolveQueue(ctx, args.ownerId)
-
-		const all = await ctx.db
-			.query('participants')
-			.withIndex('byQueue', (q: any) => q.eq('queueId', queue._id))
-			.collect()
-
-		// Sort all by creation time ascending (join order)
-		all.sort(
-			(a: { _creationTime: number }, b: { _creationTime: number }) =>
-				a._creationTime - b._creationTime
-		)
-
-		return {
-			queueState: queue.state as 'open' | 'paused',
-			waiting: all.filter(
-				(p: { status: string }) => p.status === 'waiting'
-			),
-			notified: all.filter(
-				(p: { status: string }) => p.status === 'notified'
-			),
-			playing: all.filter(
-				(p: { status: string }) => p.status === 'playing'
-			),
-		}
-	},
+// The owner's Queue, Pinged, and Playing lists. Null when signed out.
+export const view = query({
+    args: {},
+    returns: v.union(Queue.viewResult, v.null()),
+    handler: async (ctx) => {
+        const owned = await ownedQueueForRead(ctx)
+        if (!owned) return null
+        return await Queue.view(ctx, owned.queue)
+    },
 })
 
-// Ping the next `count` waiting participants (move waiting → notified)
-export const pingParticipants = mutation({
-	args: {
-		ownerId: v.string(),
-		count: v.number(),
-	},
-	handler: async (ctx, args) => {
-		const queue = await resolveQueue(ctx, args.ownerId)
-
-		const waiting = await ctx.db
-			.query('participants')
-			.withIndex('byQueue', (q: any) => q.eq('queueId', queue._id))
-			.collect()
-
-		const toNotify = waiting
-			.filter((p: { status: string }) => p.status === 'waiting')
-			.sort(
-				(a: { _creationTime: number }, b: { _creationTime: number }) =>
-					a._creationTime - b._creationTime
-			)
-			.slice(0, args.count)
-
-		for (const participant of toNotify) {
-			await ctx.db.patch(participant._id, { status: 'notified' })
-			await logEvent(ctx, participant, 'pinged')
-		}
-	},
+export const open = mutation({
+    args: {},
+    returns: Queue.stateResult,
+    handler: async (ctx) => Queue.open(ctx, await requireOwnedQueue(ctx)),
 })
 
-// Move a notified participant to playing
-export const moveToPlaying = mutation({
-	args: {
-		participantId: v.id('participants'),
-	},
-	handler: async (ctx, args) => {
-		const participant = await ctx.db.get(args.participantId)
-		if (!participant) throw new Error('Participant not found')
-		if (participant.status !== 'notified')
-			throw new Error('Participant is not in notified state')
-
-		await ctx.db.patch(args.participantId, { status: 'playing' })
-	},
+export const pause = mutation({
+    args: {},
+    returns: Queue.stateResult,
+    handler: async (ctx) => Queue.pause(ctx, await requireOwnedQueue(ctx)),
 })
 
-// Move a notified participant back to waiting — logs the no-show event
-export const moveBackToQueue = mutation({
-	args: {
-		participantId: v.id('participants'),
-	},
-	handler: async (ctx, args) => {
-		const participant = await ctx.db.get(args.participantId)
-		if (!participant) throw new Error('Participant not found')
-		if (participant.status !== 'notified')
-			throw new Error('Participant is not in notified state')
-
-		await ctx.db.patch(args.participantId, { status: 'waiting' })
-		await logEvent(ctx, participant, 'returned_to_queue')
-	},
+export const clear = mutation({
+    args: {},
+    returns: Queue.clearResult,
+    handler: async (ctx) => Queue.clear(ctx, await requireOwnedQueue(ctx)),
 })
 
-// Mark a playing participant as done — logs the finished event and removes from participants
-export const markDone = mutation({
-	args: {
-		participantId: v.id('participants'),
-	},
-	handler: async (ctx, args) => {
-		const participant = await ctx.db.get(args.participantId)
-		if (!participant) throw new Error('Participant not found')
-		if (participant.status !== 'playing')
-			throw new Error('Participant is not currently playing')
-
-		await logEvent(ctx, participant, 'finished')
-		await ctx.db.delete(args.participantId)
-	},
+export const ping = mutation({
+    args: { count: v.number() },
+    returns: Queue.pingResult,
+    handler: async (ctx, args) =>
+        Queue.ping(ctx, await requireOwnedQueue(ctx), args.count),
 })
 
-// Discord commands know the guild's Community, not the Clerk owner.
-// Trusted servers call this with a deploy key.
-// Insert a Paused Queue when this Community has none. An existing Queue is left as it is.
-export const ensureQueueForCommunity = internalMutation({
-	args: {
-		communityId: v.id('communities'),
-	},
-	returns: v.id('queues'),
-	handler: async (ctx, args) => {
-		const community = await ctx.db.get('communities', args.communityId)
-		if (!community) throw new Error('Community not found')
-
-		const existing = await queueForCommunity(ctx, args.communityId)
-		if (existing) return existing._id
-
-		return await insertPausedQueue(ctx, args.communityId)
-	},
+export const play = mutation({
+    args: { reference: v.number() },
+    returns: Queue.turnResult,
+    handler: async (ctx, args) =>
+        Queue.play(ctx, await requireOwnedQueue(ctx), args.reference),
 })
 
-// Toggle queue state between open and paused
-export const toggleQueueState = mutation({
-	args: {
-		ownerId: v.string(),
-	},
-	handler: async (ctx, args) => {
-		const queue = await resolveQueue(ctx, args.ownerId)
-		const newState = queue.state === 'open' ? 'paused' : 'open'
-		await ctx.db.patch(queue._id, { state: newState })
-	},
+export const returnToQueue = mutation({
+    args: { reference: v.number() },
+    returns: Queue.turnResult,
+    handler: async (ctx, args) =>
+        Queue.returnToQueue(ctx, await requireOwnedQueue(ctx), args.reference),
 })
 
-// Get the activity log for a queue, most recent first
+export const done = mutation({
+    args: { reference: v.number() },
+    returns: Queue.turnResult,
+    handler: async (ctx, args) =>
+        Queue.done(ctx, await requireOwnedQueue(ctx), args.reference),
+})
+
+// How many Activity log entries the dashboard shows.
+const ACTIVITY_LOG_LIMIT = 50
+
+// The owner's latest Activity log entries, most recent first. Empty when
+// signed out.
 export const getActivityLog = query({
-	args: {
-		ownerId: v.string(),
-	},
-	handler: async (ctx, args) => {
-		const queue = await resolveQueue(ctx, args.ownerId)
+    args: {},
+    returns: v.array(
+        v.object({
+            _id: v.id('activityLog'),
+            _creationTime: v.number(),
+            ...schema.tables.activityLog.validator.fields,
+        })
+    ),
+    handler: async (ctx) => {
+        const owned = await ownedQueueForRead(ctx)
+        if (!owned?.queue) return []
+        const queueId = owned.queue._id
 
-		const entries = await ctx.db
-			.query('activityLog')
-			.withIndex('byQueue', (q: any) => q.eq('queueId', queue._id))
-			.collect()
+        return await ctx.db
+            .query('activityLog')
+            .withIndex('byQueue', (q) => q.eq('queueId', queueId))
+            .order('desc')
+            .take(ACTIVITY_LOG_LIMIT)
+    },
+})
 
-		// Most recent event first
-		entries.sort(
-			(a: { _creationTime: number }, b: { _creationTime: number }) =>
-				b._creationTime - a._creationTime
-		)
-
-		return entries
-	},
+// Insert a Paused Queue when this Community has none. An existing Queue is
+// left as it is. Trusted servers call this with a deploy key.
+export const ensureQueueForCommunity = internalMutation({
+    args: {
+        communityId: v.id('communities'),
+    },
+    returns: v.id('queues'),
+    handler: async (ctx, args) => {
+        const community = await ctx.db.get('communities', args.communityId)
+        if (!community) throw new Error('Community not found')
+        return (await Queue.ensureQueue(ctx, args.communityId))._id
+    },
 })

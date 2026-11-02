@@ -31,13 +31,13 @@ export default async function DashboardPage() {
 	return (
 		<div className="grid grid-cols-1 md:grid-cols-6 gap-4">
 			<div className="col-span-1 md:col-span-2 flex flex-col gap-4">
-				<QuickPing userId={user.id} />
-				<ActivityLog userId={user.id} />
+				<QuickPing />
+				<ActivityLog />
 			</div>
 			<div className="col-span-4 flex flex-col gap-4">
-				<CurrentlyPlaying userId={user.id} />
-				<Pinged userId={user.id} />
-				<Queue userId={user.id} />
+				<CurrentlyPlaying />
+				<Pinged />
+				<Queue />
 			</div>
 		</div>
 	)

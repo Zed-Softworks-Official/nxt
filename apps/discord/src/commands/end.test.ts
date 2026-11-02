@@ -10,6 +10,7 @@ import {
 import { endQ } from './end'
 
 const waiting = {
+    reference: 1,
     username: 'ada',
     platform: 'discord' as const,
     platformUserId: 'user-1',
@@ -17,6 +18,7 @@ const waiting = {
 }
 
 const pinged = {
+    reference: 2,
     username: 'bea',
     platform: 'discord' as const,
     platformUserId: 'user-2',
@@ -24,6 +26,7 @@ const pinged = {
 }
 
 const playing = {
+    reference: 3,
     username: 'cy',
     platform: 'discord' as const,
     platformUserId: 'user-3',

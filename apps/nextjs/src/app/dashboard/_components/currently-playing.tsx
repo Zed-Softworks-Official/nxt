@@ -4,8 +4,8 @@ import { api } from "@nxt/backend/api"
 import { useMutation, useQuery } from "@nxt/backend/react"
 
 import { Radio, CheckCheck } from "lucide-react"
-import { useMemo } from "react"
 
+import { PlatformBadge, ReferenceBadge } from "./participant-badges"
 import { Card, CardHeader, CardTitle, CardContent } from "~/components/ui/card"
 import {
 	Item,
@@ -14,7 +14,6 @@ import {
 	ItemTitle,
 	ItemActions,
 } from "~/components/ui/item"
-import { Badge } from "~/components/ui/badge"
 import { Button } from "~/components/ui/button"
 import {
 	Empty,
@@ -23,12 +22,10 @@ import {
 	EmptyTitle,
 	EmptyDescription,
 } from "~/components/ui/empty"
-import { cn } from "~/lib/utils"
-import type { Id } from "@nxt/backend/dataModel"
 
-export function CurrentlyPlaying(props: { userId: string }) {
-	const data = useQuery(api.queue.getParticipants, { ownerId: props.userId })
-	const markDone = useMutation(api.queue.markDone)
+export function CurrentlyPlaying() {
+	const data = useQuery(api.queue.view, {})
+	const done = useMutation(api.queue.done)
 
 	if (!data) return null
 
@@ -64,7 +61,7 @@ export function CurrentlyPlaying(props: { userId: string }) {
 					<ItemGroup>
 						{playing.map((participant) => (
 							<Item
-								key={participant._id}
+								key={participant.reference}
 								variant="outline"
 								className="border-chart-2/30 bg-chart-2/5 shadow-xs transition-all hover:border-chart-2/50 hover:bg-chart-2/10"
 							>
@@ -72,6 +69,7 @@ export function CurrentlyPlaying(props: { userId: string }) {
 									<div className="flex items-center justify-between gap-3">
 										<div className="flex min-w-0 items-center gap-3">
 											<div className="flex size-2 shrink-0 rounded-full bg-chart-2 ring-2 ring-chart-2/30" />
+											<ReferenceBadge reference={participant.reference} />
 											<ItemTitle className="text-sm font-semibold">
 												{participant.username}
 											</ItemTitle>
@@ -85,9 +83,7 @@ export function CurrentlyPlaying(props: { userId: string }) {
 										variant="outline"
 										className="h-7 gap-1.5 border-emerald-500/40 bg-emerald-500/10 px-2 text-xs text-emerald-400 hover:border-emerald-500/60 hover:bg-emerald-500/20 hover:text-emerald-300"
 										onClick={() =>
-											markDone({
-												participantId: participant._id as Id<"participants">,
-											})
+											done({ reference: participant.reference })
 										}
 									>
 										<CheckCheck className="size-3" />
@@ -100,38 +96,5 @@ export function CurrentlyPlaying(props: { userId: string }) {
 				)}
 			</CardContent>
 		</Card>
-	)
-}
-
-function PlatformBadge(props: { platform: "discord" | "twitch" | "youtube" }) {
-	const badgeText = useMemo(() => {
-		switch (props.platform) {
-			case "discord":
-				return "Discord"
-			case "twitch":
-				return "Twitch"
-			case "youtube":
-				return "YouTube"
-			default:
-				return "Unknown"
-		}
-	}, [props.platform])
-
-	return (
-		<Badge
-			className={cn(
-				"rounded-full border px-2 py-1 text-[10px] font-semibold tracking-wide uppercase",
-				{
-					"border-[#5864f0]/60 bg-[#5864f0]/15 text-[#5864f0]":
-						props.platform === "discord",
-					"border-[#9146ff]/60 bg-[#9146ff]/15 text-[#9146ff]":
-						props.platform === "twitch",
-					"border-[#ff0000]/60 bg-[#ff0000]/15 text-[#ff0000]":
-						props.platform === "youtube",
-				}
-			)}
-		>
-			{badgeText}
-		</Badge>
 	)
 }

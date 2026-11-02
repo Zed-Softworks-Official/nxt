@@ -1,17 +1,24 @@
-import { convexTest } from 'convex-test'
+import {
+    createTestBackend,
+    readActivityLog,
+    readQueue,
+    seedCommunity,
+    seedDiscordCommunity,
+    type TestBackend,
+} from '@nxt/backend/testing'
 import { type CommandInteraction, PermissionFlagsBits } from 'discord.js'
 import type { QueueConvex } from '~/lib/convex'
-import schema from '../../../../packages/backend/src/functions/schema'
 
-const modules = import.meta.glob(
-    '../../../../packages/backend/src/functions/**/*.*s'
-)
-
-export function createTestBackend() {
-    return convexTest(schema, modules)
+// The backend harness is shared with every platform adapter; this file adds
+// only the Discord-specific fakes.
+export type { TestBackend }
+export {
+    createTestBackend,
+    readActivityLog,
+    readQueue,
+    seedCommunity,
+    seedDiscordCommunity,
 }
-
-type TestBackend = ReturnType<typeof createTestBackend>
 
 export function asQueueConvex(backend: TestBackend): QueueConvex {
     return backend as unknown as QueueConvex
@@ -28,6 +35,7 @@ export function fakeInteraction(input: {
     userId?: string
     username?: string
     manageServer?: boolean
+    options?: Record<string, string | number>
 }) {
     const replies: SeenReply[] = []
     const manageServer = input.manageServer === true
@@ -40,6 +48,17 @@ export function fakeInteraction(input: {
         user: {
             id: input.userId ?? 'user-1',
             username: input.username ?? 'ada',
+        },
+        isChatInputCommand: () => true,
+        options: {
+            getString: (name: string) => {
+                const value = input.options?.[name]
+                return typeof value === 'string' ? value : null
+            },
+            getInteger: (name: string) => {
+                const value = input.options?.[name]
+                return typeof value === 'number' ? value : null
+            },
         },
         memberPermissions: {
             has: (permission: bigint) =>
@@ -92,89 +111,4 @@ export function fakeInteraction(input: {
         interaction: interaction as unknown as CommandInteraction,
         replies,
     }
-}
-
-type ParticipantStatus = 'waiting' | 'notified' | 'playing' | 'done'
-
-export async function seedDiscordCommunity(
-    backend: TestBackend,
-    input: {
-        ownerId: string
-        guildId: string
-        state: 'open' | 'paused' | 'none'
-        commandChannelId?: string
-        participants?: Array<{
-            platformUserId: string
-            username: string
-            status: ParticipantStatus
-        }>
-    }
-) {
-    await backend.run(async (ctx) => {
-        const communityId = await ctx.db.insert('communities', {
-            name: 'Community',
-            ownerId: input.ownerId,
-        })
-
-        if (input.state !== 'none') {
-            const queueId = await ctx.db.insert('queues', {
-                communityId,
-                state: input.state,
-            })
-            for (const participant of input.participants ?? []) {
-                await ctx.db.insert('participants', {
-                    queueId,
-                    username: participant.username,
-                    platform: 'discord',
-                    platformUserId: participant.platformUserId,
-                    status: participant.status,
-                })
-            }
-        }
-
-        await ctx.db.insert('platformLinks', {
-            communityId,
-            enabled: true,
-            platform: 'discord',
-            platformId: input.guildId,
-            platformName: 'Discord',
-            ...(input.commandChannelId
-                ? { commandChannelId: input.commandChannelId }
-                : {}),
-        })
-    })
-}
-
-export async function readQueue(backend: TestBackend, ownerId: string) {
-    return await backend.run(async (ctx) => {
-        const community = await ctx.db
-            .query('communities')
-            .withIndex('byOwner', (q) => q.eq('ownerId', ownerId))
-            .first()
-        if (!community) return null
-
-        const queue = await ctx.db
-            .query('queues')
-            .withIndex('byCommunity', (q) => q.eq('communityId', community._id))
-            .first()
-        if (!queue) {
-            return { state: null, participants: [] }
-        }
-
-        const participants = await ctx.db
-            .query('participants')
-            .withIndex('byQueue', (q) => q.eq('queueId', queue._id))
-            .collect()
-        participants.sort((a, b) => a._creationTime - b._creationTime)
-
-        return {
-            state: queue.state,
-            participants: participants.map((participant) => ({
-                username: participant.username,
-                platform: participant.platform,
-                platformUserId: participant.platformUserId,
-                status: participant.status,
-            })),
-        }
-    })
 }

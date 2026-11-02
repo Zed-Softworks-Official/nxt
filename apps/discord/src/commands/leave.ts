@@ -1,4 +1,4 @@
-import { api } from '@nxt/backend/api'
+import { internal } from '@nxt/backend/api'
 import { tryCatch } from '@nxt/utils'
 import type { CommandInteraction } from 'discord.js'
 import { SlashCommandBuilder } from 'discord.js'
@@ -15,15 +15,15 @@ export const leaveQ: Command = {
         const convex = client ?? getConvex()
         await runQueueCommand(interaction, convex, {
             kind: 'player',
-            run: async ({ guildId }) => {
+            run: async ({ link }) => {
                 const { data, error } = await tryCatch(
-                    convex.mutation(api.discord.leaveQ, {
+                    convex.mutation(internal.platformQueue.leave, {
+                        link,
                         platformUserId: interaction.user.id,
-                        platformId: guildId,
                     })
                 )
 
-                if (error || data === 'absent') {
+                if (error || data.kind !== 'ok') {
                     await editDeferred(interaction, 'Error leaving the queue.')
                     return
                 }

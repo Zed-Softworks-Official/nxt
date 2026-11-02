@@ -8,17 +8,18 @@
  * @module
  */
 
-import type * as clearQueue from "../clearQueue.js";
+import type * as announcements from "../announcements.js";
 import type * as commandChannel from "../commandChannel.js";
 import type * as communities from "../communities.js";
-import type * as discord from "../discord.js";
+import type * as crons from "../crons.js";
 import type * as discordGuild from "../discordGuild.js";
 import type * as http from "../http.js";
+import type * as linkStates from "../linkStates.js";
 import type * as platformLinks from "../platformLinks.js";
-import type * as position from "../position.js";
+import type * as platformQueue from "../platformQueue.js";
 import type * as queue from "../queue.js";
-import type * as queueState from "../queueState.js";
-import type * as viewQueue from "../viewQueue.js";
+import type * as twitchChannels from "../twitchChannels.js";
+import type * as twitchLink from "../twitchLink.js";
 
 import type {
   ApiFromModules,
@@ -27,17 +28,18 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
-  clearQueue: typeof clearQueue;
+  announcements: typeof announcements;
   commandChannel: typeof commandChannel;
   communities: typeof communities;
-  discord: typeof discord;
+  crons: typeof crons;
   discordGuild: typeof discordGuild;
   http: typeof http;
+  linkStates: typeof linkStates;
   platformLinks: typeof platformLinks;
-  position: typeof position;
+  platformQueue: typeof platformQueue;
   queue: typeof queue;
-  queueState: typeof queueState;
-  viewQueue: typeof viewQueue;
+  twitchChannels: typeof twitchChannels;
+  twitchLink: typeof twitchLink;
 }>;
 
 /**
