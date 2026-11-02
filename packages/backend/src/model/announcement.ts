@@ -42,14 +42,17 @@ export async function announcePinged(
     communityId: Id<'communities'>,
     participant: Doc<'participants'>
 ) {
-    const links = await ctx.db
-        .query('platformLinks')
-        .withIndex('byCommunity', (q) => q.eq('communityId', communityId))
-        .collect()
-    const sameSpace = links.filter(
-        (link) => link.platform === participant.platform
-    )
-    const link = sameSpace.find((row) => row.enabled) ?? sameSpace[0]
+    const sameSpace = (enabled: boolean) =>
+        ctx.db
+            .query('platformLinks')
+            .withIndex('byCommunityAndPlatformAndEnabled', (q) =>
+                q
+                    .eq('communityId', communityId)
+                    .eq('platform', participant.platform)
+                    .eq('enabled', enabled)
+            )
+            .first()
+    const link = (await sameSpace(true)) ?? (await sameSpace(false))
     if (!link) return
 
     await ctx.db.insert('announcements', {
@@ -72,7 +75,7 @@ export async function announcePinged(
 function unsettled(ctx: QueryCtx, platform: Platform) {
     return ctx.db
         .query('announcements')
-        .withIndex('byPlatformAndDelivered', (q) =>
+        .withIndex('byPlatformAndDeliveredAt', (q) =>
             q.eq('platform', platform).eq('deliveredAt', undefined)
         )
 }
@@ -147,20 +150,18 @@ export async function dropPendingForLink(
 ) {
     const rows = await ctx.db
         .query('announcements')
-        .withIndex('byCommunityAndPlatform', (q) =>
+        .withIndex('byCommunityAndPlatformAndPlatformIdAndDeliveredAt', (q) =>
             q
                 .eq('communityId', communityId)
                 .eq('platform', link.platform)
+                .eq('platformId', link.platformId)
                 .eq('deliveredAt', undefined)
         )
         .collect()
-    let dropped = 0
     for (const row of rows) {
-        if (row.platformId !== link.platformId) continue
         await settle(ctx, row._id, 'dropped')
-        dropped += 1
     }
-    return dropped
+    return rows.length
 }
 
 // Settled Announcements are kept this long, then pruned.
@@ -173,7 +174,7 @@ const PRUNE_BATCH = 500
 export async function prune(ctx: MutationCtx, now: number) {
     const rows = await ctx.db
         .query('announcements')
-        .withIndex('byDelivered', (q) =>
+        .withIndex('byDeliveredAt', (q) =>
             q.gt('deliveredAt', 0).lt('deliveredAt', now - RETENTION_MS)
         )
         .take(PRUNE_BATCH)

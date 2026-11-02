@@ -28,11 +28,12 @@ export default defineSchema({
 		deliveredAt: v.optional(v.number()),
 		dropped: v.optional(v.boolean()),
 	})
-		.index('byPlatformAndDelivered', ['platform', 'deliveredAt'])
-		.index('byDelivered', ['deliveredAt'])
-		.index('byCommunityAndPlatform', [
+		.index('byPlatformAndDeliveredAt', ['platform', 'deliveredAt'])
+		.index('byDeliveredAt', ['deliveredAt'])
+		.index('byCommunityAndPlatformAndPlatformIdAndDeliveredAt', [
 			'communityId',
 			'platform',
+			'platformId',
 			'deliveredAt',
 		]),
 	activityLog: defineTable({
@@ -103,7 +104,13 @@ export default defineSchema({
 		),
 	})
 		.index('byCommunity', ['communityId'])
-		.index('byPlatform', ['platform', 'platformId']),
+		.index('byPlatform', ['platform', 'platformId'])
+		.index('byCommunityAndPlatformAndEnabled', [
+			'communityId',
+			'platform',
+			'enabled',
+		])
+		.index('byPlatformAndEnabled', ['platform', 'enabled']),
 	queues: defineTable({
 		communityId: v.id('communities'),
 		state: v.union(v.literal('open'), v.literal('paused')),
@@ -134,5 +141,6 @@ export default defineSchema({
 	})
 		.index('byQueue', ['queueId'])
 		.index('byQueueAndReference', ['queueId', 'reference'])
+		.index('byQueueAndPlatformAndStatus', ['queueId', 'platform', 'status'])
 		.index('byUser', ['platformUserId', 'platform', 'queueId']),
 })

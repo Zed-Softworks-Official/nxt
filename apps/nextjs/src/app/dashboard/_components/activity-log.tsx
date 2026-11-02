@@ -86,8 +86,8 @@ export function ActivityLog() {
 						{validEntries.map((entry, i) => (
 							<LogEntry
 								key={entry._id}
-								username={(entry as any).username}
-								event={(entry as any).event as Event}
+								username={entry.username}
+								event={entry.event}
 								creationTime={entry._creationTime}
 								isLast={i === validEntries.length - 1}
 							/>

@@ -1,6 +1,7 @@
 import { mutation } from '@nxt/backend/server'
 import { v } from 'convex/values'
 
+import { requireOwnedCommunity } from '../model/community'
 import { mintLinkState as mint } from '../model/linkState'
 
 /**
@@ -11,19 +12,12 @@ export const mintLinkState = mutation({
     args: {
         platform: v.union(v.literal('discord'), v.literal('twitch')),
     },
-    handler: async (ctx, args): Promise<string> => {
-        const identity = await ctx.auth.getUserIdentity()
-        if (!identity) throw new Error('Not signed in')
-
-        const community = await ctx.db
-            .query('communities')
-            .withIndex('byOwner', (q) => q.eq('ownerId', identity.subject))
-            .first()
-        if (!community) throw new Error('Community not found')
-
+    returns: v.string(),
+    handler: async (ctx, args) => {
+        const community = await requireOwnedCommunity(ctx)
         return await mint(ctx, {
             communityId: community._id,
-            ownerId: identity.subject,
+            ownerId: community.ownerId,
             platform: args.platform,
         })
     },

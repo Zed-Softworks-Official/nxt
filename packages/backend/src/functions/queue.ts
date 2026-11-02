@@ -6,26 +6,16 @@ import {
     query,
 } from '@nxt/backend/server'
 import { v } from 'convex/values'
+import { ownedCommunity, requireOwnedCommunity } from '../model/community'
 import { queueForCommunity } from '../model/pausedQueue'
 import * as Queue from '../model/queue'
+import schema from './schema'
 
 // Queue operations for the dashboard. The caller is the Community owner,
 // identified by their Clerk session, never by an argument.
 
-async function ownedCommunity(ctx: QueryCtx | MutationCtx) {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) return null
-    return await ctx.db
-        .query('communities')
-        .withIndex('byOwner', (q) => q.eq('ownerId', identity.subject))
-        .first()
-}
-
 async function requireOwnedQueue(ctx: MutationCtx) {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) throw new Error('Not signed in')
-    const community = await ownedCommunity(ctx)
-    if (!community) throw new Error('Community not found')
+    const community = await requireOwnedCommunity(ctx)
     return await Queue.ensureQueue(ctx, community._id)
 }
 
@@ -92,19 +82,30 @@ export const done = mutation({
         Queue.done(ctx, await requireOwnedQueue(ctx), args.reference),
 })
 
-// The owner's Activity log, most recent first. Empty when signed out.
+// How many Activity log entries the dashboard shows.
+const ACTIVITY_LOG_LIMIT = 50
+
+// The owner's latest Activity log entries, most recent first. Empty when
+// signed out.
 export const getActivityLog = query({
     args: {},
+    returns: v.array(
+        v.object({
+            _id: v.id('activityLog'),
+            _creationTime: v.number(),
+            ...schema.tables.activityLog.validator.fields,
+        })
+    ),
     handler: async (ctx) => {
         const owned = await ownedQueueForRead(ctx)
         if (!owned?.queue) return []
         const queueId = owned.queue._id
 
-        const entries = await ctx.db
+        return await ctx.db
             .query('activityLog')
             .withIndex('byQueue', (q) => q.eq('queueId', queueId))
-            .collect()
-        return entries.sort((a, b) => b._creationTime - a._creationTime)
+            .order('desc')
+            .take(ACTIVITY_LOG_LIMIT)
     },
 })
 
