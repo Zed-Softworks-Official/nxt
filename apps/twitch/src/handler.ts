@@ -34,7 +34,7 @@ export function createChatHandler(deps: {
             )
 
         const commandName = name.toLowerCase()
-        const command = commands[commandName]
+        const command = commands.get(commandName)
         if (!command) {
             await reply(isTwitchAdmin(message) ? ADMIN_USAGE : USAGE)
             return

@@ -128,3 +128,17 @@ test('replies @mention the chatter by login, not their localised display name', 
         '@kurisu You joined the queue as q-1.',
     ])
 })
+
+test.each(['constructor', 'toString', '__proto__', 'hasOwnProperty'])(
+    '!nxt %s is not a command and gets the usage reply',
+    async (name) => {
+        const backend = await openChannel()
+        const { handle, sent } = twitchBot(backend)
+
+        await handle(chatMessage(`!nxt ${name}`))
+
+        expect(sent.map((entry) => entry.text)).toEqual([
+            '@ada Usage: !nxt join | leave | pos | view',
+        ])
+    }
+)
