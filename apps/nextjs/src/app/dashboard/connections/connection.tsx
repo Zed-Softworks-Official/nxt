@@ -18,10 +18,8 @@ import {
 
 import { env } from "~/env"
 
-export function Connections(props: { clerkId: string }) {
-	const platforms = useQuery(api.platformLinks.getPlatformLinks, {
-		ownerId: props.clerkId,
-	})
+export function Connections() {
+	const platforms = useQuery(api.platformLinks.getPlatformLinks, {})
 
 	if (!platforms) return <>Loading...</>
 

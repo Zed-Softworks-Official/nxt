@@ -1,50 +1,45 @@
-import { api } from '@nxt/backend/api'
 import { query, internalMutation } from '@nxt/backend/server'
 import { v } from 'convex/values'
 
+import { ownedCommunity } from '../model/community'
 import { consumedLinkState, consumeLinkState } from '../model/linkState'
 
-type PlatformLink = {
-	enabled: boolean
-	platform: string
-	platformName: string
-	platformId: string
-	// The linked channel's display name (Twitch only).
-	channelName?: string
-}
+const platformLink = v.object({
+    enabled: v.boolean(),
+    platform: v.union(
+        v.literal('discord'),
+        v.literal('twitch'),
+        v.literal('youtube')
+    ),
+    platformName: v.string(),
+    platformId: v.string(),
+    // The linked channel's display name (Twitch only).
+    channelName: v.optional(v.string()),
+})
 
+// The signed-in owner's Platform Links. Empty when signed out.
 export const getPlatformLinks = query({
-	args: {
-		ownerId: v.string(),
-	},
-	handler: async (ctx, args): Promise<PlatformLink[]> => {
-		const ownerCommunity = await ctx.runQuery(api.communities.getCommunity, {
-			ownerId: args.ownerId,
-		})
+    args: {},
+    returns: v.array(platformLink),
+    handler: async (ctx) => {
+        const community = await ownedCommunity(ctx)
+        if (!community) return []
 
-		if (!ownerCommunity) {
-			throw new Error('Owner not found')
-		}
+        const platformLinks = await ctx.db
+            .query('platformLinks')
+            .withIndex('byCommunity', (q) => q.eq('communityId', community._id))
+            .collect()
 
-		const platformLinks = await ctx.db
-			.query('platformLinks')
-			.withIndex('byCommunity', (q) => q.eq('communityId', ownerCommunity._id))
-			.collect()
-
-		const result = platformLinks.map((platformLink) => {
-			return {
-				enabled: platformLink.enabled,
-				platform: platformLink.platform,
-				platformName: platformLink.platformName,
-				platformId: platformLink.platformId,
-				...(platformLink.twitch
-					? { channelName: platformLink.twitch.displayName }
-					: {}),
-			}
-		})
-
-		return result
-	},
+        return platformLinks.map((platformLink) => ({
+            enabled: platformLink.enabled,
+            platform: platformLink.platform,
+            platformName: platformLink.platformName,
+            platformId: platformLink.platformId,
+            ...(platformLink.twitch
+                ? { channelName: platformLink.twitch.displayName }
+                : {}),
+        }))
+    },
 })
 
 /** Consume a Discord link `state`. Good once; see model/linkState.ts. */
