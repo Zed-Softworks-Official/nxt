@@ -101,8 +101,11 @@ async function channelWhereTyped(
     if (interaction.channel) return channelChoice(interaction.channel)
     if (!interaction.channelId) return null
 
+    // intents: [] means guilds aren't cached; allowUnknownGuild still builds a Channel.
     const { data: fetched, error } = await tryCatch(
-        interaction.client.channels.fetch(interaction.channelId)
+        interaction.client.channels.fetch(interaction.channelId, {
+            allowUnknownGuild: true,
+        })
     )
     if (error || !fetched) return null
 
