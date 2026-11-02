@@ -7,7 +7,7 @@ import {
 import { v } from 'convex/values'
 
 import { dropPendingForLink } from '../model/announcement'
-import { consumeLinkState } from '../model/linkState'
+import { consumedLinkState, consumeLinkState } from '../model/linkState'
 import { queueForCommunity } from '../model/pausedQueue'
 import { twitchClient } from '../model/twitchClient'
 
@@ -18,6 +18,7 @@ import { twitchClient } from '../model/twitchClient'
 /** Consume a Twitch link `state`. Good once; see model/linkState.ts. */
 export const consumeState = internalMutation({
     args: { state: v.string() },
+    returns: consumedLinkState,
     handler: async (ctx, args) => {
         return await consumeLinkState(ctx, {
             platform: 'twitch',
