@@ -30,7 +30,7 @@ export function createChatHandler(deps: {
             deps.sender.reply(
                 message.broadcasterId,
                 message.messageId,
-                `@${message.chatterName} ${text}`
+                `@${message.chatterLogin} ${text}`
             )
 
         const commandName = name.toLowerCase()

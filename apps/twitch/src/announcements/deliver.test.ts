@@ -36,7 +36,7 @@ test('a Twitch Participant Pinged from Discord is @mentioned in the channel, onc
         {
             kind: 'say',
             channelId: 'broadcaster-1',
-            text: "@Ada you're up! (q-1)",
+            text: "@ada you're up! (q-1)",
         },
     ])
 })
@@ -65,8 +65,8 @@ test('a Ping from the dashboard is announced exactly like one from chat', async 
     await deliverPending(asQueueConvex(backend), sender)
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        "@Ada you're up! (q-1)",
-        "@Bob you're up! (q-2)",
+        "@ada you're up! (q-1)",
+        "@bob you're up! (q-2)",
     ])
 })
 
@@ -121,5 +121,34 @@ test('a failed post stays pending and is retried on the next delivery', async ()
     const { sender, sent } = fakeSender()
     await deliverPending(asQueueConvex(backend), sender)
 
-    expect(sent.map((entry) => entry.text)).toEqual(["@Ada you're up! (q-1)"])
+    expect(sent.map((entry) => entry.text)).toEqual(["@ada you're up! (q-1)"])
+})
+
+test('an Announcement @mentions the login while the dashboard shows the display name', async () => {
+    const backend = createTestBackend()
+    await seedTwitchCommunity(backend, {
+        ownerId: 'owner-1',
+        broadcasterId: 'broadcaster-1',
+        state: 'open',
+    })
+    await twitchBot(backend).handle(
+        chatMessage('!nxt join', {
+            chatterLogin: 'kurisu',
+            chatterName: '牧瀬紅莉栖',
+        })
+    )
+    await backend
+        .withIdentity({ subject: 'owner-1' })
+        .mutation(api.queue.ping, { count: 1 })
+    const { sender, sent } = fakeSender()
+
+    await deliverPending(asQueueConvex(backend), sender)
+
+    expect(sent.map((entry) => entry.text)).toEqual([
+        "@kurisu you're up! (q-1)",
+    ])
+    const view = await backend
+        .withIdentity({ subject: 'owner-1' })
+        .query(api.queue.view, {})
+    expect(view?.pinged.map((entry) => entry.username)).toEqual(['牧瀬紅莉栖'])
 })

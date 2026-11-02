@@ -13,6 +13,8 @@ export const join = internalMutation({
         link: Queue.platformLink,
         platformUserId: v.string(),
         username: v.string(),
+        // The login to @mention, where it differs from the display name.
+        login: v.optional(v.string()),
         // The channel the command ran in, kept as the Announcement fallback.
         channelId: v.optional(v.string()),
     },
@@ -24,6 +26,7 @@ export const join = internalMutation({
             platform: args.link.platform,
             platformUserId: args.platformUserId,
             username: args.username,
+            login: args.login,
             channelId: args.channelId,
         })
     },

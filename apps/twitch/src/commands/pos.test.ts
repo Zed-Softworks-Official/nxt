@@ -27,16 +27,16 @@ test('!nxt pos while paused tells a waiting chatter their position', async () =>
     await handle(chatMessage('!nxt pos'))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Ada You are #2 in the queue (q-2).',
+        '@ada You are #2 in the queue (q-2).',
     ])
 })
 
 test.each([
     [
         'notified' as const,
-        '@Ada You are not waiting: you have been pinged (q-1).',
+        '@ada You are not waiting: you have been pinged (q-1).',
     ],
-    ['playing' as const, '@Ada You are not waiting: you are playing (q-1).'],
+    ['playing' as const, '@ada You are not waiting: you are playing (q-1).'],
 ])('!nxt pos when %s says the chatter is not waiting', async (status, expected) => {
     const backend = createTestBackend()
     await seedTwitchCommunity(backend, {
@@ -64,6 +64,6 @@ test('!nxt pos when absent says the chatter is not waiting', async () => {
     await handle(chatMessage('!nxt pos'))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Ada You are not waiting in the queue.',
+        '@ada You are not waiting in the queue.',
     ])
 })

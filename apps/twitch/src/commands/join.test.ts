@@ -24,7 +24,7 @@ test('!nxt join on an open queue adds the chatter and replies with their referen
             kind: 'reply',
             channelId: 'broadcaster-1',
             parentMessageId: message.messageId,
-            text: '@Ada You joined the queue as q-1.',
+            text: '@ada You joined the queue as q-1.',
         },
     ])
     expect(await readQueue(backend, 'owner-1')).toEqual({
@@ -53,7 +53,7 @@ test('!nxt join on a paused queue says it is paused and adds nobody', async () =
     await handle(chatMessage('!nxt join'))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Ada The queue is paused, so you cannot join right now.',
+        '@ada The queue is paused, so you cannot join right now.',
     ])
     expect(await readQueue(backend, 'owner-1')).toEqual({
         state: 'paused',
@@ -76,7 +76,7 @@ test('!nxt join while already in the queue keeps the one entry and says so', asy
     await handle(chatMessage('!nxt join'))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Ada You are already in the queue as q-1.',
+        '@ada You are already in the queue as q-1.',
     ])
     expect(await readQueue(backend, 'owner-1')).toEqual({
         state: 'open',
@@ -112,7 +112,7 @@ test('a renamed chatter keeps their entry because identity is the Twitch user ID
     )
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Lovelace You are already in the queue as q-1.',
+        '@lovelace You are already in the queue as q-1.',
     ])
     expect((await readQueue(backend, 'owner-1'))?.participants).toHaveLength(1)
 })
@@ -137,6 +137,6 @@ test('a Twitch chatter with the same ID as a Discord participant gets a separate
     await handle(chatMessage('!nxt join'))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Ada You joined the queue as q-2.',
+        '@ada You joined the queue as q-2.',
     ])
 })

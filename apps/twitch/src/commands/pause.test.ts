@@ -21,7 +21,7 @@ test('!nxt pause from a moderator pauses an open queue', async () => {
     await handle(chatMessage('!nxt pause', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Ada The queue is paused.',
+        '@ada The queue is paused.',
     ])
     expect((await readQueue(backend, 'owner-1'))?.state).toBe('paused')
 })
@@ -38,7 +38,7 @@ test('!nxt pause on a paused queue says it is already paused', async () => {
     await handle(chatMessage('!nxt pause', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Ada The queue is already paused.',
+        '@ada The queue is already paused.',
     ])
 })
 
@@ -54,7 +54,7 @@ test('!nxt pause from a viewer is refused and leaves the queue open', async () =
     await handle(chatMessage('!nxt pause'))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Ada Only the broadcaster and moderators can run !nxt pause.',
+        '@ada Only the broadcaster and moderators can run !nxt pause.',
     ])
     expect((await readQueue(backend, 'owner-1'))?.state).toBe('open')
 })

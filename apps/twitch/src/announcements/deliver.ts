@@ -29,7 +29,7 @@ export async function deliverPending(
         const { error } = await tryCatch(
             sender.say(
                 announcement.channelId,
-                `@${participant.username} you're up! (${formatReference(participant.reference)})`
+                `@${participant.login ?? participant.username} you're up! (${formatReference(participant.reference)})`
             )
         )
         if (error) {

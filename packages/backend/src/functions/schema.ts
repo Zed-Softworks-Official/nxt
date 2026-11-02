@@ -16,6 +16,9 @@ export default defineSchema({
 		participant: v.object({
 			platformUserId: v.string(),
 			username: v.string(),
+			// The platform login to @mention, where it differs from the
+			// display name (Twitch).
+			login: v.optional(v.string()),
 			reference: v.number(),
 		}),
 		// The channel the Participant last used, if the platform needs one.
@@ -110,6 +113,9 @@ export default defineSchema({
 		// Participant reference, shown as `q-<reference>`. Unique per Community.
 		reference: v.number(),
 		username: v.string(),
+		// The platform login to @mention, where it differs from the display
+		// name (Twitch). Refreshed when the Participant runs join again.
+		login: v.optional(v.string()),
 		platform: v.union(
 			v.literal('discord'),
 			v.literal('twitch'),

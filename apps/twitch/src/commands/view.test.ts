@@ -36,13 +36,13 @@ test('!nxt view lists the front of the queue with references and platforms', asy
             },
         ])
     ).toEqual([
-        '@Ada The queue is open. Next: 1. q-2 Ada (Twitch), 2. q-3 cy (Discord)',
+        '@ada The queue is open. Next: 1. q-2 Ada (Twitch), 2. q-3 cy (Discord)',
     ])
 })
 
 test('!nxt view on an empty paused queue says nobody is waiting', async () => {
     expect(await viewWith('paused', [])).toEqual([
-        '@Ada The queue is paused. Nobody is waiting.',
+        '@ada The queue is paused. Nobody is waiting.',
     ])
 })
 
@@ -54,6 +54,6 @@ test('!nxt view shows the first five and counts the rest', async () => {
     }))
 
     expect(await viewWith('open', participants)).toEqual([
-        '@Ada The queue is open. Next: 1. q-1 p1 (Twitch), 2. q-2 p2 (Twitch), 3. q-3 p3 (Twitch), 4. q-4 p4 (Twitch), 5. q-5 p5 (Twitch) …and 2 more.',
+        '@ada The queue is open. Next: 1. q-1 p1 (Twitch), 2. q-2 p2 (Twitch), 3. q-3 p3 (Twitch), 4. q-4 p4 (Twitch), 5. q-5 p5 (Twitch) …and 2 more.',
     ])
 })

@@ -60,7 +60,7 @@ test('a Twitch Admin moves a Pinged Discord Participant to Playing by reference'
     await handle(chatMessage('!nxt play q-2', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Ada q-2 cy (Discord) is now playing.',
+        '@ada q-2 cy (Discord) is now playing.',
     ])
     expect(await statusOf(backend, 2)).toBe('playing')
     expect(await readActivityLog(backend, 'owner-1')).toEqual([])
@@ -73,7 +73,7 @@ test('!nxt play on someone already Playing is refused with their state', async (
     await handle(chatMessage('!nxt play q-3', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Ada q-3 is playing. Only a Pinged Participant can start playing.',
+        '@ada q-3 is playing. Only a Pinged Participant can start playing.',
     ])
     expect(await statusOf(backend, 3)).toBe('playing')
 })
@@ -85,7 +85,7 @@ test('!nxt play on someone still waiting is refused with their state', async () 
     await handle(chatMessage('!nxt play q-1', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Ada q-1 is waiting in the queue. Only a Pinged Participant can start playing.',
+        '@ada q-1 is waiting in the queue. Only a Pinged Participant can start playing.',
     ])
     expect(await statusOf(backend, 1)).toBe('waiting')
 })
@@ -97,7 +97,7 @@ test('!nxt play with an unknown reference is refused', async () => {
     await handle(chatMessage('!nxt play q-42', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Ada Nobody in the queue has the reference q-42.',
+        '@ada Nobody in the queue has the reference q-42.',
     ])
 })
 
@@ -109,8 +109,8 @@ test('!nxt play with an ended reference is refused like an unknown one', async (
     await handle(chatMessage('!nxt play q-3', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Ada q-3 dot (Twitch) is done.',
-        '@Ada Nobody in the queue has the reference q-3.',
+        '@ada q-3 dot (Twitch) is done.',
+        '@ada Nobody in the queue has the reference q-3.',
     ])
 })
 
@@ -126,7 +126,7 @@ test.each([
 
     await handle(chatMessage(text, MODERATOR))
 
-    expect(sent.map((entry) => entry.text)).toEqual([`@Ada ${reply}`])
+    expect(sent.map((entry) => entry.text)).toEqual([`@ada ${reply}`])
     expect(await statusOf(backend, 2)).toBe('notified')
 })
 
@@ -137,7 +137,7 @@ test('!nxt play from a viewer is refused and changes nothing', async () => {
     await handle(chatMessage('!nxt play q-2'))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Ada Only the broadcaster and moderators can run !nxt play.',
+        '@ada Only the broadcaster and moderators can run !nxt play.',
     ])
     expect(await statusOf(backend, 2)).toBe('notified')
 })

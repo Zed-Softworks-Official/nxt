@@ -20,7 +20,7 @@ test('!nxt open from a moderator opens a paused queue', async () => {
 
     await handle(chatMessage('!nxt open', MODERATOR))
 
-    expect(sent.map((entry) => entry.text)).toEqual(['@Ada The queue is open.'])
+    expect(sent.map((entry) => entry.text)).toEqual(['@ada The queue is open.'])
     expect((await readQueue(backend, 'owner-1'))?.state).toBe('open')
 })
 
@@ -36,7 +36,7 @@ test('!nxt open from a viewer without moderator rights is refused and changes no
     await handle(chatMessage('!nxt open', { badges: { subscriber: '12' } }))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Ada Only the broadcaster and moderators can run !nxt open.',
+        '@ada Only the broadcaster and moderators can run !nxt open.',
     ])
     expect((await readQueue(backend, 'owner-1'))?.state).toBe('paused')
 })
@@ -59,7 +59,7 @@ test('the broadcaster counts as a Twitch Admin in their own channel, badge or no
     )
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Grace The queue is open.',
+        '@grace The queue is open.',
     ])
     expect((await readQueue(backend, 'owner-1'))?.state).toBe('open')
 })
@@ -90,6 +90,6 @@ test('!nxt open on an open queue says it is already open', async () => {
     await handle(chatMessage('!nxt open', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Ada The queue is already open.',
+        '@ada The queue is already open.',
     ])
 })

@@ -13,6 +13,7 @@ import type { Platform, PlatformLinkRef } from './queue'
 const participantSnapshot = v.object({
     platformUserId: v.string(),
     username: v.string(),
+    login: v.optional(v.string()),
     reference: v.number(),
 })
 
@@ -58,6 +59,7 @@ export async function announcePinged(
         participant: {
             platformUserId: participant.platformUserId,
             username: participant.username,
+            ...(participant.login ? { login: participant.login } : {}),
             reference: participant.reference,
         },
         ...(participant.lastChannelId

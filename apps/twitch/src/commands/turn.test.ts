@@ -58,7 +58,7 @@ test('!nxt return puts a Pinged Participant back in their spot with the same ref
     await handle(chatMessage('!nxt return q-2', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Ada q-2 cy (Twitch) is back in the queue.',
+        '@ada q-2 cy (Twitch) is back in the queue.',
     ])
     expect(await participants(backend)).toEqual([
         [1, 'waiting'],
@@ -82,7 +82,7 @@ test('!nxt return on a Playing Participant is refused', async () => {
     await handle(chatMessage('!nxt return q-3', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Ada q-3 is playing. Only a Pinged Participant can return to the queue.',
+        '@ada q-3 is playing. Only a Pinged Participant can return to the queue.',
     ])
     expect(await readActivityLog(backend, 'owner-1')).toEqual([])
 })
@@ -94,7 +94,7 @@ test("a Twitch Admin finishes a Playing Discord Participant's turn and it is log
     await handle(chatMessage('!nxt done q-3', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Ada q-3 dot (Discord) is done.',
+        '@ada q-3 dot (Discord) is done.',
     ])
     expect(await participants(backend)).toEqual([
         [1, 'waiting'],
@@ -117,7 +117,7 @@ test('!nxt done on a Pinged Participant is refused', async () => {
     await handle(chatMessage('!nxt done q-2', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Ada q-2 is Pinged. Only a Playing Participant can finish.',
+        '@ada q-2 is Pinged. Only a Playing Participant can finish.',
     ])
     expect(await participants(backend)).toHaveLength(3)
 })
@@ -130,8 +130,8 @@ test('return and done from a viewer are refused and change nothing', async () =>
     await handle(chatMessage('!nxt done q-3'))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Ada Only the broadcaster and moderators can run !nxt return.',
-        '@Ada Only the broadcaster and moderators can run !nxt done.',
+        '@ada Only the broadcaster and moderators can run !nxt return.',
+        '@ada Only the broadcaster and moderators can run !nxt done.',
     ])
     expect(await readActivityLog(backend, 'owner-1')).toEqual([])
 })
