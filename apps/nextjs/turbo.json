@@ -1,15 +1,15 @@
 {
-	"$schema": "https://v2-11-10.turborepo.dev/schema.json",
-	"extends": ["//"],
-	"tasks": {
-		"build": {
-			"dependsOn": ["^build"],
-			"outputs": [".next/**", "!.next/cache/**", "next-env.d.ts"]
-		},
-		"dev": {
-			"cache": false,
-			"persistent": true
-		}
-	}
+    "$schema": "https://v2-11-4.turborepo.dev/schema.json",
+    "extends": ["//"],
+    "tasks": {
+        "build": {
+            "dependsOn": ["^build"],
+            "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/.env"],
+            "outputs": [".next/**", "!.next/cache/**", "next-env.d.ts"]
+        },
+        "dev": {
+            "cache": false,
+            "persistent": true
+        }
+    }
 }
-

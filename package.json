@@ -7,11 +7,19 @@
         "dev": "turbo run dev",
         "check:write": "turbo run check:write",
         "check-types": "turbo run check-types",
-        "ui": "pnpm --filter @nxt/nextjs run ui"
+        "typecheck": "turbo run typecheck",
+        "test": "turbo run test",
+        "validate": "turbo run typecheck test build",
+        "ui": "pnpm --filter @nxt/nextjs run ui",
+        "prepare": "husky"
     },
     "devDependencies": {
         "@biomejs/biome": "2.3.8",
-        "turbo": "^2.11.10",
+        "@commitlint/cli": "^21.2.3",
+        "@commitlint/config-conventional": "^21.2.3",
+        "husky": "^9.1.7",
+        "lint-staged": "^17.6.0",
+        "turbo": "^2.11.4",
         "typescript": "5.9.2"
     },
     "packageManager": "pnpm@12.6.0",

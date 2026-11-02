@@ -23,8 +23,12 @@
             "outputs": [".cache/.eslintcache"]
         },
         "typecheck": {
-            "dependsOn": ["^topo", "^build"],
-            "outputs": [".cache/tsbuildinfo.json"]
+            "dependsOn": ["^typecheck"],
+            "outputs": []
+        },
+        "test": {
+            "dependsOn": ["^test"],
+            "outputs": []
         },
         "clean": {
             "cache": false
