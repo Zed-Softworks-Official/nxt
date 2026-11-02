@@ -9,7 +9,8 @@
         "check-types": "turbo run check-types",
         "typecheck": "turbo run typecheck",
         "test": "turbo run test",
-        "validate": "turbo run typecheck test build",
+        "validate": "turbo run typecheck test",
+        "ci": "turbo run typecheck test build",
         "ui": "pnpm --filter @nxt/nextjs run ui",
         "prepare": "husky"
     },
