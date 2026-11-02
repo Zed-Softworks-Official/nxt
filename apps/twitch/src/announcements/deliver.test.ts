@@ -36,7 +36,7 @@ test('a Twitch Participant Pinged from Discord is @mentioned in the channel, onc
         {
             kind: 'say',
             channelId: 'broadcaster-1',
-            text: "@ada you're up! (q-1)",
+            text: "@ada you're up!",
         },
     ])
 })
@@ -65,8 +65,8 @@ test('a Ping from the dashboard is announced exactly like one from chat', async 
     await deliverPending(asQueueConvex(backend), sender)
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        "@ada you're up! (q-1)",
-        "@bob you're up! (q-2)",
+        "@ada you're up!",
+        "@bob you're up!",
     ])
 })
 
@@ -121,7 +121,7 @@ test('a failed post stays pending and is retried on the next delivery', async ()
     const { sender, sent } = fakeSender()
     await deliverPending(asQueueConvex(backend), sender)
 
-    expect(sent.map((entry) => entry.text)).toEqual(["@ada you're up! (q-1)"])
+    expect(sent.map((entry) => entry.text)).toEqual(["@ada you're up!"])
 })
 
 test('an Announcement @mentions the login while the dashboard shows the display name', async () => {
@@ -144,9 +144,7 @@ test('an Announcement @mentions the login while the dashboard shows the display 
 
     await deliverPending(asQueueConvex(backend), sender)
 
-    expect(sent.map((entry) => entry.text)).toEqual([
-        "@kurisu you're up! (q-1)",
-    ])
+    expect(sent.map((entry) => entry.text)).toEqual(["@kurisu you're up!"])
     const view = await backend
         .withIdentity({ subject: 'owner-1' })
         .query(api.queue.view, {})

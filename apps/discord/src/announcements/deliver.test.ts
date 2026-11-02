@@ -58,7 +58,7 @@ test('a Pinged Participant is mentioned in the Command channel, once', async () 
     await deliverPending(asQueueConvex(backend), sender)
 
     expect(posts).toEqual([
-        { channelId: 'commands', content: "<@ada> you're up! (q-1)" },
+        { channelId: 'commands', content: "<@ada> you're up!" },
     ])
 })
 
@@ -80,8 +80,8 @@ test('without a Command channel the mention goes where the Participant last join
     await deliverPending(asQueueConvex(backend), sender)
 
     expect(posts).toEqual([
-        { channelId: 'general', content: "<@ada> you're up! (q-1)" },
-        { channelId: 'lobby', content: "<@bob> you're up! (q-2)" },
+        { channelId: 'general', content: "<@ada> you're up!" },
+        { channelId: 'lobby', content: "<@bob> you're up!" },
     ])
 })
 
@@ -105,7 +105,7 @@ test('a Twitch Admin pinging a Discord Participant is announced in Discord', asy
     await deliverPending(asQueueConvex(backend), sender)
 
     expect(posts).toEqual([
-        { channelId: 'commands', content: "<@ada> you're up! (q-1)" },
+        { channelId: 'commands', content: "<@ada> you're up!" },
     ])
 })
 
@@ -161,6 +161,6 @@ test('a failed post stays pending and is retried on the next delivery', async ()
     await deliverPending(asQueueConvex(backend), sender)
 
     expect(posts).toEqual([
-        { channelId: 'general', content: "<@ada> you're up! (q-1)" },
+        { channelId: 'general', content: "<@ada> you're up!" },
     ])
 })

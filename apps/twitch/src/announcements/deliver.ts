@@ -1,5 +1,4 @@
 import { internal } from '@nxt/backend/api'
-import { formatReference } from '@nxt/backend/reference'
 import { tryCatch } from '@nxt/utils'
 
 import type { ChatSender } from '~/lib/chat'
@@ -29,7 +28,7 @@ export async function deliverPending(
         const { error } = await tryCatch(
             sender.say(
                 announcement.channelId,
-                `@${participant.login ?? participant.username} you're up! (${formatReference(participant.reference)})`
+                `@${participant.login ?? participant.username} you're up!`
             )
         )
         if (error) {

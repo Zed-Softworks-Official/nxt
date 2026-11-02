@@ -1,5 +1,4 @@
 import { internal } from '@nxt/backend/api'
-import { formatReference } from '@nxt/backend/reference'
 import { tryCatch } from '@nxt/utils'
 
 import type { QueueConvex } from '~/lib/convex'
@@ -34,7 +33,7 @@ export async function deliverPending(
         const { error } = await tryCatch(
             sender.send(
                 announcement.channelId,
-                `<@${participant.platformUserId}> you're up! (${formatReference(participant.reference)})`
+                `<@${participant.platformUserId}> you're up!`
             )
         )
         if (error) {
