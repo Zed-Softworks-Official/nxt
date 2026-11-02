@@ -3,7 +3,7 @@ import type { CommandInteraction } from 'discord.js'
 import { PermissionFlagsBits, SlashCommandBuilder } from 'discord.js'
 
 import { getConvex, type QueueConvex } from '~/lib/convex'
-import { describeParticipant } from '~/lib/participant'
+import { describeParticipant } from '@nxt/backend/participant'
 import { editDeferred, NOT_CONNECTED, runQueueCommand } from '~/lib/queueGate'
 import type { Command } from '~/lib/types'
 

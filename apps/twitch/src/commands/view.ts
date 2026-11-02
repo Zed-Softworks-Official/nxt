@@ -1,7 +1,7 @@
 import { internal } from '@nxt/backend/api'
 import { formatReference } from '@nxt/backend/reference'
 
-import { platformLabel } from '~/lib/participant'
+import { platformLabel } from '@nxt/backend/participant'
 
 import type { TwitchCommand } from './types'
 

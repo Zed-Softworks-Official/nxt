@@ -1,6 +1,5 @@
+import { platformLabel, type Platform } from "@nxt/backend/participant"
 import { formatReference } from "@nxt/backend/reference"
-
-import { useMemo } from "react"
 
 import { cn } from "~/lib/utils"
 import { Badge } from "~/components/ui/badge"
@@ -16,20 +15,7 @@ export function ReferenceBadge(props: { reference: number }) {
 	)
 }
 
-export function PlatformBadge(props: { platform: "discord" | "twitch" | "youtube" }) {
-	const badgeText = useMemo(() => {
-		switch (props.platform) {
-			case "discord":
-				return "Discord"
-			case "twitch":
-				return "Twitch"
-			case "youtube":
-				return "YouTube"
-			default:
-				return "Unknown"
-		}
-	}, [props.platform])
-
+export function PlatformBadge(props: { platform: Platform }) {
 	return (
 		<Badge
 			className={cn(
@@ -44,7 +30,7 @@ export function PlatformBadge(props: { platform: "discord" | "twitch" | "youtube
 				}
 			)}
 		>
-			{badgeText}
+			{platformLabel(props.platform)}
 		</Badge>
 	)
 }

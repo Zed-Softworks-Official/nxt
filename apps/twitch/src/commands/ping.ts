@@ -1,6 +1,6 @@
 import { internal } from '@nxt/backend/api'
 
-import { describeParticipant } from '~/lib/participant'
+import { describeParticipant } from '@nxt/backend/participant'
 
 import type { TwitchCommand } from './types'
 
