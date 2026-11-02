@@ -9,10 +9,10 @@ export const linked = internalQuery({
     handler: async (ctx) => {
         const links = await ctx.db
             .query('platformLinks')
-            .withIndex('byPlatform', (q) => q.eq('platform', 'twitch'))
+            .withIndex('byPlatformAndEnabled', (q) =>
+                q.eq('platform', 'twitch').eq('enabled', true)
+            )
             .collect()
-        return links
-            .filter((link) => link.enabled)
-            .map((link) => link.platformId)
+        return links.map((link) => link.platformId)
     },
 })

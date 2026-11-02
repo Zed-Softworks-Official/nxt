@@ -23,7 +23,7 @@ test('!nxt leave while paused removes the waiting chatter', async () => {
     await handle(chatMessage('!nxt leave'))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Ada You left the queue.',
+        '@ada You left the queue.',
     ])
     expect(await readQueue(backend, 'owner-1')).toEqual({
         state: 'paused',
@@ -51,6 +51,6 @@ test('!nxt leave when not in the queue says so', async () => {
     await handle(chatMessage('!nxt leave'))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Ada You are not in the queue.',
+        '@ada You are not in the queue.',
     ])
 })

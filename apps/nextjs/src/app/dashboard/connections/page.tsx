@@ -15,7 +15,7 @@ export default async function ConnectionsPage() {
 					Manage your bot connections here.
 				</span>
 			</div>
-			<Connections clerkId={user.id} />
+			<Connections />
 		</div>
 	)
 }

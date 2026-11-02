@@ -9,6 +9,8 @@ import { Hono } from 'hono'
 import { HonoWithConvex, HttpRouterWithHono } from 'convex-helpers/server/hono'
 
 import { env } from '../env'
+import { discordClient } from '../model/discordClient'
+import { completeDiscordLink } from '../model/discordLink'
 import { twitchClient } from '../model/twitchClient'
 import { completeTwitchLink } from '../model/twitchLink'
 
@@ -39,19 +41,21 @@ app.post('/clerk', async (ctx) => {
 	return ctx.json({ message: 'Webhook Received' })
 })
 
+// Discord redirects the owner here after the bot install started from the
+// dashboard. The guild comes from the code exchange, never the query.
 app.get('/discord', async (ctx) => {
-	const { state, guild_id: guildId } = ctx.req.query()
-	if (!state || !guildId)
-		return ctx.redirect('http://localhost:3000/dashboard/connections?type=error')
+	const { state, code, error } = ctx.req.query()
+	const result = await completeDiscordLink(ctx.env, discordClient(), {
+		state,
+		code,
+		error,
+	})
+	if (!result.ok) {
+		console.warn('Discord link refused: ', result.reason)
+		return ctx.redirect(connectionsUrl({ type: 'error', reason: result.reason }))
+	}
 
-	const result = await ctx.env.runMutation(
-		internal.platformLinks.linkDiscordGuild,
-		{ state, guildId }
-	)
-	if (!result.ok)
-		return ctx.redirect('http://localhost:3000/dashboard/connections?type=error')
-
-	return ctx.redirect('http://localhost:3000/dashboard/connections?type=success')
+	return ctx.redirect(connectionsUrl({ type: 'success' }))
 })
 
 // Twitch redirects the broadcaster here after the OAuth sign-in started from
@@ -65,13 +69,20 @@ app.get('/twitch', async (ctx) => {
 	})
 	if (!result.ok) {
 		console.warn('Twitch link refused: ', result.reason)
-		return ctx.redirect(
-			`http://localhost:3000/dashboard/connections?type=error&reason=${result.reason}`
-		)
+		return ctx.redirect(connectionsUrl({ type: 'error', reason: result.reason }))
 	}
 
-	return ctx.redirect('http://localhost:3000/dashboard/connections?type=success')
+	return ctx.redirect(connectionsUrl({ type: 'success' }))
 })
+
+// The dashboard's connections page, where link callbacks report the outcome.
+function connectionsUrl(params: Record<string, string>) {
+	const url = new URL('/dashboard/connections', env.DASHBOARD_URL)
+	for (const [key, value] of Object.entries(params)) {
+		url.searchParams.set(key, value)
+	}
+	return url.toString()
+}
 
 async function clerkValidateRequest(req: Request) {
 	const payloadString = await req.text()

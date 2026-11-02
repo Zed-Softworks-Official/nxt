@@ -48,7 +48,9 @@ async function twitchCallback(
 }
 
 async function dashboardLinks(backend: TestBackend, ownerId: string) {
-    return await backend.query(api.platformLinks.getPlatformLinks, { ownerId })
+    return await backend
+        .withIdentity({ subject: ownerId })
+        .query(api.platformLinks.getPlatformLinks, {})
 }
 
 test('a valid sign-in links the broadcaster channel and subscribes to its chat', async () => {
@@ -350,4 +352,26 @@ test('an unlinked channel can be linked again, by the same or another Community'
         'broadcaster-1',
     ])
     expect(twitch.subscribedChannels()).toEqual(['broadcaster-1'])
+})
+
+test('the dashboard lists only the signed-in owner\'s links', async () => {
+    const backend = createTestBackend()
+    await seedCommunity(backend, {
+        ownerId: 'owner-1',
+        state: 'none',
+        links: [{ platform: 'discord', platformId: 'guild-1' }],
+    })
+
+    expect(
+        await backend.query(api.platformLinks.getPlatformLinks, {})
+    ).toEqual([])
+    expect(await dashboardLinks(backend, 'stranger')).toEqual([])
+    expect(await dashboardLinks(backend, 'owner-1')).toEqual([
+        {
+            platform: 'discord',
+            platformId: 'guild-1',
+            platformName: 'Discord',
+            enabled: true,
+        },
+    ])
 })

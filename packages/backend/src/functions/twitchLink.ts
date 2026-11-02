@@ -7,7 +7,8 @@ import {
 import { v } from 'convex/values'
 
 import { dropPendingForLink } from '../model/announcement'
-import { consumeLinkState } from '../model/linkState'
+import { communityForOwner } from '../model/community'
+import { consumedLinkState, consumeLinkState } from '../model/linkState'
 import { queueForCommunity } from '../model/pausedQueue'
 import { twitchClient } from '../model/twitchClient'
 
@@ -18,6 +19,7 @@ import { twitchClient } from '../model/twitchClient'
 /** Consume a Twitch link `state`. Good once; see model/linkState.ts. */
 export const consumeState = internalMutation({
     args: { state: v.string() },
+    returns: consumedLinkState,
     handler: async (ctx, args) => {
         return await consumeLinkState(ctx, {
             platform: 'twitch',
@@ -116,34 +118,33 @@ export const disableLink = internalMutation({
     args: { ownerId: v.string() },
     returns: v.array(v.string()),
     handler: async (ctx, args) => {
-        const community = await ctx.db
-            .query('communities')
-            .withIndex('byOwner', (q) => q.eq('ownerId', args.ownerId))
-            .first()
+        const community = await communityForOwner(ctx, args.ownerId)
         if (!community) throw new Error('Community not found')
 
-        const links = await ctx.db
+        const twitchLinks = await ctx.db
             .query('platformLinks')
-            .withIndex('byCommunity', (q) => q.eq('communityId', community._id))
+            .withIndex('byCommunityAndPlatformAndEnabled', (q) =>
+                q
+                    .eq('communityId', community._id)
+                    .eq('platform', 'twitch')
+                    .eq('enabled', true)
+            )
             .collect()
-        const twitchLinks = links.filter(
-            (link) => link.platform === 'twitch' && link.enabled
-        )
         if (twitchLinks.length === 0) return []
 
         const queue = await queueForCommunity(ctx, community._id)
         if (queue) {
-            const participants = await ctx.db
+            const waiting = await ctx.db
                 .query('participants')
-                .withIndex('byQueue', (q) => q.eq('queueId', queue._id))
+                .withIndex('byQueueAndPlatformAndStatus', (q) =>
+                    q
+                        .eq('queueId', queue._id)
+                        .eq('platform', 'twitch')
+                        .eq('status', 'waiting')
+                )
                 .collect()
-            for (const participant of participants) {
-                if (
-                    participant.platform === 'twitch' &&
-                    participant.status === 'waiting'
-                ) {
-                    await ctx.db.delete('participants', participant._id)
-                }
+            for (const participant of waiting) {
+                await ctx.db.delete('participants', participant._id)
             }
         }
 

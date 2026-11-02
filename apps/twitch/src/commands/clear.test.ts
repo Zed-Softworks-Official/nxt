@@ -51,7 +51,7 @@ test('!nxt clear removes waiting Participants from every platform and leaves Pin
     await handle(chatMessage('!nxt clear', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Ada Cleared 2 from the queue.',
+        '@ada Cleared 2 from the queue.',
     ])
     expect(
         (await readQueue(backend, 'owner-1'))?.participants.map((p) => [
@@ -79,7 +79,7 @@ test('!nxt clear with nobody waiting says the queue is already empty', async () 
     await handle(chatMessage('!nxt clear', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Ada Nobody is waiting, so there is nothing to clear.',
+        '@ada Nobody is waiting, so there is nothing to clear.',
     ])
 })
 
@@ -98,7 +98,7 @@ test('!nxt clear from a viewer is refused and removes nobody', async () => {
     await handle(chatMessage('!nxt clear'))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Ada Only the broadcaster and moderators can run !nxt clear.',
+        '@ada Only the broadcaster and moderators can run !nxt clear.',
     ])
     expect((await readQueue(backend, 'owner-1'))?.participants).toHaveLength(1)
 })

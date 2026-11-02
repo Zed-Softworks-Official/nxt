@@ -1,20 +1,11 @@
 import { internal } from '@nxt/backend/api'
+import { describeParticipant, TURN_STATE_WORDING } from '@nxt/backend/participant'
 import { formatReference, parseReference } from '@nxt/backend/reference'
-
-import { describeParticipant } from '~/lib/participant'
 
 import type { TwitchCommand } from './types'
 
 // play, return and done share the backend's Turn mutation shape.
 type TurnMutation = typeof internal.platformQueue.play
-
-type TurnState = 'waiting' | 'pinged' | 'playing'
-
-const STATE_WORDING: Record<TurnState, string> = {
-    waiting: 'is waiting in the queue',
-    pinged: 'is Pinged',
-    playing: 'is playing',
-}
 
 // A Turn command that targets one Participant by reference (ADR-0005). The
 // Participant may be on any platform linked to the Community.
@@ -46,7 +37,7 @@ function turnCommand(spec: {
                 case 'unknown_reference':
                     return `Nobody in the queue has the reference ${formatReference(reference)}.`
                 case 'wrong_state':
-                    return `${formatReference(reference)} ${STATE_WORDING[result.status]}. ${spec.requirement}`
+                    return `${formatReference(reference)} ${TURN_STATE_WORDING[result.status]}. ${spec.requirement}`
                 case 'ok':
                     return spec.succeeded(
                         describeParticipant(result.participant)

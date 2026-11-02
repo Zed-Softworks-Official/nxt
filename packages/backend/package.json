@@ -23,7 +23,8 @@
 		".": "./src/index.ts",
 		"./react": "./src/react.ts",
 		"./testing": "./src/testing/index.ts",
-		"./reference": "./src/reference.ts"
+		"./reference": "./src/reference.ts",
+		"./participant": "./src/participant.ts"
 	},
 	"devDependencies": {
 		"@edge-runtime/vm": "^5.0.0",

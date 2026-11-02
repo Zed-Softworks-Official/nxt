@@ -59,8 +59,8 @@ test("one chatter's cooldown does not hold back another chatter", async () => {
     )
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Ada You are not waiting in the queue.',
-        '@Bob You are not waiting in the queue.',
+        '@ada You are not waiting in the queue.',
+        '@bob You are not waiting in the queue.',
     ])
 })
 
@@ -81,8 +81,8 @@ test('join and leave are not cooled down', async () => {
     await handle(chatMessage('!nxt join'))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@Ada You joined the queue as q-1.',
-        '@Ada You left the queue.',
-        '@Ada You joined the queue as q-2.',
+        '@ada You joined the queue as q-1.',
+        '@ada You left the queue.',
+        '@ada You joined the queue as q-2.',
     ])
 })

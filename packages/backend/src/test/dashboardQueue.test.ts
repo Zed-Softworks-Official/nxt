@@ -119,3 +119,36 @@ test('signed-out Turn commands are rejected', async () => {
     )
     expect((await readQueue(backend, 'owner-1'))?.participants).toHaveLength(2)
 })
+
+test('the Activity log shows the 50 most recent entries, newest first', async () => {
+    const backend = await seed()
+    await backend.run(async (ctx) => {
+        const community = await ctx.db
+            .query('communities')
+            .withIndex('byOwner', (q) => q.eq('ownerId', 'owner-1'))
+            .first()
+        const queue = await ctx.db
+            .query('queues')
+            .withIndex('byCommunity', (q) =>
+                q.eq('communityId', community!._id)
+            )
+            .first()
+        for (let i = 1; i <= 60; i++) {
+            await ctx.db.insert('activityLog', {
+                queueId: queue!._id,
+                username: `player-${i}`,
+                platform: 'discord',
+                platformUserId: `d-${i}`,
+                event: 'finished',
+            })
+        }
+    })
+
+    const log = await backend
+        .withIdentity({ subject: 'owner-1' })
+        .query(api.queue.getActivityLog, {})
+
+    expect(log).toHaveLength(50)
+    expect(log[0]?.username).toBe('player-60')
+    expect(log[49]?.username).toBe('player-11')
+})

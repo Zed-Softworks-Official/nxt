@@ -2,6 +2,7 @@
 import { convexTest } from 'convex-test'
 
 import schema from '../functions/schema'
+import { setDiscordClient } from '../model/discordClient'
 import {
     setTwitchClient,
     type TwitchClient,
@@ -298,4 +299,20 @@ export function installFakeTwitch(signIns: Record<string, FakeTwitchSignIn>) {
         subscribedChannels: () => [...subscriptions.keys()].sort(),
         uninstall: () => setTwitchClient(null),
     }
+}
+
+// ---- Discord linking --------------------------------------------------------
+
+// A fake Discord, installed as the backend's Discord client. Each
+// authorization `code` is a bot install in one guild; an unknown code fails
+// the exchange.
+export function installFakeDiscord(installs: Record<string, { guildId: string }>) {
+    setDiscordClient({
+        async exchangeBotInstallCode(code) {
+            const install = installs[code]
+            if (!install) throw new Error('Invalid authorization code')
+            return { guildId: install.guildId }
+        },
+    })
+    return { uninstall: () => setDiscordClient(null) }
 }

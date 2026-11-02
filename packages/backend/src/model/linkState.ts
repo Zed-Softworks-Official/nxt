@@ -1,5 +1,6 @@
 import type { Doc, Id } from '@nxt/backend/dataModel'
 import type { MutationCtx } from '@nxt/backend/server'
+import { v } from 'convex/values'
 
 import { env } from '../env'
 
@@ -37,6 +38,19 @@ export async function mintLinkState(
 export type ConsumedLinkState =
     | { ok: true; communityId: Id<'communities'>; ownerId: string }
     | { ok: false; reason: 'invalid' | 'expired' }
+
+/** Validator for a `ConsumedLinkState`. */
+export const consumedLinkState = v.union(
+    v.object({
+        ok: v.literal(true),
+        communityId: v.id('communities'),
+        ownerId: v.string(),
+    }),
+    v.object({
+        ok: v.literal(false),
+        reason: v.union(v.literal('invalid'), v.literal('expired')),
+    })
+)
 
 /**
  * Verify and consume a `state` token for `platform`. A token is good once: a

@@ -9,6 +9,7 @@ export const join: TwitchCommand = {
             link,
             platformUserId: message.chatterId,
             username: message.chatterName,
+            login: message.chatterLogin,
         })
         switch (result.kind) {
             case 'unlinked':

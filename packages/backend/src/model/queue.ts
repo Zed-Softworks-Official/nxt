@@ -115,14 +115,20 @@ async function nextReference(ctx: MutationCtx, communityId: Id<'communities'>) {
 export async function join(
     ctx: MutationCtx,
     queue: QueueDoc,
-    who: Who & { username: string; channelId?: string }
+    who: Who & { username: string; login?: string; channelId?: string }
 ) {
     const existing = await findParticipant(ctx, queue._id, who)
     if (existing) {
-        if (who.channelId && existing.lastChannelId !== who.channelId) {
-            await ctx.db.patch('participants', existing._id, {
-                lastChannelId: who.channelId,
-            })
+        const changes = {
+            ...(who.channelId && existing.lastChannelId !== who.channelId
+                ? { lastChannelId: who.channelId }
+                : {}),
+            ...(who.login && existing.login !== who.login
+                ? { login: who.login }
+                : {}),
+        }
+        if (Object.keys(changes).length > 0) {
+            await ctx.db.patch('participants', existing._id, changes)
         }
         return { kind: 'already' as const, reference: existing.reference }
     }
@@ -133,6 +139,7 @@ export async function join(
         queueId: queue._id,
         reference,
         username: who.username,
+        ...(who.login ? { login: who.login } : {}),
         platform: who.platform,
         platformUserId: who.platformUserId,
         ...(who.channelId ? { lastChannelId: who.channelId } : {}),

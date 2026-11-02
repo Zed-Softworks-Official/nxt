@@ -2,11 +2,10 @@
 
 import { api } from "@nxt/backend/api"
 import { useMutation, useQuery } from "@nxt/backend/react"
-import { formatReference } from "@nxt/backend/reference"
 
 import { Radio, CheckCheck } from "lucide-react"
-import { useMemo } from "react"
 
+import { PlatformBadge, ReferenceBadge } from "./participant-badges"
 import { Card, CardHeader, CardTitle, CardContent } from "~/components/ui/card"
 import {
 	Item,
@@ -15,7 +14,6 @@ import {
 	ItemTitle,
 	ItemActions,
 } from "~/components/ui/item"
-import { Badge } from "~/components/ui/badge"
 import { Button } from "~/components/ui/button"
 import {
 	Empty,
@@ -24,7 +22,6 @@ import {
 	EmptyTitle,
 	EmptyDescription,
 } from "~/components/ui/empty"
-import { cn } from "~/lib/utils"
 
 export function CurrentlyPlaying() {
 	const data = useQuery(api.queue.view, {})
@@ -99,46 +96,5 @@ export function CurrentlyPlaying() {
 				)}
 			</CardContent>
 		</Card>
-	)
-}
-
-function ReferenceBadge(props: { reference: number }) {
-	return (
-		<span className="shrink-0 rounded-md border border-border/70 bg-background/80 px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
-			{formatReference(props.reference)}
-		</span>
-	)
-}
-
-function PlatformBadge(props: { platform: "discord" | "twitch" | "youtube" }) {
-	const badgeText = useMemo(() => {
-		switch (props.platform) {
-			case "discord":
-				return "Discord"
-			case "twitch":
-				return "Twitch"
-			case "youtube":
-				return "YouTube"
-			default:
-				return "Unknown"
-		}
-	}, [props.platform])
-
-	return (
-		<Badge
-			className={cn(
-				"rounded-full border px-2 py-1 text-[10px] font-semibold tracking-wide uppercase",
-				{
-					"border-[#5864f0]/60 bg-[#5864f0]/15 text-[#5864f0]":
-						props.platform === "discord",
-					"border-[#9146ff]/60 bg-[#9146ff]/15 text-[#9146ff]":
-						props.platform === "twitch",
-					"border-[#ff0000]/60 bg-[#ff0000]/15 text-[#ff0000]":
-						props.platform === "youtube",
-				}
-			)}
-		>
-			{badgeText}
-		</Badge>
 	)
 }
