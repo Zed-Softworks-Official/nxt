@@ -22,26 +22,26 @@ async function botWithClock() {
 
 test.each([
     'pos',
-    'view',
-])('!nxt %s is ignored when the same chatter repeats it within the cooldown', async (command) => {
+    'viewq',
+])('!%s is ignored when the same chatter repeats it within the cooldown', async (command) => {
     const { handle, sent, clock } = await botWithClock()
 
-    await handle(chatMessage(`!nxt ${command}`))
+    await handle(chatMessage(`!${command}`))
     clock.now += COOLDOWN_MS - 1
-    await handle(chatMessage(`!nxt ${command}`))
+    await handle(chatMessage(`!${command}`))
 
     expect(sent).toHaveLength(1)
 })
 
 test.each([
     'pos',
-    'view',
-])('!nxt %s answers again once the cooldown has passed', async (command) => {
+    'viewq',
+])('!%s answers again once the cooldown has passed', async (command) => {
     const { handle, sent, clock } = await botWithClock()
 
-    await handle(chatMessage(`!nxt ${command}`))
+    await handle(chatMessage(`!${command}`))
     clock.now += COOLDOWN_MS
-    await handle(chatMessage(`!nxt ${command}`))
+    await handle(chatMessage(`!${command}`))
 
     expect(sent).toHaveLength(2)
 })
@@ -49,9 +49,9 @@ test.each([
 test("one chatter's cooldown does not hold back another chatter", async () => {
     const { handle, sent } = await botWithClock()
 
-    await handle(chatMessage('!nxt pos'))
+    await handle(chatMessage('!pos'))
     await handle(
-        chatMessage('!nxt pos', {
+        chatMessage('!pos', {
             chatterId: 'user-2',
             chatterLogin: 'bob',
             chatterName: 'Bob',
@@ -64,21 +64,21 @@ test("one chatter's cooldown does not hold back another chatter", async () => {
     ])
 })
 
-test('pos and view have separate cooldowns', async () => {
+test('pos and viewq have separate cooldowns', async () => {
     const { handle, sent } = await botWithClock()
 
-    await handle(chatMessage('!nxt pos'))
-    await handle(chatMessage('!nxt view'))
+    await handle(chatMessage('!pos'))
+    await handle(chatMessage('!viewq'))
 
     expect(sent).toHaveLength(2)
 })
 
-test('join and leave are not cooled down', async () => {
+test('joinq and leaveq are not cooled down', async () => {
     const { handle, sent } = await botWithClock()
 
-    await handle(chatMessage('!nxt join'))
-    await handle(chatMessage('!nxt leave'))
-    await handle(chatMessage('!nxt join'))
+    await handle(chatMessage('!joinq'))
+    await handle(chatMessage('!leaveq'))
+    await handle(chatMessage('!joinq'))
 
     expect(sent.map((entry) => entry.text)).toEqual([
         '@ada You joined the queue as q-1.',

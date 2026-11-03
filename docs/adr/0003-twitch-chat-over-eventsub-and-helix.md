@@ -16,4 +16,4 @@ The Twitch adapter receives `channel.chat.message` through EventSub and replies 
 - Each Twitch Platform Link needs its own EventSub subscription, which Nxt creates when the channel is linked and deletes when it is unlinked.
 - Moderator checks come from the badges on each chat event, so the adapter does not call the API for every command.
 - The Nxt bot account grants `user:read:chat`, `user:write:chat`, and `user:bot`. Each linking broadcaster grants `channel:bot`, which lets the subscription and replies use an app access token.
-- Twitch commands use one prefix, `!nxt <command>`, so they do not collide with other bots in the channel.
+- Twitch commands use the same names as the Discord slash commands, as `!<command>` (for example `!joinq`, `!viewq`, `!startq`). The `q` suffix keeps them clear of other bots' commands, and Nxt ignores any `!` command it does not know. `!nxt` replies with the command list.

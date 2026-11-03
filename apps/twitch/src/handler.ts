@@ -3,13 +3,15 @@ import type { ChatMessage, ChatSender } from '~/lib/chat'
 import type { QueueConvex } from '~/lib/convex'
 import { createCooldown } from '~/lib/cooldown'
 
-const PREFIX = '!nxt'
-const USAGE = 'Usage: !nxt join | leave | pos | view'
-const ADMIN_USAGE = `${USAGE}. Admins: open | pause | clear | ping [count] | play <ref> | return <ref> | done <ref>`
+const PREFIX = '!'
+// `!nxt` is the help command: it lists the commands instead of running one.
+const HELP = 'nxt'
+const USAGE = 'Usage: !joinq | !leaveq | !pos | !viewq'
+const ADMIN_USAGE = `${USAGE}. Admins: !startq | !endq | !clearq | !pingq [count] | !playq <ref> | !returnq <ref> | !doneq <ref>`
 const COOLDOWN_MS = 15_000
 
 // Builds the one handler every `channel.chat.message` event goes through. It
-// parses `!nxt <command> [arg]`, runs the command against the Queue module and
+// parses `!<command> [arg]`, runs the command against the Queue module and
 // replies `@user …` in the channel. The cooldown state lives in the closure.
 export function createChatHandler(deps: {
     convex: QueueConvex
@@ -23,8 +25,9 @@ export function createChatHandler(deps: {
     return async function handleChatMessage(message: ChatMessage) {
         if (message.chatterId === deps.botUserId) return
 
-        const [prefix, name = '', ...rest] = message.text.trim().split(/\s+/)
-        if (prefix?.toLowerCase() !== PREFIX) return
+        const [first = '', ...rest] = message.text.trim().split(/\s+/)
+        if (!first.startsWith(PREFIX)) return
+        const commandName = first.slice(PREFIX.length).toLowerCase()
 
         const reply = (text: string) =>
             deps.sender.reply(
@@ -33,16 +36,19 @@ export function createChatHandler(deps: {
                 `@${message.chatterLogin} ${text}`
             )
 
-        const commandName = name.toLowerCase()
-        const command = commands.get(commandName)
-        if (!command) {
+        if (commandName === HELP) {
             await reply(isTwitchAdmin(message) ? ADMIN_USAGE : USAGE)
             return
         }
 
+        // Other bots share the channel, so unknown `!` commands are not ours
+        // and get no reply.
+        const command = commands.get(commandName)
+        if (!command) return
+
         if (command.admin && !isTwitchAdmin(message)) {
             await reply(
-                `Only the broadcaster and moderators can run !nxt ${commandName}.`
+                `Only the broadcaster and moderators can run !${commandName}.`
             )
             return
         }

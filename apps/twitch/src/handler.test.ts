@@ -18,23 +18,24 @@ async function openChannel() {
     return backend
 }
 
-test('messages that do not start with !nxt are ignored', async () => {
+test('messages that do not start with a command are ignored', async () => {
     const backend = await openChannel()
     const { handle, sent } = twitchBot(backend)
 
     await handle(chatMessage('hello chat'))
-    await handle(chatMessage('!nxtjoin'))
-    await handle(chatMessage('please !nxt join'))
+    await handle(chatMessage('joinq'))
+    await handle(chatMessage('please !joinq'))
+    await handle(chatMessage('! joinq'))
 
     expect(sent).toEqual([])
     expect((await readQueue(backend, 'owner-1'))?.participants).toEqual([])
 })
 
-test('the prefix and subcommand are case-insensitive', async () => {
+test('commands are case-insensitive', async () => {
     const backend = await openChannel()
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('  !NXT Join  '))
+    await handle(chatMessage('  !JoinQ  '))
 
     expect(sent.map((entry) => entry.text)).toEqual([
         '@ada You joined the queue as q-1.',
@@ -46,7 +47,7 @@ test("the Nxt bot account's own messages are ignored", async () => {
     const { handle, sent } = twitchBot(backend)
 
     await handle(
-        chatMessage('!nxt join', {
+        chatMessage('!joinq', {
             chatterId: BOT_USER_ID,
             chatterLogin: 'nxtbot',
             chatterName: 'NxtBot',
@@ -57,10 +58,21 @@ test("the Nxt bot account's own messages are ignored", async () => {
     expect((await readQueue(backend, 'owner-1'))?.participants).toEqual([])
 })
 
-test('an unknown subcommand gets a usage reply', async () => {
+test('unknown commands are left to other bots and get no reply', async () => {
     const backend = await openChannel()
     const { handle, sent } = twitchBot(backend)
-    const message = chatMessage('!nxt dance')
+
+    await handle(chatMessage('!dance'))
+    await handle(chatMessage('!join'))
+    await handle(chatMessage('!nxtjoin'))
+
+    expect(sent).toEqual([])
+})
+
+test('!nxt gets a usage reply', async () => {
+    const backend = await openChannel()
+    const { handle, sent } = twitchBot(backend)
+    const message = chatMessage('!nxt')
 
     await handle(message)
 
@@ -69,19 +81,8 @@ test('an unknown subcommand gets a usage reply', async () => {
             kind: 'reply',
             channelId: 'broadcaster-1',
             parentMessageId: message.messageId,
-            text: '@ada Usage: !nxt join | leave | pos | view',
+            text: '@ada Usage: !joinq | !leaveq | !pos | !viewq',
         },
-    ])
-})
-
-test('a bare !nxt gets a usage reply', async () => {
-    const backend = await openChannel()
-    const { handle, sent } = twitchBot(backend)
-
-    await handle(chatMessage('!nxt'))
-
-    expect(sent.map((entry) => entry.text)).toEqual([
-        '@ada Usage: !nxt join | leave | pos | view',
     ])
 })
 
@@ -95,21 +96,21 @@ test('a channel with no enabled Platform Link gets no reply', async () => {
     })
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt join'))
-    await handle(chatMessage('!nxt join', { broadcasterId: 'elsewhere' }))
+    await handle(chatMessage('!joinq'))
+    await handle(chatMessage('!joinq', { broadcasterId: 'elsewhere' }))
 
     expect(sent).toEqual([])
     expect((await readQueue(backend, 'owner-1'))?.participants).toEqual([])
 })
 
-test('an unknown subcommand from a Twitch Admin lists the Admin commands too', async () => {
+test('!nxt from a Twitch Admin lists the Admin commands too', async () => {
     const backend = await openChannel()
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt dance', { badges: { moderator: '1' } }))
+    await handle(chatMessage('!nxt', { badges: { moderator: '1' } }))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@ada Usage: !nxt join | leave | pos | view. Admins: open | pause | clear | ping [count] | play <ref> | return <ref> | done <ref>',
+        '@ada Usage: !joinq | !leaveq | !pos | !viewq. Admins: !startq | !endq | !clearq | !pingq [count] | !playq <ref> | !returnq <ref> | !doneq <ref>',
     ])
 })
 
@@ -118,7 +119,7 @@ test('replies @mention the chatter by login, not their localised display name', 
     const { handle, sent } = twitchBot(backend)
 
     await handle(
-        chatMessage('!nxt join', {
+        chatMessage('!joinq', {
             chatterLogin: 'kurisu',
             chatterName: '牧瀬紅莉栖',
         })
@@ -129,16 +130,16 @@ test('replies @mention the chatter by login, not their localised display name', 
     ])
 })
 
-test.each(['constructor', 'toString', '__proto__', 'hasOwnProperty'])(
-    '!nxt %s is not a command and gets the usage reply',
-    async (name) => {
-        const backend = await openChannel()
-        const { handle, sent } = twitchBot(backend)
+test.each([
+    'constructor',
+    'toString',
+    '__proto__',
+    'hasOwnProperty',
+])('!%s is not a command and gets no reply', async (name) => {
+    const backend = await openChannel()
+    const { handle, sent } = twitchBot(backend)
 
-        await handle(chatMessage(`!nxt ${name}`))
+    await handle(chatMessage(`!${name}`))
 
-        expect(sent.map((entry) => entry.text)).toEqual([
-            '@ada Usage: !nxt join | leave | pos | view',
-        ])
-    }
-)
+    expect(sent).toEqual([])
+})

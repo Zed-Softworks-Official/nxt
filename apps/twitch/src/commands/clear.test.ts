@@ -10,7 +10,7 @@ import {
 
 const MODERATOR = { badges: { moderator: '1' } }
 
-test('!nxt clear removes waiting Participants from every platform and leaves Pinged and Playing in place', async () => {
+test('!clearq removes waiting Participants from every platform and leaves Pinged and Playing in place', async () => {
     const backend = createTestBackend()
     await seedCommunity(backend, {
         ownerId: 'owner-1',
@@ -48,7 +48,7 @@ test('!nxt clear removes waiting Participants from every platform and leaves Pin
     })
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt clear', MODERATOR))
+    await handle(chatMessage('!clearq', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
         '@ada Cleared 2 from the queue.',
@@ -64,7 +64,7 @@ test('!nxt clear removes waiting Participants from every platform and leaves Pin
     ])
 })
 
-test('!nxt clear with nobody waiting says the queue is already empty', async () => {
+test('!clearq with nobody waiting says the queue is already empty', async () => {
     const backend = createTestBackend()
     await seedTwitchCommunity(backend, {
         ownerId: 'owner-1',
@@ -76,14 +76,14 @@ test('!nxt clear with nobody waiting says the queue is already empty', async () 
     })
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt clear', MODERATOR))
+    await handle(chatMessage('!clearq', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
         '@ada Nobody is waiting, so there is nothing to clear.',
     ])
 })
 
-test('!nxt clear from a viewer is refused and removes nobody', async () => {
+test('!clearq from a viewer is refused and removes nobody', async () => {
     const backend = createTestBackend()
     await seedTwitchCommunity(backend, {
         ownerId: 'owner-1',
@@ -95,10 +95,10 @@ test('!nxt clear from a viewer is refused and removes nobody', async () => {
     })
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt clear'))
+    await handle(chatMessage('!clearq'))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@ada Only the broadcaster and moderators can run !nxt clear.',
+        '@ada Only the broadcaster and moderators can run !clearq.',
     ])
     expect((await readQueue(backend, 'owner-1'))?.participants).toHaveLength(1)
 })

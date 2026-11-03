@@ -9,7 +9,7 @@ import {
 
 const MODERATOR = { badges: { moderator: '1' } }
 
-test('!nxt open from a moderator opens a paused queue', async () => {
+test('!startq from a moderator opens a paused queue', async () => {
     const backend = createTestBackend()
     await seedTwitchCommunity(backend, {
         ownerId: 'owner-1',
@@ -18,13 +18,13 @@ test('!nxt open from a moderator opens a paused queue', async () => {
     })
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt open', MODERATOR))
+    await handle(chatMessage('!startq', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual(['@ada The queue is open.'])
     expect((await readQueue(backend, 'owner-1'))?.state).toBe('open')
 })
 
-test('!nxt open from a viewer without moderator rights is refused and changes nothing', async () => {
+test('!startq from a viewer without moderator rights is refused and changes nothing', async () => {
     const backend = createTestBackend()
     await seedTwitchCommunity(backend, {
         ownerId: 'owner-1',
@@ -33,10 +33,10 @@ test('!nxt open from a viewer without moderator rights is refused and changes no
     })
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt open', { badges: { subscriber: '12' } }))
+    await handle(chatMessage('!startq', { badges: { subscriber: '12' } }))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@ada Only the broadcaster and moderators can run !nxt open.',
+        '@ada Only the broadcaster and moderators can run !startq.',
     ])
     expect((await readQueue(backend, 'owner-1'))?.state).toBe('paused')
 })
@@ -51,7 +51,7 @@ test('the broadcaster counts as a Twitch Admin in their own channel, badge or no
     const { handle, sent } = twitchBot(backend)
 
     await handle(
-        chatMessage('!nxt open', {
+        chatMessage('!startq', {
             chatterId: 'broadcaster-1',
             chatterLogin: 'grace',
             chatterName: 'Grace',
@@ -73,12 +73,12 @@ test('a broadcaster badge counts as a Twitch Admin', async () => {
     })
     const { handle } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt open', { badges: { broadcaster: '1' } }))
+    await handle(chatMessage('!startq', { badges: { broadcaster: '1' } }))
 
     expect((await readQueue(backend, 'owner-1'))?.state).toBe('open')
 })
 
-test('!nxt open on an open queue says it is already open', async () => {
+test('!startq on an open queue says it is already open', async () => {
     const backend = createTestBackend()
     await seedTwitchCommunity(backend, {
         ownerId: 'owner-1',
@@ -87,7 +87,7 @@ test('!nxt open on an open queue says it is already open', async () => {
     })
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt open', MODERATOR))
+    await handle(chatMessage('!startq', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
         '@ada The queue is already open.',

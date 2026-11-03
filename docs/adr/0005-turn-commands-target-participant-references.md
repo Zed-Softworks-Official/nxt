@@ -4,7 +4,7 @@ status: accepted
 
 # Turn commands target Participant references
 
-Every Queue entry gets a Participant reference, such as `q-42`. It is unique within the Community. It stays the same while that entry is waiting, Pinged, or Playing, including when the Participant returns to the Queue. It is never reused after the turn is done. Queue views and Ping Announcements show it, and Turn commands take it as their target, as in `!nxt play q-42` on Twitch or `/play q-42` on Discord. Ping takes a count, not a reference, and calls the front of the Queue.
+Every Queue entry gets a Participant reference, such as `q-42`. It is unique within the Community. It stays the same while that entry is waiting, Pinged, or Playing, including when the Participant returns to the Queue. It is never reused after the turn is done. Queue views and Ping Announcements show it, and Turn commands take it as their target, as in `!playq q-42` on Twitch or `/playq q-42` on Discord. Ping takes a count, not a reference, and calls the front of the Queue.
 
 The dashboard, Discord, and Twitch offer the same Turn commands (ping, play, return, done), backed by the same backend mutations. Admins on any linked platform can therefore act on Participants from any other platform.
 

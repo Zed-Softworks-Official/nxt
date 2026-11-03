@@ -19,11 +19,11 @@ async function viewWith(
         participants,
     })
     const { handle, sent } = twitchBot(backend)
-    await handle(chatMessage('!nxt view'))
+    await handle(chatMessage('!viewq'))
     return sent.map((entry) => entry.text)
 }
 
-test('!nxt view lists the front of the queue with references and platforms', async () => {
+test('!viewq lists the front of the queue with references and platforms', async () => {
     expect(
         await viewWith('open', [
             { platformUserId: 'user-2', username: 'Bob', status: 'notified' },
@@ -40,13 +40,13 @@ test('!nxt view lists the front of the queue with references and platforms', asy
     ])
 })
 
-test('!nxt view on an empty paused queue says nobody is waiting', async () => {
+test('!viewq on an empty paused queue says nobody is waiting', async () => {
     expect(await viewWith('paused', [])).toEqual([
         '@ada The queue is paused. Nobody is waiting.',
     ])
 })
 
-test('!nxt view shows the first five and counts the rest', async () => {
+test('!viewq shows the first five and counts the rest', async () => {
     const participants = Array.from({ length: 7 }, (_, index) => ({
         platformUserId: `user-${index + 1}`,
         username: `p${index + 1}`,

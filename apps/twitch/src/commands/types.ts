@@ -7,7 +7,7 @@ export type CommandContext = {
     convex: QueueConvex
     message: ChatMessage
     link: PlatformLink
-    // The text after `!nxt <command>`, trimmed. Empty when absent.
+    // The text after `!<command>`, trimmed. Empty when absent.
     arg: string
 }
 

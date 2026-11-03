@@ -6,7 +6,7 @@ import {
     twitchBot,
 } from '../test/chatHarness'
 
-test('!nxt pos while paused tells a waiting chatter their position', async () => {
+test('!pos while paused tells a waiting chatter their position', async () => {
     const backend = createTestBackend()
     await seedTwitchCommunity(backend, {
         ownerId: 'owner-1',
@@ -24,7 +24,7 @@ test('!nxt pos while paused tells a waiting chatter their position', async () =>
     })
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt pos'))
+    await handle(chatMessage('!pos'))
 
     expect(sent.map((entry) => entry.text)).toEqual([
         '@ada You are #2 in the queue (q-2).',
@@ -37,7 +37,7 @@ test.each([
         '@ada You are not waiting: you have been pinged (q-1).',
     ],
     ['playing' as const, '@ada You are not waiting: you are playing (q-1).'],
-])('!nxt pos when %s says the chatter is not waiting', async (status, expected) => {
+])('!pos when %s says the chatter is not waiting', async (status, expected) => {
     const backend = createTestBackend()
     await seedTwitchCommunity(backend, {
         ownerId: 'owner-1',
@@ -47,12 +47,12 @@ test.each([
     })
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt pos'))
+    await handle(chatMessage('!pos'))
 
     expect(sent.map((entry) => entry.text)).toEqual([expected])
 })
 
-test('!nxt pos when absent says the chatter is not waiting', async () => {
+test('!pos when absent says the chatter is not waiting', async () => {
     const backend = createTestBackend()
     await seedTwitchCommunity(backend, {
         ownerId: 'owner-1',
@@ -61,7 +61,7 @@ test('!nxt pos when absent says the chatter is not waiting', async () => {
     })
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt pos'))
+    await handle(chatMessage('!pos'))
 
     expect(sent.map((entry) => entry.text)).toEqual([
         '@ada You are not waiting in the queue.',

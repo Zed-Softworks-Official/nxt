@@ -8,7 +8,7 @@ import type { TwitchCommand } from './types'
 // most this many Participants.
 const MAX_COUNT = 10
 
-const USAGE = `Use !nxt ping, or !nxt ping <count> with a count from 1 to ${MAX_COUNT}.`
+const USAGE = `Use !pingq, or !pingq <count> with a count from 1 to ${MAX_COUNT}.`
 
 export const ping: TwitchCommand = {
     admin: true,

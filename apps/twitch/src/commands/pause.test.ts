@@ -9,7 +9,7 @@ import {
 
 const MODERATOR = { badges: { moderator: '1' } }
 
-test('!nxt pause from a moderator pauses an open queue', async () => {
+test('!endq from a moderator pauses an open queue', async () => {
     const backend = createTestBackend()
     await seedTwitchCommunity(backend, {
         ownerId: 'owner-1',
@@ -18,7 +18,7 @@ test('!nxt pause from a moderator pauses an open queue', async () => {
     })
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt pause', MODERATOR))
+    await handle(chatMessage('!endq', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
         '@ada The queue is paused.',
@@ -26,7 +26,7 @@ test('!nxt pause from a moderator pauses an open queue', async () => {
     expect((await readQueue(backend, 'owner-1'))?.state).toBe('paused')
 })
 
-test('!nxt pause on a paused queue says it is already paused', async () => {
+test('!endq on a paused queue says it is already paused', async () => {
     const backend = createTestBackend()
     await seedTwitchCommunity(backend, {
         ownerId: 'owner-1',
@@ -35,14 +35,14 @@ test('!nxt pause on a paused queue says it is already paused', async () => {
     })
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt pause', MODERATOR))
+    await handle(chatMessage('!endq', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
         '@ada The queue is already paused.',
     ])
 })
 
-test('!nxt pause from a viewer is refused and leaves the queue open', async () => {
+test('!endq from a viewer is refused and leaves the queue open', async () => {
     const backend = createTestBackend()
     await seedTwitchCommunity(backend, {
         ownerId: 'owner-1',
@@ -51,10 +51,10 @@ test('!nxt pause from a viewer is refused and leaves the queue open', async () =
     })
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt pause'))
+    await handle(chatMessage('!endq'))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@ada Only the broadcaster and moderators can run !nxt pause.',
+        '@ada Only the broadcaster and moderators can run !endq.',
     ])
     expect((await readQueue(backend, 'owner-1'))?.state).toBe('open')
 })

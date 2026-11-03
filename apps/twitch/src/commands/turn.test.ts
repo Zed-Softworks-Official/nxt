@@ -51,11 +51,11 @@ async function participants(backend: ReturnType<typeof createTestBackend>) {
     ])
 }
 
-test('!nxt return puts a Pinged Participant back in their spot with the same reference and logs it', async () => {
+test('!returnq puts a Pinged Participant back in their spot with the same reference and logs it', async () => {
     const backend = await sharedQueue()
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt return q-2', MODERATOR))
+    await handle(chatMessage('!returnq q-2', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
         '@ada q-2 cy (Twitch) is back in the queue.',
@@ -75,11 +75,11 @@ test('!nxt return puts a Pinged Participant back in their spot with the same ref
     ])
 })
 
-test('!nxt return on a Playing Participant is refused', async () => {
+test('!returnq on a Playing Participant is refused', async () => {
     const backend = await sharedQueue()
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt return q-3', MODERATOR))
+    await handle(chatMessage('!returnq q-3', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
         '@ada q-3 is playing. Only a Pinged Participant can return to the queue.',
@@ -91,7 +91,7 @@ test("a Twitch Admin finishes a Playing Discord Participant's turn and it is log
     const backend = await sharedQueue()
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt done q-3', MODERATOR))
+    await handle(chatMessage('!doneq q-3', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
         '@ada q-3 dot (Discord) is done.',
@@ -110,11 +110,11 @@ test("a Twitch Admin finishes a Playing Discord Participant's turn and it is log
     ])
 })
 
-test('!nxt done on a Pinged Participant is refused', async () => {
+test('!doneq on a Pinged Participant is refused', async () => {
     const backend = await sharedQueue()
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt done q-2', MODERATOR))
+    await handle(chatMessage('!doneq q-2', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
         '@ada q-2 is Pinged. Only a Playing Participant can finish.',
@@ -126,12 +126,12 @@ test('return and done from a viewer are refused and change nothing', async () =>
     const backend = await sharedQueue()
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt return q-2'))
-    await handle(chatMessage('!nxt done q-3'))
+    await handle(chatMessage('!returnq q-2'))
+    await handle(chatMessage('!doneq q-3'))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@ada Only the broadcaster and moderators can run !nxt return.',
-        '@ada Only the broadcaster and moderators can run !nxt done.',
+        '@ada Only the broadcaster and moderators can run !returnq.',
+        '@ada Only the broadcaster and moderators can run !doneq.',
     ])
     expect(await readActivityLog(backend, 'owner-1')).toEqual([])
 })

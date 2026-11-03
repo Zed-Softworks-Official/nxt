@@ -1,5 +1,8 @@
 import { internal } from '@nxt/backend/api'
-import { describeParticipant, TURN_STATE_WORDING } from '@nxt/backend/participant'
+import {
+    describeParticipant,
+    TURN_STATE_WORDING,
+} from '@nxt/backend/participant'
 import { formatReference, parseReference } from '@nxt/backend/reference'
 
 import type { TwitchCommand } from './types'
@@ -20,7 +23,7 @@ function turnCommand(spec: {
         admin: true,
         async run({ convex, link, arg }) {
             if (arg === '') {
-                return `Use !nxt ${spec.name} <reference>, such as !nxt ${spec.name} q-42.`
+                return `Use !${spec.name} <reference>, such as !${spec.name} q-42.`
             }
             const reference = parseReference(arg)
             if (reference === null) {
@@ -48,21 +51,21 @@ function turnCommand(spec: {
 }
 
 export const play = turnCommand({
-    name: 'play',
+    name: 'playq',
     mutation: internal.platformQueue.play,
     requirement: 'Only a Pinged Participant can start playing.',
     succeeded: (participant) => `${participant} is now playing.`,
 })
 
 export const returnToQueue = turnCommand({
-    name: 'return',
+    name: 'returnq',
     mutation: internal.platformQueue.returnToQueue,
     requirement: 'Only a Pinged Participant can return to the queue.',
     succeeded: (participant) => `${participant} is back in the queue.`,
 })
 
 export const done = turnCommand({
-    name: 'done',
+    name: 'doneq',
     mutation: internal.platformQueue.done,
     requirement: 'Only a Playing Participant can finish.',
     succeeded: (participant) => `${participant} is done.`,

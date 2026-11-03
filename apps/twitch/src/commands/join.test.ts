@@ -7,7 +7,7 @@ import {
     twitchBot,
 } from '../test/chatHarness'
 
-test('!nxt join on an open queue adds the chatter and replies with their reference', async () => {
+test('!joinq on an open queue adds the chatter and replies with their reference', async () => {
     const backend = createTestBackend()
     await seedTwitchCommunity(backend, {
         ownerId: 'owner-1',
@@ -15,7 +15,7 @@ test('!nxt join on an open queue adds the chatter and replies with their referen
         state: 'open',
     })
     const { handle, sent } = twitchBot(backend)
-    const message = chatMessage('!nxt join')
+    const message = chatMessage('!joinq')
 
     await handle(message)
 
@@ -41,7 +41,7 @@ test('!nxt join on an open queue adds the chatter and replies with their referen
     })
 })
 
-test('!nxt join on a paused queue says it is paused and adds nobody', async () => {
+test('!joinq on a paused queue says it is paused and adds nobody', async () => {
     const backend = createTestBackend()
     await seedTwitchCommunity(backend, {
         ownerId: 'owner-1',
@@ -50,7 +50,7 @@ test('!nxt join on a paused queue says it is paused and adds nobody', async () =
     })
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt join'))
+    await handle(chatMessage('!joinq'))
 
     expect(sent.map((entry) => entry.text)).toEqual([
         '@ada The queue is paused, so you cannot join right now.',
@@ -61,7 +61,7 @@ test('!nxt join on a paused queue says it is paused and adds nobody', async () =
     })
 })
 
-test('!nxt join while already in the queue keeps the one entry and says so', async () => {
+test('!joinq while already in the queue keeps the one entry and says so', async () => {
     const backend = createTestBackend()
     await seedTwitchCommunity(backend, {
         ownerId: 'owner-1',
@@ -73,7 +73,7 @@ test('!nxt join while already in the queue keeps the one entry and says so', asy
     })
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt join'))
+    await handle(chatMessage('!joinq'))
 
     expect(sent.map((entry) => entry.text)).toEqual([
         '@ada You are already in the queue as q-1.',
@@ -105,7 +105,7 @@ test('a renamed chatter keeps their entry because identity is the Twitch user ID
     const { handle, sent } = twitchBot(backend)
 
     await handle(
-        chatMessage('!nxt join', {
+        chatMessage('!joinq', {
             chatterLogin: 'lovelace',
             chatterName: 'Lovelace',
         })
@@ -134,7 +134,7 @@ test('a Twitch chatter with the same ID as a Discord participant gets a separate
     })
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt join'))
+    await handle(chatMessage('!joinq'))
 
     expect(sent.map((entry) => entry.text)).toEqual([
         '@ada You joined the queue as q-2.',

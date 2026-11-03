@@ -5,6 +5,7 @@ import { useAction, useMutation, useQuery } from '@nxt/backend/react'
 
 import { useState } from 'react'
 
+import { DiscordIcon, TwitchIcon } from '~/components/icons/brand-icons'
 import { Button } from '~/components/ui/button'
 import {
     Item,
@@ -34,7 +35,9 @@ export function Connections() {
     return (
         <ItemGroup>
             <Item>
-                <ItemMedia>D</ItemMedia>
+                <ItemMedia variant="icon">
+                    <DiscordIcon className="size-6 text-[#5865f2]" />
+                </ItemMedia>
                 <ItemContent>
                     <ItemTitle>Discord</ItemTitle>
                     <ItemDescription>
@@ -50,7 +53,9 @@ export function Connections() {
                 )}
             </Item>
             <Item>
-                <ItemMedia>T</ItemMedia>
+                <ItemMedia variant="icon">
+                    <TwitchIcon className="size-6 text-[#9146ff]" />
+                </ItemMedia>
                 <ItemContent>
                     <ItemTitle>Twitch</ItemTitle>
                     <ItemDescription>
@@ -74,7 +79,7 @@ export function ConnectionsSkeleton() {
                 // biome-ignore lint/suspicious/noArrayIndexKey: static placeholders
                 <Item key={i}>
                     <ItemMedia>
-                        <Skeleton className="size-4" />
+                        <Skeleton className="size-6" />
                     </ItemMedia>
                     <ItemContent className="gap-2">
                         <Skeleton className="h-4 w-20" />

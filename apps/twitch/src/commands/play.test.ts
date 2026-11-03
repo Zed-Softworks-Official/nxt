@@ -57,7 +57,7 @@ test('a Twitch Admin moves a Pinged Discord Participant to Playing by reference'
     const backend = await sharedQueue()
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt play q-2', MODERATOR))
+    await handle(chatMessage('!playq q-2', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
         '@ada q-2 cy (Discord) is now playing.',
@@ -66,11 +66,11 @@ test('a Twitch Admin moves a Pinged Discord Participant to Playing by reference'
     expect(await readActivityLog(backend, 'owner-1')).toEqual([])
 })
 
-test('!nxt play on someone already Playing is refused with their state', async () => {
+test('!playq on someone already Playing is refused with their state', async () => {
     const backend = await sharedQueue()
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt play q-3', MODERATOR))
+    await handle(chatMessage('!playq q-3', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
         '@ada q-3 is playing. Only a Pinged Participant can start playing.',
@@ -78,11 +78,11 @@ test('!nxt play on someone already Playing is refused with their state', async (
     expect(await statusOf(backend, 3)).toBe('playing')
 })
 
-test('!nxt play on someone still waiting is refused with their state', async () => {
+test('!playq on someone still waiting is refused with their state', async () => {
     const backend = await sharedQueue()
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt play q-1', MODERATOR))
+    await handle(chatMessage('!playq q-1', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
         '@ada q-1 is waiting in the queue. Only a Pinged Participant can start playing.',
@@ -90,23 +90,23 @@ test('!nxt play on someone still waiting is refused with their state', async () 
     expect(await statusOf(backend, 1)).toBe('waiting')
 })
 
-test('!nxt play with an unknown reference is refused', async () => {
+test('!playq with an unknown reference is refused', async () => {
     const backend = await sharedQueue()
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt play q-42', MODERATOR))
+    await handle(chatMessage('!playq q-42', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
         '@ada Nobody in the queue has the reference q-42.',
     ])
 })
 
-test('!nxt play with an ended reference is refused like an unknown one', async () => {
+test('!playq with an ended reference is refused like an unknown one', async () => {
     const backend = await sharedQueue()
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt done q-3', MODERATOR))
-    await handle(chatMessage('!nxt play q-3', MODERATOR))
+    await handle(chatMessage('!doneq q-3', MODERATOR))
+    await handle(chatMessage('!playq q-3', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
         '@ada q-3 dot (Twitch) is done.',
@@ -115,11 +115,8 @@ test('!nxt play with an ended reference is refused like an unknown one', async (
 })
 
 test.each([
-    ['!nxt play', 'Use !nxt play <reference>, such as !nxt play q-42.'],
-    [
-        '!nxt play bea',
-        '"bea" is not a Participant reference. Use one like q-42.',
-    ],
+    ['!playq', 'Use !playq <reference>, such as !playq q-42.'],
+    ['!playq bea', '"bea" is not a Participant reference. Use one like q-42.'],
 ])('%s is refused with how to name a Participant', async (text, reply) => {
     const backend = await sharedQueue()
     const { handle, sent } = twitchBot(backend)
@@ -130,14 +127,14 @@ test.each([
     expect(await statusOf(backend, 2)).toBe('notified')
 })
 
-test('!nxt play from a viewer is refused and changes nothing', async () => {
+test('!playq from a viewer is refused and changes nothing', async () => {
     const backend = await sharedQueue()
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt play q-2'))
+    await handle(chatMessage('!playq q-2'))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@ada Only the broadcaster and moderators can run !nxt play.',
+        '@ada Only the broadcaster and moderators can run !playq.',
     ])
     expect(await statusOf(backend, 2)).toBe('notified')
 })

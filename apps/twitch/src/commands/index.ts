@@ -8,18 +8,19 @@ import { done, play, returnToQueue } from './turn'
 import type { TwitchCommand } from './types'
 import { view } from './view'
 
-// `!nxt <name>` → command. Add new subcommands here. A Map, so names like
-// `constructor` or `__proto__` never resolve to an object's built-ins.
+// `!<name>` → command. Names match the Discord slash commands. Add new
+// commands here. A Map, so names like `constructor` or `__proto__` never
+// resolve to an object's built-ins.
 export const commands: ReadonlyMap<string, TwitchCommand> = new Map([
-    ['clear', clear],
-    ['done', done],
-    ['join', join],
-    ['leave', leave],
-    ['open', open],
-    ['pause', pause],
-    ['ping', ping],
-    ['play', play],
+    ['clearq', clear],
+    ['doneq', done],
+    ['endq', pause],
+    ['joinq', join],
+    ['leaveq', leave],
+    ['pingq', ping],
+    ['playq', play],
     ['pos', pos],
-    ['return', returnToQueue],
-    ['view', view],
+    ['returnq', returnToQueue],
+    ['startq', open],
+    ['viewq', view],
 ])

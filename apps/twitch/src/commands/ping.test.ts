@@ -51,11 +51,11 @@ async function statuses(backend: ReturnType<typeof createTestBackend>) {
     ])
 }
 
-test('!nxt ping calls the Participant at the front of the queue and logs it', async () => {
+test('!pingq calls the Participant at the front of the queue and logs it', async () => {
     const backend = await channelWithThreeWaiting()
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt ping', MODERATOR))
+    await handle(chatMessage('!pingq', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
         '@ada Pinged q-1 bea (Twitch).',
@@ -75,11 +75,11 @@ test('!nxt ping calls the Participant at the front of the queue and logs it', as
     ])
 })
 
-test('!nxt ping 2 calls the front two, including a Discord Participant', async () => {
+test('!pingq 2 calls the front two, including a Discord Participant', async () => {
     const backend = await channelWithThreeWaiting()
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt ping 2', MODERATOR))
+    await handle(chatMessage('!pingq 2', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
         '@ada Pinged q-1 bea (Twitch), q-2 cy (Discord).',
@@ -94,7 +94,7 @@ test('!nxt ping 2 calls the front two, including a Discord Participant', async (
     ).toEqual(['bea', 'cy'])
 })
 
-test('!nxt ping on an empty queue says nobody is waiting', async () => {
+test('!pingq on an empty queue says nobody is waiting', async () => {
     const backend = createTestBackend()
     await seedTwitchCommunity(backend, {
         ownerId: 'owner-1',
@@ -103,7 +103,7 @@ test('!nxt ping on an empty queue says nobody is waiting', async () => {
     })
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt ping', MODERATOR))
+    await handle(chatMessage('!pingq', MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
         '@ada Nobody is waiting in the queue.',
@@ -115,14 +115,14 @@ test.each([
     'three',
     '11',
     '2.5',
-])('!nxt ping %s is refused with the allowed range and pings nobody', async (count) => {
+])('!pingq %s is refused with the allowed range and pings nobody', async (count) => {
     const backend = await channelWithThreeWaiting()
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage(`!nxt ping ${count}`, MODERATOR))
+    await handle(chatMessage(`!pingq ${count}`, MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@ada Use !nxt ping, or !nxt ping <count> with a count from 1 to 10.',
+        '@ada Use !pingq, or !pingq <count> with a count from 1 to 10.',
     ])
     expect(await statuses(backend)).toEqual([
         [1, 'waiting'],
@@ -131,14 +131,14 @@ test.each([
     ])
 })
 
-test('!nxt ping from a viewer is refused and pings nobody', async () => {
+test('!pingq from a viewer is refused and pings nobody', async () => {
     const backend = await channelWithThreeWaiting()
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt ping'))
+    await handle(chatMessage('!pingq'))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@ada Only the broadcaster and moderators can run !nxt ping.',
+        '@ada Only the broadcaster and moderators can run !pingq.',
     ])
     expect(await readActivityLog(backend, 'owner-1')).toEqual([])
 })

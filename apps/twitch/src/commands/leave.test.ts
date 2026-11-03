@@ -7,7 +7,7 @@ import {
     twitchBot,
 } from '../test/chatHarness'
 
-test('!nxt leave while paused removes the waiting chatter', async () => {
+test('!leaveq while paused removes the waiting chatter', async () => {
     const backend = createTestBackend()
     await seedTwitchCommunity(backend, {
         ownerId: 'owner-1',
@@ -20,7 +20,7 @@ test('!nxt leave while paused removes the waiting chatter', async () => {
     })
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt leave'))
+    await handle(chatMessage('!leaveq'))
 
     expect(sent.map((entry) => entry.text)).toEqual([
         '@ada You left the queue.',
@@ -39,7 +39,7 @@ test('!nxt leave while paused removes the waiting chatter', async () => {
     })
 })
 
-test('!nxt leave when not in the queue says so', async () => {
+test('!leaveq when not in the queue says so', async () => {
     const backend = createTestBackend()
     await seedTwitchCommunity(backend, {
         ownerId: 'owner-1',
@@ -48,7 +48,7 @@ test('!nxt leave when not in the queue says so', async () => {
     })
     const { handle, sent } = twitchBot(backend)
 
-    await handle(chatMessage('!nxt leave'))
+    await handle(chatMessage('!leaveq'))
 
     expect(sent.map((entry) => entry.text)).toEqual([
         '@ada You are not in the queue.',

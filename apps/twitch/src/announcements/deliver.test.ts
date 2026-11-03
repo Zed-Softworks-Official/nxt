@@ -22,7 +22,7 @@ test('a Twitch Participant Pinged from Discord is @mentioned in the channel, onc
         state: 'open',
         links: [guild, twitch],
     })
-    await twitchBot(backend).handle(chatMessage('!nxt join'))
+    await twitchBot(backend).handle(chatMessage('!joinq'))
     await backend.mutation(internal.platformQueue.ping, {
         link: guild,
         count: 1,
@@ -49,9 +49,9 @@ test('a Ping from the dashboard is announced exactly like one from chat', async 
         state: 'open',
     })
     const bot = twitchBot(backend)
-    await bot.handle(chatMessage('!nxt join'))
+    await bot.handle(chatMessage('!joinq'))
     await bot.handle(
-        chatMessage('!nxt join', {
+        chatMessage('!joinq', {
             chatterId: 'user-2',
             chatterLogin: 'bob',
             chatterName: 'Bob',
@@ -77,7 +77,7 @@ test('Announcements for an unlinked Twitch channel are dropped, not posted', asy
         broadcasterId: 'broadcaster-1',
         state: 'open',
     })
-    await twitchBot(backend).handle(chatMessage('!nxt join'))
+    await twitchBot(backend).handle(chatMessage('!joinq'))
     await backend.mutation(internal.platformQueue.ping, {
         link: twitch,
         count: 1,
@@ -106,7 +106,7 @@ test('a failed post stays pending and is retried on the next delivery', async ()
         broadcasterId: 'broadcaster-1',
         state: 'open',
     })
-    await twitchBot(backend).handle(chatMessage('!nxt join'))
+    await twitchBot(backend).handle(chatMessage('!joinq'))
     await backend.mutation(internal.platformQueue.ping, {
         link: twitch,
         count: 1,
@@ -132,7 +132,7 @@ test('an Announcement @mentions the login while the dashboard shows the display 
         state: 'open',
     })
     await twitchBot(backend).handle(
-        chatMessage('!nxt join', {
+        chatMessage('!joinq', {
             chatterLogin: 'kurisu',
             chatterName: '牧瀬紅莉栖',
         })
