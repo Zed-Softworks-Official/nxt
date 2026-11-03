@@ -43,6 +43,9 @@
         "NEXT_PUBLIC_CONVEX_URL",
         "NEXT_PUBLIC_DISCORD_CLIENT_ID",
         "NEXT_PUBLIC_DISCORD_REDIRECT_URI",
+        "NEXT_PUBLIC_TWITCH_CLIENT_ID",
+        "NEXT_PUBLIC_TWITCH_REDIRECT_URI",
+        "CONVEX_DEPLOY_KEY",
         "DISCORD_TOKEN"
     ],
     "globalPassThroughEnv": [

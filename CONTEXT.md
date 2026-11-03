@@ -1,6 +1,6 @@
 # Nxt
 
-A Community runs one Queue of people waiting for a turn. Discord, Twitch, and YouTube are ways those people show up.
+A Community runs one Queue of people waiting for a turn. Discord and Twitch are the ways those people show up.
 
 ## Language
 

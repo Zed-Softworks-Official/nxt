@@ -1,21 +1,8 @@
-import { currentUser } from "@clerk/nextjs/server"
-
-import Link from "next/link"
-import { redirect } from "next/navigation"
-
-import { Button } from "~/components/ui/button"
+import { currentUser } from '@clerk/nextjs/server'
+import { redirect } from 'next/navigation'
 
 export default async function HomePage() {
-	const user = await currentUser()
-	if (user) {
-		return redirect("/dashboard")
-	}
+    const user = await currentUser()
 
-	return (
-		<div className="flex flex-col items-center justify-center min-h-screen py-2">
-			<Button asChild>
-				<Link href="/u/login">Login</Link>
-			</Button>
-		</div>
-	)
+    redirect(user ? '/dashboard' : '/u/login')
 }
