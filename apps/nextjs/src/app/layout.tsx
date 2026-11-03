@@ -14,7 +14,6 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
 export const metadata: Metadata = {
     title: 'nxtbot',
     description: 'One fair Queue for your Discord and Twitch community.',
-    icons: [{ rel: 'icon', url: '/favicon.ico' }],
 }
 
 const geist = Geist({

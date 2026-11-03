@@ -1,124 +1,150 @@
-"use client"
+'use client'
 
-import { api } from "@nxt/backend/api"
-import { useQuery } from "@nxt/backend/react"
-
-import { useEffect, useState } from "react"
-import { Users, Timer } from "lucide-react"
-
-import { PlatformBadge, ReferenceBadge } from "./participant-badges"
-import { Card, CardHeader, CardTitle, CardContent } from "~/components/ui/card"
-import { Item, ItemContent, ItemGroup, ItemTitle } from "~/components/ui/item"
+import { api } from '@nxt/backend/api'
+import { useQuery } from '@nxt/backend/react'
+import { Timer, Users } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import {
-	Empty,
-	EmptyHeader,
-	EmptyMedia,
-	EmptyTitle,
-	EmptyDescription,
-} from "~/components/ui/empty"
+    Empty,
+    EmptyDescription,
+    EmptyHeader,
+    EmptyMedia,
+    EmptyTitle,
+} from '~/components/ui/empty'
+import { Item, ItemContent, ItemGroup, ItemTitle } from '~/components/ui/item'
+import { PlatformBadge, ReferenceBadge } from './participant-badges'
+import { ParticipantRowsSkeleton } from './skeletons'
 
 export function Queue() {
-	const [now, setNow] = useState<number | null>(null)
+    const [now, setNow] = useState<number | null>(null)
 
-	useEffect(() => {
-		setNow(Date.now())
-		const intervalId = window.setInterval(() => {
-			setNow(Date.now())
-		}, 30_000)
+    useEffect(() => {
+        setNow(Date.now())
+        const intervalId = window.setInterval(() => {
+            setNow(Date.now())
+        }, 30_000)
 
-		return () => window.clearInterval(intervalId)
-	}, [])
+        return () => window.clearInterval(intervalId)
+    }, [])
 
-	const data = useQuery(api.queue.view, {})
+    const data = useQuery(api.queue.view, {})
 
-	if (!data) return null
+    if (!data) return <QueueSkeleton />
 
-	const { waiting } = data
+    const { waiting } = data
 
-	return (
-		<Card>
-			<CardHeader>
-				<div className="flex items-center gap-2">
-					<Users className="size-5 text-chart-2" />
-					<CardTitle>Queue</CardTitle>
-					{waiting.length > 0 && (
-						<span className="ml-auto rounded-full border border-chart-2/30 bg-chart-2/10 px-2 py-0.5 text-xs font-semibold text-chart-2">
-							{waiting.length}
-						</span>
-					)}
-				</div>
-			</CardHeader>
-			<CardContent>
-				{waiting.length === 0 ? (
-					<Empty className="border py-8">
-						<EmptyHeader>
-							<EmptyMedia variant="icon">
-								<Users className="size-5 text-muted-foreground" />
-							</EmptyMedia>
-							<EmptyTitle className="text-base">Queue is empty</EmptyTitle>
-							<EmptyDescription>
-								Players will appear here when they join.
-							</EmptyDescription>
-						</EmptyHeader>
-					</Empty>
-				) : (
-					<ItemGroup>
-						{waiting.map((participant, i) => (
-							<Item
-								key={participant.reference}
-								variant="outline"
-								className="group border-border/60 bg-card/50 shadow-xs transition-all hover:border-primary/35 hover:bg-accent/30"
-							>
-								<ItemContent className="gap-2">
-									<div className="flex items-start justify-between gap-3">
-										<div className="flex min-w-0 items-center gap-3">
-											<div className="flex size-7 shrink-0 items-center justify-center rounded-full border border-chart-2/30 bg-chart-2/10 text-xs font-semibold text-chart-2">
-												{i + 1}
-											</div>
-											<ReferenceBadge reference={participant.reference} />
-											<ItemTitle className="text-sm font-semibold">
-												{participant.username}
-											</ItemTitle>
-										</div>
-										<PlatformBadge platform={participant.platform} />
-									</div>
-									<div className="ml-10 flex items-center gap-2 text-muted-foreground">
-										<div className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-background/80 px-2 py-1 text-xs">
-											<Timer className="size-3.5" />
-											{formatElapsedTime(participant.joinedAt, now)}
-										</div>
-									</div>
-								</ItemContent>
-							</Item>
-						))}
-					</ItemGroup>
-				)}
-			</CardContent>
-		</Card>
-	)
+    return (
+        <Card>
+            <CardHeader>
+                <div className="flex items-center gap-2">
+                    <Users className="size-5 text-chart-2" />
+                    <CardTitle>Queue</CardTitle>
+                    {waiting.length > 0 && (
+                        <span className="ml-auto rounded-full border border-chart-2/30 bg-chart-2/10 px-2 py-0.5 text-xs font-semibold text-chart-2">
+                            {waiting.length}
+                        </span>
+                    )}
+                </div>
+            </CardHeader>
+            <CardContent>
+                {waiting.length === 0 ? (
+                    <Empty className="border py-8">
+                        <EmptyHeader>
+                            <EmptyMedia variant="icon">
+                                <Users className="size-5 text-muted-foreground" />
+                            </EmptyMedia>
+                            <EmptyTitle className="text-base">
+                                Queue is empty
+                            </EmptyTitle>
+                            <EmptyDescription>
+                                Players will appear here when they join.
+                            </EmptyDescription>
+                        </EmptyHeader>
+                    </Empty>
+                ) : (
+                    <ItemGroup>
+                        {waiting.map((participant, i) => (
+                            <Item
+                                key={participant.reference}
+                                variant="outline"
+                                className="group border-border/60 bg-card/50 shadow-xs transition-all hover:border-primary/35 hover:bg-accent/30"
+                            >
+                                <ItemContent className="gap-2">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="flex min-w-0 items-center gap-3">
+                                            <div className="flex size-7 shrink-0 items-center justify-center rounded-full border border-chart-2/30 bg-chart-2/10 text-xs font-semibold text-chart-2">
+                                                {i + 1}
+                                            </div>
+                                            <ReferenceBadge
+                                                reference={
+                                                    participant.reference
+                                                }
+                                            />
+                                            <ItemTitle className="text-sm font-semibold">
+                                                {participant.username}
+                                            </ItemTitle>
+                                        </div>
+                                        <PlatformBadge
+                                            platform={participant.platform}
+                                        />
+                                    </div>
+                                    <div className="ml-10 flex items-center gap-2 text-muted-foreground">
+                                        <div className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-background/80 px-2 py-1 text-xs">
+                                            <Timer className="size-3.5" />
+                                            {formatElapsedTime(
+                                                participant.joinedAt,
+                                                now
+                                            )}
+                                        </div>
+                                    </div>
+                                </ItemContent>
+                            </Item>
+                        ))}
+                    </ItemGroup>
+                )}
+            </CardContent>
+        </Card>
+    )
+}
+
+export function QueueSkeleton() {
+    return (
+        <Card aria-busy="true">
+            <CardHeader>
+                <div className="flex items-center gap-2">
+                    <Users className="size-5 text-chart-2" />
+                    <CardTitle>Queue</CardTitle>
+                </div>
+            </CardHeader>
+            <CardContent>
+                <ParticipantRowsSkeleton rows={3} meta />
+            </CardContent>
+        </Card>
+    )
 }
 
 function formatElapsedTime(joinedAtEpoch: number, now: number | null) {
-	if (now === null) {
-		return "..."
-	}
+    if (now === null) {
+        return '...'
+    }
 
-	const elapsedMs = Math.max(0, now - joinedAtEpoch)
-	const elapsedMinutes = Math.floor(elapsedMs / 60_000)
-	const elapsedHours = Math.floor(elapsedMinutes / 60)
-	const elapsedDays = Math.floor(elapsedHours / 24)
+    const elapsedMs = Math.max(0, now - joinedAtEpoch)
+    const elapsedMinutes = Math.floor(elapsedMs / 60_000)
+    const elapsedHours = Math.floor(elapsedMinutes / 60)
+    const elapsedDays = Math.floor(elapsedHours / 24)
 
-	if (elapsedMinutes < 1) {
-		return "<1m"
-	}
+    if (elapsedMinutes < 1) {
+        return '<1m'
+    }
 
-	if (elapsedHours < 1) {
-		return `${elapsedMinutes}m`
-	}
+    if (elapsedHours < 1) {
+        return `${elapsedMinutes}m`
+    }
 
-	if (elapsedDays < 1) {
-		return `${elapsedHours}h ${String(elapsedMinutes % 60).padStart(2, "0")}m`
-	}
+    if (elapsedDays < 1) {
+        return `${elapsedHours}h ${String(elapsedMinutes % 60).padStart(2, '0')}m`
+    }
 
-	return `${elapsedDays}d ${elapsedHours % 24}h`
+    return `${elapsedDays}d ${elapsedHours % 24}h`
 }
