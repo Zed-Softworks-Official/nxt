@@ -2,7 +2,11 @@ import type { Doc, Id } from '@nxt/backend/dataModel'
 import type { MutationCtx, QueryCtx } from '@nxt/backend/server'
 import { v } from 'convex/values'
 
-import { announcePinged } from './announcement'
+import {
+    announcePinged,
+    dropPendingForParticipant,
+    pendingSinceByReference,
+} from './announcement'
 import { insertPausedQueue, queueForCommunity } from './pausedQueue'
 
 // The platform-neutral Queue module. Every entry point (platform adapters
@@ -157,6 +161,9 @@ export const leaveResult = v.union(
 export async function leave(ctx: MutationCtx, queue: QueueDoc, who: Who) {
     const participant = await findParticipant(ctx, queue._id, who)
     if (!participant) return { kind: 'absent' as const }
+    if (participant.status === 'notified') {
+        await dropPendingForParticipant(ctx, queue.communityId, participant)
+    }
     await ctx.db.delete('participants', participant._id)
     return { kind: 'ok' as const, reference: participant.reference }
 }
@@ -333,6 +340,7 @@ export async function play(
         await ctx.db.patch('participants', participant._id, {
             status: 'playing',
         })
+        await dropPendingForParticipant(ctx, queue.communityId, participant)
     })
 }
 
@@ -347,6 +355,7 @@ export async function returnToQueue(
             status: 'waiting',
         })
         await logTurn(ctx, participant, 'returned_to_queue')
+        await dropPendingForParticipant(ctx, queue.communityId, participant)
     })
 }
 
@@ -414,7 +423,13 @@ export const viewResult = v.object({
     state: v.union(v.literal('open'), v.literal('paused')),
     // The Queue: waiting Participants, front first.
     waiting: v.array(viewEntry),
-    pinged: v.array(viewEntry),
+    pinged: v.array(
+        v.object({
+            ...viewEntry.fields,
+            // Set while the Announcement calling them has not been posted.
+            announcementPendingSince: v.optional(v.number()),
+        })
+    ),
     playing: v.array(viewEntry),
 })
 
@@ -433,11 +448,15 @@ export async function view(ctx: QueryCtx, queue: QueueDoc | null) {
         rows
             .filter((row) => row.status === status)
             .map((row) => ({ ...toEntry(row), joinedAt: row._creationTime }))
+    const pendingSince = await pendingSinceByReference(ctx, queue.communityId)
     return {
         kind: 'ok' as const,
         state: queue.state,
         waiting: list('waiting'),
-        pinged: list('notified'),
+        pinged: list('notified').map((entry) => ({
+            ...entry,
+            announcementPendingSince: pendingSince.get(entry.reference),
+        })),
         playing: list('playing'),
     }
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { api } from '@nxt/backend/api'
-import { useMutation, useQuery } from '@nxt/backend/react'
+import { useQuery } from '@nxt/backend/react'
 
 import { BellRing, Pause, Play } from 'lucide-react'
 
@@ -9,11 +9,11 @@ import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Skeleton } from '~/components/ui/skeleton'
 
+import { useQueueActions } from '../_lib/queue-actions'
+
 export function QuickPing() {
     const data = useQuery(api.queue.view, {})
-    const ping = useMutation(api.queue.ping)
-    const open = useMutation(api.queue.open)
-    const pause = useMutation(api.queue.pause)
+    const { ping, open, pause } = useQueueActions()
 
     if (!data) return <QuickPingSkeleton />
 
@@ -34,7 +34,7 @@ export function QuickPing() {
                                     key={amount}
                                     amount={amount}
                                     disabled={isDisabled}
-                                    onClick={() => ping({ count: amount })}
+                                    onClick={() => ping(amount)}
                                 />
                             )
                         })}
@@ -49,9 +49,7 @@ export function QuickPing() {
                 </div>
                 <PauseButton
                     queueState={queueState}
-                    onClick={() =>
-                        queueState === 'open' ? pause({}) : open({})
-                    }
+                    onClick={() => (queueState === 'open' ? pause() : open())}
                 />
             </CardContent>
         </Card>

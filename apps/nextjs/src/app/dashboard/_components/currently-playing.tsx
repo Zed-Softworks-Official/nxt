@@ -1,7 +1,7 @@
 'use client'
 
 import { api } from '@nxt/backend/api'
-import { useMutation, useQuery } from '@nxt/backend/react'
+import { useQuery } from '@nxt/backend/react'
 
 import { CheckCheck, Radio } from 'lucide-react'
 import { Button } from '~/components/ui/button'
@@ -20,12 +20,13 @@ import {
     ItemGroup,
     ItemTitle,
 } from '~/components/ui/item'
+import { useQueueActions } from '../_lib/queue-actions'
 import { PlatformBadge, ReferenceBadge } from './participant-badges'
 import { ParticipantRowsSkeleton } from './skeletons'
 
 export function CurrentlyPlaying() {
     const data = useQuery(api.queue.view, {})
-    const done = useMutation(api.queue.done)
+    const { done } = useQueueActions()
 
     if (!data) return <CurrentlyPlayingSkeleton />
 
@@ -90,12 +91,7 @@ export function CurrentlyPlaying() {
                                         size="sm"
                                         variant="outline"
                                         className="h-7 gap-1.5 border-emerald-500/40 bg-emerald-500/10 px-2 text-xs text-emerald-400 hover:border-emerald-500/60 hover:bg-emerald-500/20 hover:text-emerald-300"
-                                        onClick={() =>
-                                            done({
-                                                reference:
-                                                    participant.reference,
-                                            })
-                                        }
+                                        onClick={() => done(participant)}
                                     >
                                         <CheckCheck className="size-3" />
                                         Done

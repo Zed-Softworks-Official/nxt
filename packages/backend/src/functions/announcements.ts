@@ -35,8 +35,9 @@ export const markDropped = internalMutation({
     },
 })
 
-// Deletes settled Announcements past the retention window. Runs from crons.ts
-// and reschedules itself while a full batch was deleted.
+// Drops overdue pending Announcements and deletes settled ones past the
+// retention window. Runs from crons.ts and reschedules itself while a full
+// batch was handled.
 export const prune = internalMutation({
     args: {},
     returns: v.object({ pruned: v.number() }),

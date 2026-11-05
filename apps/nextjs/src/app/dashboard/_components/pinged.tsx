@@ -1,9 +1,9 @@
 'use client'
 
 import { api } from '@nxt/backend/api'
-import { useMutation, useQuery } from '@nxt/backend/react'
+import { useQuery } from '@nxt/backend/react'
 
-import { ArrowUp, BellRing, Undo2 } from 'lucide-react'
+import { ArrowUp, BellRing, TriangleAlert, Undo2 } from 'lucide-react'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import {
@@ -20,13 +20,15 @@ import {
     ItemGroup,
     ItemTitle,
 } from '~/components/ui/item'
+import { isAnnouncementFailed, useNow } from '../_lib/failed-announcement'
+import { useQueueActions } from '../_lib/queue-actions'
 import { PlatformBadge, ReferenceBadge } from './participant-badges'
 import { ParticipantRowsSkeleton } from './skeletons'
 
 export function Pinged() {
     const data = useQuery(api.queue.view, {})
-    const play = useMutation(api.queue.play)
-    const returnToQueue = useMutation(api.queue.returnToQueue)
+    const { play, returnToQueue } = useQueueActions()
+    const now = useNow()
 
     if (!data) return <PingedSkeleton />
 
@@ -85,6 +87,13 @@ export function Pinged() {
                                             platform={participant.platform}
                                         />
                                     </div>
+                                    {isAnnouncementFailed(participant, now) && (
+                                        <span className="flex items-center gap-1.5 text-xs font-medium text-red-400">
+                                            <TriangleAlert className="size-3 shrink-0" />
+                                            Couldn't reach them yet. Nxt is
+                                            still trying.
+                                        </span>
+                                    )}
                                 </ItemContent>
                                 <ItemActions className="shrink-0">
                                     <Button
@@ -92,10 +101,7 @@ export function Pinged() {
                                         variant="outline"
                                         className="h-7 gap-1.5 border-red-500/40 bg-red-500/10 px-2 text-xs text-red-400 hover:border-red-500/60 hover:bg-red-500/20 hover:text-red-300"
                                         onClick={() =>
-                                            returnToQueue({
-                                                reference:
-                                                    participant.reference,
-                                            })
+                                            returnToQueue(participant)
                                         }
                                     >
                                         <Undo2 className="size-3" />
@@ -105,12 +111,7 @@ export function Pinged() {
                                         size="sm"
                                         variant="outline"
                                         className="h-7 gap-1.5 border-chart-2/40 bg-chart-2/10 px-2 text-xs text-chart-2 hover:border-chart-2/60 hover:bg-chart-2/20"
-                                        onClick={() =>
-                                            play({
-                                                reference:
-                                                    participant.reference,
-                                            })
-                                        }
+                                        onClick={() => play(participant)}
                                     >
                                         <ArrowUp className="size-3" />
                                         Playing

@@ -40,6 +40,10 @@ _Avoid_: live, active, current
 A message Nxt owes to one platform space about a Queue change, such as a Participant being Pinged. Turn changes record it in Convex. The adapter for that platform posts it and marks it delivered.
 _Avoid_: notification, event, message
 
+**Failed Announcement**:
+An Announcement Nxt has not managed to post within the allowed time. Its Participant stays Pinged, because the call still happened even though they have not been told.
+_Avoid_: failed ping, missed ping, failed notification
+
 **Position**:
 A waiting Participant's place in the Queue, starting at 1 at the front. A pinged or playing Participant has no Position.
 _Avoid_: index, rank, spot

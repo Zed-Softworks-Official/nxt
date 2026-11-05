@@ -42,11 +42,16 @@ const discordSender: AnnouncementSender = {
     },
 }
 
-// Post pending Announcements now and whenever the set of pending ones changes.
+// How often to retry Announcements whose post failed.
+const RETRY_INTERVAL_MS = 30_000
+
+// Post pending Announcements now, whenever the set of pending ones changes, and
+// on a timer so a failed post is retried even if nothing else changes.
 function startAnnouncements() {
     const deliver = serialRunner(() =>
         deliverPending(getConvex(), discordSender)
     )
+    setInterval(deliver, RETRY_INTERVAL_MS)
     getConvexSubscriber().onUpdate(
         internal.announcements.pending,
         { platform: 'discord' },

@@ -164,22 +164,83 @@ export async function dropPendingForLink(
     return rows.length
 }
 
-// Settled Announcements are kept this long, then pruned.
+// When each Participant's pending Announcement was created, by reference. The
+// dashboard uses this to tell when an Announcement has failed.
+export async function pendingSinceByReference(
+    ctx: QueryCtx,
+    communityId: Id<'communities'>
+) {
+    const rows = await ctx.db
+        .query('announcements')
+        .withIndex('byCommunityAndPlatformAndPlatformIdAndDeliveredAt', (q) =>
+            q.eq('communityId', communityId)
+        )
+        .collect()
+    return new Map(
+        rows
+            .filter((row) => row.deliveredAt === undefined)
+            .map((row) => [row.participant.reference, row._creationTime])
+    )
+}
+
+// Drop the Announcement still owed to a Participant leaving Pinged, so a late
+// post cannot call someone who has moved on. Their reference is unique within
+// the Community.
+export async function dropPendingForParticipant(
+    ctx: MutationCtx,
+    communityId: Id<'communities'>,
+    participant: Doc<'participants'>
+) {
+    const rows = await ctx.db
+        .query('announcements')
+        .withIndex('byCommunityAndPlatformAndPlatformIdAndDeliveredAt', (q) =>
+            q
+                .eq('communityId', communityId)
+                .eq('platform', participant.platform)
+        )
+        .collect()
+    for (const row of rows) {
+        if (
+            row.deliveredAt === undefined &&
+            row.participant.reference === participant.reference
+        ) {
+            await settle(ctx, row._id, 'dropped')
+        }
+    }
+}
+
+// Settled Announcements are kept this long, then pruned. A pending Announcement
+// is given the same time to post, then dropped, so posts that can never succeed
+// cannot fill the pending read and block other Communities.
 export const RETENTION_MS = 24 * 60 * 60 * 1000
 
 const PRUNE_BATCH = 500
 
-// Delete settled Announcements older than the retention window. Returns how
-// many were deleted and whether more remain past the batch.
+// Drop pending Announcements past the window and delete settled ones past it.
+// Returns how many were deleted and whether more remain past the batch.
 export async function prune(ctx: MutationCtx, now: number) {
+    const cutoff = now - RETENTION_MS
+    const overdue = await ctx.db
+        .query('announcements')
+        .withIndex('byDeliveredAt', (q) =>
+            q.eq('deliveredAt', undefined).lt('_creationTime', cutoff)
+        )
+        .take(PRUNE_BATCH)
+    for (const row of overdue) {
+        await settle(ctx, row._id, 'dropped')
+    }
+
     const rows = await ctx.db
         .query('announcements')
         .withIndex('byDeliveredAt', (q) =>
-            q.gt('deliveredAt', 0).lt('deliveredAt', now - RETENTION_MS)
+            q.gt('deliveredAt', 0).lt('deliveredAt', cutoff)
         )
         .take(PRUNE_BATCH)
     for (const row of rows) {
         await ctx.db.delete('announcements', row._id)
     }
-    return { pruned: rows.length, more: rows.length === PRUNE_BATCH }
+    return {
+        pruned: rows.length,
+        more: overdue.length === PRUNE_BATCH || rows.length === PRUNE_BATCH,
+    }
 }

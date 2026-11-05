@@ -224,7 +224,88 @@ test('dropPendingForLink drops only that Platform Link’s pending Announcements
     expect(await pending(backend, 'discord')).toHaveLength(1)
 })
 
-test('the scheduled prune deletes settled Announcements after a day and keeps pending ones', async () => {
+test('moving a Pinged Participant to Playing drops their pending Announcement', async () => {
+    const backend = await seedShared()
+    await joinFrom(backend, discord, 'ada', 'chan-ada')
+    const owner = backend.withIdentity({ subject: 'owner-1' })
+    await owner.mutation(api.queue.ping, { count: 1 })
+
+    await owner.mutation(api.queue.play, { reference: 1 })
+
+    expect(await pending(backend, 'discord')).toEqual([])
+})
+
+test('a Pinged Participant who leaves has their pending Announcement dropped', async () => {
+    const backend = await seedShared()
+    await joinFrom(backend, discord, 'ada', 'chan-ada')
+    const owner = backend.withIdentity({ subject: 'owner-1' })
+    await owner.mutation(api.queue.ping, { count: 1 })
+
+    await backend.mutation(internal.platformQueue.leave, {
+        link: discord,
+        platformUserId: 'ada',
+    })
+
+    expect(await pending(backend, 'discord')).toEqual([])
+})
+
+test('returning a Participant and pinging them again owes them one Announcement', async () => {
+    const backend = await seedShared()
+    await joinFrom(backend, discord, 'ada', 'chan-ada')
+    const owner = backend.withIdentity({ subject: 'owner-1' })
+    await owner.mutation(api.queue.ping, { count: 1 })
+
+    await owner.mutation(api.queue.returnToQueue, { reference: 1 })
+    expect(await pending(backend, 'discord')).toEqual([])
+
+    await owner.mutation(api.queue.ping, { count: 1 })
+    expect(await pending(backend, 'discord')).toHaveLength(1)
+})
+
+test('dropping one Participant’s Announcement leaves other Participants’ pending', async () => {
+    const backend = await seedShared()
+    await joinFrom(backend, discord, 'ada', 'chan-ada')
+    await joinFrom(backend, discord, 'cy', 'chan-cy')
+    const owner = backend.withIdentity({ subject: 'owner-1' })
+    await owner.mutation(api.queue.ping, { count: 2 })
+
+    await owner.mutation(api.queue.play, { reference: 1 })
+
+    expect(await pending(backend, 'discord')).toEqual([
+        expect.objectContaining({
+            participant: { platformUserId: 'cy', username: 'cy', reference: 2 },
+        }),
+    ])
+})
+
+test('the dashboard view shows when a Pinged Participant’s pending Announcement was created', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-11-01T00:00:00Z'))
+    const backend = await seedShared()
+    await joinFrom(backend, discord, 'ada', 'chan-ada')
+    await joinFrom(backend, twitch, 'bob')
+    const owner = backend.withIdentity({ subject: 'owner-1' })
+    await owner.mutation(api.queue.ping, { count: 2 })
+    const [forAda] = await pending(backend, 'discord')
+    await backend.mutation(internal.announcements.markDelivered, {
+        id: forAda!.id,
+    })
+
+    const view = await owner.query(api.queue.view, {})
+
+    const pinged = view?.pinged.map((p) => [
+        p.username,
+        p.announcementPendingSince === undefined
+            ? undefined
+            : Math.floor(p.announcementPendingSince / 1000),
+    ])
+    expect(pinged).toEqual([
+        ['ada', undefined],
+        ['bob', Date.parse('2026-11-01T00:00:00Z') / 1000],
+    ])
+})
+
+test('the scheduled prune deletes settled Announcements after a day', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-11-01T00:00:00Z'))
     const backend = await seedShared()
@@ -248,7 +329,25 @@ test('the scheduled prune deletes settled Announcements after a day and keeps pe
     expect(await backend.mutation(internal.announcements.prune, {})).toEqual({
         pruned: 1,
     })
+})
+
+test('the scheduled prune keeps pending Announcements for a day, then drops them', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-11-01T00:00:00Z'))
+    const backend = await seedShared()
+    await joinFrom(backend, discord, 'ada', 'chan-ada')
+    await backend.mutation(internal.platformQueue.ping, {
+        link: discord,
+        count: 1,
+    })
+
+    vi.setSystemTime(new Date('2026-11-01T23:00:00Z'))
+    await backend.mutation(internal.announcements.prune, {})
     expect(await pending(backend, 'discord')).toHaveLength(1)
+
+    vi.setSystemTime(new Date('2026-11-02T01:00:00Z'))
+    await backend.mutation(internal.announcements.prune, {})
+    expect(await pending(backend, 'discord')).toEqual([])
 })
 
 test('prune is registered as a cron job', async () => {

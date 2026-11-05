@@ -15,6 +15,8 @@ import {
 
 // How often to pick up channels linked or unlinked from the dashboard.
 const SYNC_INTERVAL_MS = 60_000
+// How often to retry Announcements whose post failed.
+const RETRY_INTERVAL_MS = 30_000
 
 const convex = getConvex()
 const api = createTwitchApi({
@@ -72,9 +74,11 @@ async function sync() {
 }
 
 // Post pending Announcements now and whenever the set of pending ones changes,
-// so Pings made while the bot was offline are posted when it comes back.
+// so Pings made while the bot was offline are posted when it comes back. A timer
+// retries failed posts even if nothing else changes.
 function startAnnouncements() {
     const deliver = serialRunner(() => deliverPending(convex, sender))
+    setInterval(deliver, RETRY_INTERVAL_MS)
     getConvexSubscriber().onUpdate(
         internal.announcements.pending,
         { platform: 'twitch' },

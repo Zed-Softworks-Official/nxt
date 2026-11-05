@@ -1,23 +1,28 @@
-import { auth } from "@clerk/nextjs/server"
-import { redirect } from "next/navigation"
+import { auth } from '@clerk/nextjs/server'
+import { redirect } from 'next/navigation'
 
-import AppSidebar from "~/components/sidebar/app-sidebar"
-import { SidebarInset, SidebarProvider } from "~/components/ui/sidebar"
+import AppSidebar from '~/components/sidebar/app-sidebar'
+import { SidebarInset, SidebarProvider } from '~/components/ui/sidebar'
+import { Toaster } from '~/components/ui/sonner'
+
+import { FailedAnnouncementToasts } from './_components/failed-announcement-toasts'
 
 export default async function DashboardLayout(props: {
-	children: React.ReactNode
+    children: React.ReactNode
 }) {
-	const authData = await auth()
-	if (!authData.userId) {
-		return redirect("/u/login")
-	}
+    const authData = await auth()
+    if (!authData.userId) {
+        return redirect('/u/login')
+    }
 
-	return (
-		<SidebarProvider>
-			<AppSidebar />
-			<SidebarInset>
-				<div className="flex flex-1 flex-col p-4">{props.children}</div>
-			</SidebarInset>
-		</SidebarProvider>
-	)
+    return (
+        <SidebarProvider>
+            <AppSidebar />
+            <SidebarInset>
+                <div className="flex flex-1 flex-col p-4">{props.children}</div>
+            </SidebarInset>
+            <Toaster />
+            <FailedAnnouncementToasts />
+        </SidebarProvider>
+    )
 }
