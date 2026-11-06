@@ -44,6 +44,12 @@ export function useQueueActions() {
                 toast.info('No one is waiting.')
                 return
             }
+            if (result.kind === 'note_too_long') {
+                toast.error(
+                    `The saved ping note is over ${result.max} characters. Shorten it in Settings.`
+                )
+                return
+            }
             const pinged = result.pinged.length
             if (pinged < count) {
                 const verb = pinged === 1 ? 'was' : 'were'

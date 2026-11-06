@@ -7,7 +7,7 @@ const PREFIX = '!'
 // `!nxt` is the help command: it lists the commands instead of running one.
 const HELP = 'nxt'
 const USAGE = 'Usage: !joinq | !leaveq | !pos | !viewq'
-const ADMIN_USAGE = `${USAGE}. Admins: !startq | !endq | !clearq | !pingq [count] | !playq <ref> | !returnq <ref> | !doneq <ref>`
+const ADMIN_USAGE = `${USAGE}. Admins: !startq | !endq | !clearq | !pingq [count [note]] | !playq <ref> | !returnq <ref> | !doneq <ref>`
 const COOLDOWN_MS = 15_000
 
 // Builds the one handler every `channel.chat.message` event goes through. It

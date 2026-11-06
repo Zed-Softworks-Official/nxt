@@ -1,3 +1,4 @@
+import { internal } from '@nxt/backend/api'
 import { PermissionFlagsBits } from 'discord.js'
 import { expect, test } from 'vitest'
 import {
@@ -152,4 +153,60 @@ test('pingq on an empty queue replies that nobody is waiting', async () => {
         { content: 'Nobody is waiting in the queue.', ephemeral: false },
     ])
     expect(await readActivityLog(backend, 'owner-1')).toEqual([])
+})
+
+test('pingq with a note carries it on the Announcement', async () => {
+    const backend = createTestBackend()
+    await seedDiscordCommunity(backend, {
+        ownerId: 'owner-1',
+        guildId: 'guild-1',
+        state: 'open',
+        commandChannelId: 'commands',
+        participants: [
+            { platformUserId: 'user-1', username: 'ada', status: 'waiting' },
+        ],
+    })
+    const { interaction, replies } = fakeInteraction({
+        guildId: 'guild-1',
+        manageServer: true,
+        options: { note: 'VC 2' },
+    })
+
+    await pingQ.execute(interaction, asQueueConvex(backend))
+
+    expect(replies).toEqual([
+        { content: 'Pinged q-1 ada (Discord).', ephemeral: false },
+    ])
+    const [announcement] = await backend.query(internal.announcements.pending, {
+        platform: 'discord',
+    })
+    expect(announcement).toMatchObject({ note: 'VC 2' })
+})
+
+test('pingq with an over-limit note says so and calls nobody', async () => {
+    const backend = createTestBackend()
+    await seedDiscordCommunity(backend, {
+        ownerId: 'owner-1',
+        guildId: 'guild-1',
+        state: 'open',
+        participants: [
+            { platformUserId: 'user-1', username: 'ada', status: 'waiting' },
+        ],
+    })
+    const { interaction, replies } = fakeInteraction({
+        guildId: 'guild-1',
+        manageServer: true,
+        options: { note: 'x'.repeat(201) },
+    })
+
+    await pingQ.execute(interaction, asQueueConvex(backend))
+
+    expect(replies).toEqual([
+        {
+            content: 'That note is too long. Keep it to 200 characters.',
+            ephemeral: false,
+        },
+    ])
+    const queue = await readQueue(backend, 'owner-1')
+    expect(queue?.participants[0]?.status).toBe('waiting')
 })

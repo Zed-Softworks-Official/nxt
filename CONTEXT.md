@@ -44,6 +44,14 @@ _Avoid_: notification, event, message
 An Announcement Nxt has not managed to post within the allowed time. Its Participant stays Pinged, because the call still happened even though they have not been told.
 _Avoid_: failed ping, missed ping, failed notification
 
+**Ping note**:
+Optional public text that follows the call in the Announcement to each Participant Pinged. It is fixed when the Ping happens, so later changes to the Saved ping note do not affect it.
+_Avoid_: custom message, ping message
+
+**Saved ping note**:
+The one Ping note a Community owner keeps for a Community. Every Ping uses it unless an Admin types a Ping note for that Ping, which replaces it for that Ping only.
+_Avoid_: default message, ping template
+
 **Position**:
 A waiting Participant's place in the Queue, starting at 1 at the front. A pinged or playing Participant has no Position.
 _Avoid_: index, rank, spot

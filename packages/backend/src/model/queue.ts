@@ -1,7 +1,7 @@
 import type { Doc, Id } from '@nxt/backend/dataModel'
 import type { MutationCtx, QueryCtx } from '@nxt/backend/server'
 import { v } from 'convex/values'
-
+import { parsePingNote } from '../pingNote'
 import {
     announcePinged,
     dropPendingForParticipant,
@@ -261,23 +261,36 @@ async function logTurn(
 
 export const pingResult = v.union(
     v.object({ kind: v.literal('ok'), pinged: v.array(entry) }),
-    v.object({ kind: v.literal('empty') })
+    v.object({ kind: v.literal('empty') }),
+    v.object({ kind: v.literal('note_too_long'), max: v.number() })
 )
 
-// Pings the front `count` waiting Participants (at least one).
-export async function ping(ctx: MutationCtx, queue: QueueDoc, count: number) {
+// Pings the front `count` waiting Participants (at least one). A typed note
+// replaces the Community's Saved ping note for this Ping.
+export async function ping(
+    ctx: MutationCtx,
+    queue: QueueDoc,
+    count: number,
+    typedNote?: string
+) {
+    const typed = parsePingNote(typedNote ?? '')
+    if (typed.kind === 'note_too_long') return typed
+
     const rows = await participantsInOrder(ctx, queue._id)
     const front = rows
         .filter((row) => row.status === 'waiting')
         .slice(0, Math.max(1, Math.floor(count)))
     if (front.length === 0) return { kind: 'empty' as const }
 
+    const community = await ctx.db.get('communities', queue.communityId)
+    const note = typed.note ?? community?.savedPingNote ?? null
+
     for (const participant of front) {
         await ctx.db.patch('participants', participant._id, {
             status: 'notified',
         })
         await logTurn(ctx, participant, 'pinged')
-        await announcePinged(ctx, queue.communityId, participant)
+        await announcePinged(ctx, queue.communityId, participant, note)
     }
     return { kind: 'ok' as const, pinged: front.map(toEntry) }
 }

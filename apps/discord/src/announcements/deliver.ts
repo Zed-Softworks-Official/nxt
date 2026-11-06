@@ -1,12 +1,21 @@
 import { internal } from '@nxt/backend/api'
+import { pingedAnnouncementText } from '@nxt/backend/pingNote'
 import { tryCatch } from '@nxt/utils'
 
 import type { QueueConvex } from '~/lib/convex'
 
+// A Ping note is free text, possibly written by an Admin on another platform,
+// so only the Pinged Participant may ever be mentioned. `@everyone`, roles and
+// other users in a note stay plain text.
+export type AnnouncementMessage = {
+    content: string
+    allowedMentions: { parse: never[]; users: string[] }
+}
+
 // Posts a message to a Discord channel. The real one wraps discord.js; tests
 // pass a fake that records posts.
 export interface AnnouncementSender {
-    send(channelId: string, content: string): Promise<void>
+    send(channelId: string, message: AnnouncementMessage): Promise<void>
 }
 
 // Posts every pending Discord Announcement and marks each delivered. Ones the
@@ -31,10 +40,16 @@ export async function deliverPending(
 
         const { participant } = announcement
         const { error } = await tryCatch(
-            sender.send(
-                announcement.channelId,
-                `<@${participant.platformUserId}> you're up!`
-            )
+            sender.send(announcement.channelId, {
+                content: pingedAnnouncementText(
+                    `<@${participant.platformUserId}>`,
+                    announcement.note
+                ),
+                allowedMentions: {
+                    parse: [],
+                    users: [participant.platformUserId],
+                },
+            })
         )
         if (error) {
             console.error('Failed to post announcement', announcement.id, error)

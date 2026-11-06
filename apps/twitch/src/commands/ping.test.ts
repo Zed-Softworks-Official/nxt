@@ -1,3 +1,4 @@
+import { internal } from '@nxt/backend/api'
 import { expect, test } from 'vitest'
 import {
     chatMessage,
@@ -115,6 +116,9 @@ test.each([
     'three',
     '11',
     '2.5',
+    '3x',
+    'VC 2',
+    '11 VC 2',
 ])('!pingq %s is refused with the allowed range and pings nobody', async (count) => {
     const backend = await channelWithThreeWaiting()
     const { handle, sent } = twitchBot(backend)
@@ -122,7 +126,7 @@ test.each([
     await handle(chatMessage(`!pingq ${count}`, MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@ada Use !pingq, or !pingq <count> with a count from 1 to 10.',
+        '@ada Use !pingq, !pingq <count>, or !pingq <count> <note>, with a count from 1 to 10.',
     ])
     expect(await statuses(backend)).toEqual([
         [1, 'waiting'],
@@ -141,4 +145,35 @@ test('!pingq from a viewer is refused and pings nobody', async () => {
         '@ada Only the broadcaster and moderators can run !pingq.',
     ])
     expect(await readActivityLog(backend, 'owner-1')).toEqual([])
+})
+
+test('!pingq with a count and a note carries the note', async () => {
+    const backend = await channelWithThreeWaiting()
+    const { handle, sent } = twitchBot(backend)
+
+    await handle(chatMessage('!pingq 1 VC 2 lobby ABCD', MODERATOR))
+
+    expect(sent.map((entry) => entry.text)).toEqual([
+        '@ada Pinged q-1 bea (Twitch).',
+    ])
+    const [announcement] = await backend.query(internal.announcements.pending, {
+        platform: 'twitch',
+    })
+    expect(announcement).toMatchObject({ note: 'VC 2 lobby ABCD' })
+})
+
+test('!pingq with an over-limit note says so and calls nobody', async () => {
+    const backend = await channelWithThreeWaiting()
+    const { handle, sent } = twitchBot(backend)
+
+    await handle(chatMessage(`!pingq 1 ${'x'.repeat(201)}`, MODERATOR))
+
+    expect(sent.map((entry) => entry.text)).toEqual([
+        '@ada That note is too long. Keep it to 200 characters.',
+    ])
+    expect(await statuses(backend)).toEqual([
+        [1, 'waiting'],
+        [2, 'waiting'],
+        [3, 'waiting'],
+    ])
 })

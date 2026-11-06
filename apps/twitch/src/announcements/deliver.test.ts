@@ -150,3 +150,29 @@ test('an Announcement @mentions the login while the dashboard shows the display 
         .query(api.queue.view, {})
     expect(view?.pinged.map((entry) => entry.username)).toEqual(['牧瀬紅莉栖'])
 })
+
+test('a Ping note follows the call', async () => {
+    const backend = createTestBackend()
+    await seedTwitchCommunity(backend, {
+        ownerId: 'owner-1',
+        broadcasterId: 'broadcaster-1',
+        state: 'open',
+    })
+    await twitchBot(backend).handle(chatMessage('!joinq'))
+    await backend.mutation(internal.platformQueue.ping, {
+        link: twitch,
+        count: 1,
+        note: 'VC 2',
+    })
+    const { sender, sent } = fakeSender()
+
+    await deliverPending(asQueueConvex(backend), sender)
+
+    expect(sent).toEqual([
+        {
+            kind: 'say',
+            channelId: 'broadcaster-1',
+            text: "@ada you're up! VC 2",
+        },
+    ])
+})

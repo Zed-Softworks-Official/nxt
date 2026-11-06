@@ -10,18 +10,24 @@ import {
     seedDiscordCommunity,
     type TestBackend,
 } from '~/test/queueHarness'
-import { type AnnouncementSender, deliverPending } from './deliver'
+import {
+    type AnnouncementMessage,
+    type AnnouncementSender,
+    deliverPending,
+} from './deliver'
 
 const guild = { platform: 'discord', platformId: 'guild-1' } as const
 
 function fakeSender() {
     const posts: { channelId: string; content: string }[] = []
+    const messages: AnnouncementMessage[] = []
     const sender: AnnouncementSender = {
-        send: async (channelId, content) => {
-            posts.push({ channelId, content })
+        send: async (channelId, message) => {
+            posts.push({ channelId, content: message.content })
+            messages.push(message)
         },
     }
-    return { sender, posts }
+    return { sender, posts, messages }
 }
 
 async function joinIn(
@@ -162,5 +168,31 @@ test('a failed post stays pending and is retried on the next delivery', async ()
 
     expect(posts).toEqual([
         { channelId: 'general', content: "<@ada> you're up!" },
+    ])
+})
+
+test('a Ping note follows the call, and only the Pinged Participant can be mentioned', async () => {
+    const backend = createTestBackend()
+    await seedDiscordCommunity(backend, {
+        ownerId: 'owner-1',
+        guildId: 'guild-1',
+        state: 'open',
+        commandChannelId: 'commands',
+    })
+    await joinIn(backend, 'commands', 'ada')
+    await backend.mutation(internal.platformQueue.ping, {
+        link: guild,
+        count: 1,
+        note: '@everyone VC 2 <@999>',
+    })
+    const { sender, messages } = fakeSender()
+
+    await deliverPending(asQueueConvex(backend), sender)
+
+    expect(messages).toEqual([
+        {
+            content: "<@ada> you're up! @everyone VC 2 <@999>",
+            allowedMentions: { parse: [], users: ['ada'] },
+        },
     ])
 })

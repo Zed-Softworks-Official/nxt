@@ -1,46 +1,47 @@
 {
-	"name": "@nxt/backend",
-	"version": "0.0.0",
-	"private": true,
-	"scripts": {
-		"dev": "convex dev",
-		"test": "vitest run"
-	},
-	"type": "module",
-	"exports": {
-		"./api": {
-			"types": "./src/functions/_generated/api.d.ts",
-			"default": "./src/functions/_generated/api.js"
-		},
-		"./dataModel": {
-			"types": "./src/functions/_generated/dataModel.d.ts",
-			"default": "./src/functions/_generated/dataModel.js"
-		},
-		"./server": {
-			"types": "./src/functions/_generated/server.d.ts",
-			"default": "./src/functions/_generated/server.js"
-		},
-		".": "./src/index.ts",
-		"./react": "./src/react.ts",
-		"./testing": "./src/testing/index.ts",
-		"./reference": "./src/reference.ts",
-		"./participant": "./src/participant.ts"
-	},
-	"devDependencies": {
-		"@edge-runtime/vm": "^5.0.0",
-		"@nxt/typescript-config": "workspace:*",
-		"@types/node": "^20.14.10",
-		"convex-test": "^0.0.60",
-		"vitest": "^5.0.2"
-	},
-	"dependencies": {
-		"@clerk/backend": "catalog:",
-		"@nxt/utils": "workspace:*",
-		"@t3-oss/env-core": "^0.13.11",
-		"convex": "^1.49.0",
-		"convex-helpers": "^0.1.116",
-		"hono": "^4.12.18",
-		"svix": "^1.93.0",
-		"zod": "^3.25.76"
-	}
+    "name": "@nxt/backend",
+    "version": "0.0.0",
+    "private": true,
+    "scripts": {
+        "dev": "convex dev",
+        "test": "vitest run"
+    },
+    "type": "module",
+    "exports": {
+        "./api": {
+            "types": "./src/functions/_generated/api.d.ts",
+            "default": "./src/functions/_generated/api.js"
+        },
+        "./dataModel": {
+            "types": "./src/functions/_generated/dataModel.d.ts",
+            "default": "./src/functions/_generated/dataModel.js"
+        },
+        "./server": {
+            "types": "./src/functions/_generated/server.d.ts",
+            "default": "./src/functions/_generated/server.js"
+        },
+        ".": "./src/index.ts",
+        "./react": "./src/react.ts",
+        "./testing": "./src/testing/index.ts",
+        "./reference": "./src/reference.ts",
+        "./participant": "./src/participant.ts",
+        "./pingNote": "./src/pingNote.ts"
+    },
+    "devDependencies": {
+        "@edge-runtime/vm": "^5.0.0",
+        "@nxt/typescript-config": "workspace:*",
+        "@types/node": "^20.14.10",
+        "convex-test": "^0.0.60",
+        "vitest": "^5.0.2"
+    },
+    "dependencies": {
+        "@clerk/backend": "catalog:",
+        "@nxt/utils": "workspace:*",
+        "@t3-oss/env-core": "^0.13.11",
+        "convex": "^1.49.0",
+        "convex-helpers": "^0.1.116",
+        "hono": "^4.12.18",
+        "svix": "^1.93.0",
+        "zod": "^3.25.76"
+    }
 }

@@ -8,33 +8,40 @@ import type { TwitchCommand } from './types'
 // most this many Participants.
 const MAX_COUNT = 10
 
-const USAGE = `Use !pingq, or !pingq <count> with a count from 1 to ${MAX_COUNT}.`
+const USAGE = `Use !pingq, !pingq <count>, or !pingq <count> <note>, with a count from 1 to ${MAX_COUNT}.`
 
 export const ping: TwitchCommand = {
     admin: true,
     async run({ convex, link, arg }) {
-        const count = parseCount(arg)
-        if (count === null) return USAGE
+        const parsed = parseArg(arg)
+        if (parsed === null) return USAGE
 
         const result = await convex.mutation(internal.platformQueue.ping, {
             link,
-            count,
+            count: parsed.count,
+            note: parsed.note,
         })
         switch (result.kind) {
             case 'unlinked':
                 return null
             case 'empty':
                 return 'Nobody is waiting in the queue.'
+            case 'note_too_long':
+                return `That note is too long. Keep it to ${result.max} characters.`
             case 'ok':
                 return `Pinged ${result.pinged.map(describeParticipant).join(', ')}.`
         }
     },
 }
 
-// Empty means 1. Anything other than a whole number in range is null.
-function parseCount(arg: string): number | null {
-    if (arg === '') return 1
-    if (!/^\d+$/.test(arg)) return null
-    const count = Number(arg)
-    return count >= 1 && count <= MAX_COUNT ? count : null
+// Empty means a count of 1. Otherwise a whole number in range comes first, and
+// anything after it is the note. Anything else is null, so a typo is refused
+// instead of publicly calling someone.
+function parseArg(arg: string): { count: number; note?: string } | null {
+    if (arg === '') return { count: 1 }
+    const match = /^(\d+)(?:\s+(.+))?$/s.exec(arg)
+    if (!match) return null
+    const count = Number(match[1])
+    if (count < 1 || count > MAX_COUNT) return null
+    return { count, note: match[2] }
 }

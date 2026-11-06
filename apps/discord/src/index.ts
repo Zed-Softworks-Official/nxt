@@ -30,7 +30,7 @@ client.once(Events.ClientReady, (c) => {
 })
 
 const discordSender: AnnouncementSender = {
-    async send(channelId, content) {
+    async send(channelId, message) {
         // intents: [] means guilds aren't cached; allowUnknownGuild still builds a Channel.
         const channel = await client.channels.fetch(channelId, {
             allowUnknownGuild: true,
@@ -38,7 +38,7 @@ const discordSender: AnnouncementSender = {
         if (!channel?.isSendable()) {
             throw new Error(`Cannot post in channel ${channelId}`)
         }
-        await channel.send(content)
+        await channel.send(message)
     },
 }
 

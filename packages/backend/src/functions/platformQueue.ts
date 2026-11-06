@@ -85,11 +85,15 @@ export const clear = internalMutation({
 })
 
 export const ping = internalMutation({
-    args: { link: Queue.platformLink, count: v.number() },
+    args: {
+        link: Queue.platformLink,
+        count: v.number(),
+        note: v.optional(v.string()),
+    },
     returns: v.union(Queue.pingResult, Queue.unlinked),
     handler: async (ctx, args) =>
         onLinkedQueue(ctx, args.link, (queue) =>
-            Queue.ping(ctx, queue, args.count)
+            Queue.ping(ctx, queue, args.count, args.note)
         ),
 })
 

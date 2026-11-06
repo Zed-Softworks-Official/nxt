@@ -4,6 +4,7 @@ import { api } from '@nxt/backend/api'
 import { useQuery } from '@nxt/backend/react'
 
 import { BellRing, Pause, Play } from 'lucide-react'
+import Link from 'next/link'
 
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
@@ -13,6 +14,7 @@ import { useQueueActions } from '../_lib/queue-actions'
 
 export function QuickPing() {
     const data = useQuery(api.queue.view, {})
+    const savedNote = useQuery(api.communities.savedPingNote, {})
     const { ping, open, pause } = useQueueActions()
 
     if (!data) return <QuickPingSkeleton />
@@ -47,6 +49,7 @@ export function QuickPing() {
                               : `${waitingCount} waiting in queue`}
                     </span>
                 </div>
+                <SavedNotePreview note={savedNote} />
                 <PauseButton
                     queueState={queueState}
                     onClick={() => (queueState === 'open' ? pause() : open())}
@@ -81,9 +84,26 @@ export function QuickPingSkeleton() {
                     </div>
                     <Skeleton className="h-4 w-32" />
                 </div>
+                <Skeleton className="h-4 w-40" />
                 <Skeleton className="h-12 w-44" />
             </CardContent>
         </Card>
+    )
+}
+
+// What a one-tap Ping will post, so a stale note is visible before it goes out.
+function SavedNotePreview(props: { note: string | null | undefined }) {
+    if (props.note === undefined) return <Skeleton className="h-4 w-40" />
+    return (
+        <p className="max-w-full text-center text-xs wrap-break-word text-muted-foreground">
+            {props.note === null ? 'No ping note' : `Note: ${props.note}`}{' '}
+            <Link
+                className="font-medium text-foreground underline underline-offset-2"
+                href="/dashboard/settings"
+            >
+                {props.note === null ? 'Add' : 'Edit'}
+            </Link>
+        </p>
     )
 }
 

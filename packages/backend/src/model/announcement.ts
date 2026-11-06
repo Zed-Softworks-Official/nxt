@@ -28,6 +28,7 @@ export const pendingAnnouncement = v.union(
         // last channel. Twitch: the broadcaster's channel.
         channelId: v.string(),
         participant: participantSnapshot,
+        note: v.optional(v.string()),
     }),
     v.object({
         action: v.literal('drop'),
@@ -40,7 +41,8 @@ export const pendingAnnouncement = v.union(
 export async function announcePinged(
     ctx: MutationCtx,
     communityId: Id<'communities'>,
-    participant: Doc<'participants'>
+    participant: Doc<'participants'>,
+    note: string | null
 ) {
     const sameSpace = (enabled: boolean) =>
         ctx.db
@@ -69,6 +71,7 @@ export async function announcePinged(
             ? { fallbackChannelId: participant.lastChannelId }
             : {}),
         kind: 'pinged',
+        ...(note ? { note } : {}),
     })
 }
 
@@ -108,6 +111,7 @@ export async function pending(ctx: QueryCtx, platform: Platform) {
             platformId: row.platformId,
             channelId,
             participant: row.participant,
+            ...(row.note ? { note: row.note } : {}),
         })
     }
     return result

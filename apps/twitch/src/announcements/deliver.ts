@@ -1,4 +1,5 @@
 import { internal } from '@nxt/backend/api'
+import { pingedAnnouncementText } from '@nxt/backend/pingNote'
 import { tryCatch } from '@nxt/utils'
 
 import type { ChatSender } from '~/lib/chat'
@@ -28,7 +29,10 @@ export async function deliverPending(
         const { error } = await tryCatch(
             sender.say(
                 announcement.channelId,
-                `@${participant.login ?? participant.username} you're up!`
+                pingedAnnouncementText(
+                    `@${participant.login ?? participant.username}`,
+                    announcement.note
+                )
             )
         )
         if (error) {
