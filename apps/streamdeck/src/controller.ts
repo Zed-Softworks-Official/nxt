@@ -1,4 +1,5 @@
 import { api } from '@nxt/backend/api'
+import { MAX_DECK_PING } from '@nxt/backend/deckPing'
 import {
     FAILED_AFTER_MS,
     isAnnouncementFailed,
@@ -36,7 +37,7 @@ export type KeyIcon =
     | 'done'
     | 'waiting'
     | 'pinged'
-export type Platform = 'discord' | 'twitch' | 'youtube'
+export type Platform = LiveView['playing'][number]['platform']
 
 export type KeyAppearance = {
     connection: 'live' | 'offline' | 'unpaired'
@@ -59,6 +60,14 @@ export type Clock = {
     setTimeout(callback: () => void, ms: number): () => void
 }
 
+export const systemClock: Clock = {
+    now: () => Date.now(),
+    setTimeout(callback, ms) {
+        const timer = setTimeout(callback, ms)
+        return () => clearTimeout(timer)
+    },
+}
+
 type Key = {
     action: DeckAction
     count: number
@@ -71,36 +80,6 @@ type Key = {
 
 /** A slot key ignores presses this long after its Participant changes. */
 export const PRESS_GUARD_MS = 1_000
-
-const systemClock: Clock = {
-    now: () => Date.now(),
-    setTimeout(callback, ms) {
-        const timer = setTimeout(callback, ms)
-        return () => clearTimeout(timer)
-    },
-}
-
-type SlotAction = 'play' | 'return' | 'done'
-
-function isSlotAction(action: DeckAction): action is SlotAction {
-    return action === 'play' || action === 'return' || action === 'done'
-}
-
-const baseIcons: Record<DeckAction, KeyIcon> = {
-    ping: 'ping',
-    openPause: 'open',
-    play: 'play',
-    return: 'return',
-    done: 'done',
-    waitingCount: 'waiting',
-    pingedCount: 'pinged',
-}
-
-const slotCommands = {
-    play: api.deck.play,
-    return: api.deck.returnToQueue,
-    done: api.deck.done,
-} as const
 
 /** Longest slot title that fits a key; longer names end in "…". */
 export const SLOT_TITLE_MAX = 8
@@ -118,20 +97,107 @@ type SlotParticipant = {
     announcementPendingSince: number | null
 }
 
-// Play and Return act on Pinged slot k, Done on Playing slot k (1-based,
-// join order, like the dashboard lists).
-function slotParticipant(
-    action: SlotAction,
-    slot: number,
-    live: LiveView
-): SlotParticipant | undefined {
-    if (action !== 'done') return live.pinged[slot - 1]
-    const playing = live.playing[slot - 1]
-    return playing && { ...playing, announcementPendingSince: null }
+// What a live key shows, over a plain undimmed key with no platform.
+type Look = Pick<KeyAppearance, 'icon' | 'title'> &
+    Partial<Pick<KeyAppearance, 'platform' | 'dimmed' | 'warning'>>
+
+// A press as a deck mutation to send with the secret.
+type Send = (secret: string) => Promise<{ kind: string }>
+
+// Everything that differs between deck actions.
+type ActionSpec = {
+    /** The icon a greyed (unpaired or offline) key shows. */
+    icon: KeyIcon
+    /** Slot keys only: the Participant in slot `slot` (1-based, join order). */
+    slot?: (live: LiveView, slot: number) => SlotParticipant | undefined
+    look: (key: Key, live: LiveView, now: number) => Look
+    /** What a press sends; null ignores the press. Counters have none. */
+    press?: (key: Key, live: LiveView, convex: DeckConvex) => Send | null
 }
 
-/** The most a deck Ping key calls at once (the backend clamps the same way). */
-export const MAX_PING_COUNT = 10
+// Play and Return act on Pinged slot k, Done on Playing slot k, like the
+// dashboard's lists.
+function slotAction(
+    icon: 'play' | 'return' | 'done',
+    list: 'pinged' | 'playing',
+    command:
+        | typeof api.deck.play
+        | typeof api.deck.returnToQueue
+        | typeof api.deck.done
+): ActionSpec {
+    const slot = (live: LiveView, k: number): SlotParticipant | undefined => {
+        const entry = live[list][k - 1]
+        return entry && { announcementPendingSince: null, ...entry }
+    }
+    return {
+        icon,
+        slot,
+        look(key, live, now) {
+            const participant = slot(live, key.slot)
+            if (!participant) return { icon, title: '', dimmed: true }
+            return {
+                icon,
+                title: cutOff(participant.name),
+                platform: participant.platform,
+                warning: isAnnouncementFailed(
+                    participant.announcementPendingSince,
+                    now
+                ),
+            }
+        },
+        press(key, live, convex) {
+            const participant = slot(live, key.slot)
+            if (!participant) return null
+            return (secret) =>
+                convex.mutation(command, {
+                    secret,
+                    reference: participant.reference,
+                })
+        },
+    }
+}
+
+const actions: Record<DeckAction, ActionSpec> = {
+    waitingCount: {
+        icon: 'waiting',
+        look: (_key, live) => ({
+            icon: 'waiting',
+            title: String(live.waitingCount),
+        }),
+    },
+    pingedCount: {
+        icon: 'pinged',
+        look: (_key, live) => ({
+            icon: 'pinged',
+            title: String(live.pinged.length),
+        }),
+    },
+    ping: {
+        icon: 'ping',
+        look: (key, live) => ({
+            icon: 'ping',
+            title: `Ping ${key.count}`,
+            dimmed: live.waitingCount < key.count,
+        }),
+        press: (key, _live, convex) => (secret) =>
+            convex.mutation(api.deck.ping, { secret, count: key.count }),
+    },
+    openPause: {
+        icon: 'open',
+        look: (_key, live) =>
+            live.state === 'open'
+                ? { icon: 'open', title: 'Open' }
+                : { icon: 'paused', title: 'Paused' },
+        press(_key, live, convex) {
+            const toggle =
+                live.state === 'open' ? api.deck.pause : api.deck.open
+            return (secret) => convex.mutation(toggle, { secret })
+        },
+    },
+    play: slotAction('play', 'pinged', api.deck.play),
+    return: slotAction('return', 'pinged', api.deck.returnToQueue),
+    done: slotAction('done', 'playing', api.deck.done),
+}
 
 // Key settings come from the Stream Deck untyped and stored in plain JSON,
 // so read them defensively and fall back to defaults.
@@ -184,7 +250,7 @@ export function createDeckController(deps: {
         const connection = secret === null ? 'unpaired' : 'offline'
         return {
             connection,
-            icon: baseIcons[key.action],
+            icon: actions[key.action].icon,
             title: connection,
             platform: null,
             dimmed: true,
@@ -225,59 +291,12 @@ export function createDeckController(deps: {
     }
 
     function appearance(key: Key, live: LiveView): KeyAppearance {
-        const base = {
-            connection: 'live' as const,
+        return {
+            connection: 'live',
             platform: null,
             dimmed: false,
             warning: false,
-        }
-        switch (key.action) {
-            case 'waitingCount':
-                return {
-                    ...base,
-                    icon: 'waiting',
-                    title: String(live.waitingCount),
-                }
-            case 'pingedCount':
-                return {
-                    ...base,
-                    icon: 'pinged',
-                    title: String(live.pinged.length),
-                }
-            case 'ping':
-                return {
-                    ...base,
-                    icon: 'ping',
-                    title: `Ping ${key.count}`,
-                    dimmed: live.waitingCount < key.count,
-                }
-            case 'openPause':
-                return live.state === 'open'
-                    ? { ...base, icon: 'open', title: 'Open' }
-                    : { ...base, icon: 'paused', title: 'Paused' }
-            case 'play':
-            case 'return':
-            case 'done': {
-                const participant = slotParticipant(key.action, key.slot, live)
-                if (!participant) {
-                    return {
-                        ...base,
-                        icon: key.action,
-                        title: '',
-                        dimmed: true,
-                    }
-                }
-                return {
-                    ...base,
-                    icon: key.action,
-                    title: cutOff(participant.name),
-                    platform: participant.platform,
-                    warning: isAnnouncementFailed(
-                        participant.announcementPendingSince,
-                        clock.now()
-                    ),
-                }
-            }
+            ...actions[key.action].look(key, live, clock.now()),
         }
     }
 
@@ -293,9 +312,9 @@ export function createDeckController(deps: {
         if (!key) return
         const view = liveView()
         if (!view) return draw(id, greyed(key))
-        if (isSlotAction(key.action)) {
-            const reference =
-                slotParticipant(key.action, key.slot, view)?.reference ?? null
+        const slot = actions[key.action].slot
+        if (slot) {
+            const reference = slot(view, key.slot)?.reference ?? null
             if (key.shown !== undefined && key.shown !== reference) {
                 key.changedAt = clock.now()
             }
@@ -355,7 +374,7 @@ export function createDeckController(deps: {
         showKey(id: string, action: DeckAction, settings: unknown) {
             keys.set(id, {
                 action,
-                count: wholeNumberSetting(settings, 'count', 1, MAX_PING_COUNT),
+                count: wholeNumberSetting(settings, 'count', 1, MAX_DECK_PING),
                 slot: wholeNumberSetting(
                     settings,
                     'slot',
@@ -376,40 +395,13 @@ export function createDeckController(deps: {
             if (!key) return
             const view = liveView()
             if (!view) return deps.display.feedback(id, 'alert')
-            switch (key.action) {
-                case 'ping':
-                    return await send(id, (secret) =>
-                        deps.convex.mutation(api.deck.ping, {
-                            secret,
-                            count: key.count,
-                        })
-                    )
-                case 'play':
-                case 'return':
-                case 'done': {
-                    const participant = slotParticipant(
-                        key.action,
-                        key.slot,
-                        view
-                    )
-                    if (!participant) return
-                    if (clock.now() - key.changedAt < PRESS_GUARD_MS) return
-                    const command = slotCommands[key.action]
-                    return await send(id, (secret) =>
-                        deps.convex.mutation(command, {
-                            secret,
-                            reference: participant.reference,
-                        })
-                    )
-                }
-                case 'openPause': {
-                    const toggle =
-                        view.state === 'open' ? api.deck.pause : api.deck.open
-                    return await send(id, (secret) =>
-                        deps.convex.mutation(toggle, { secret })
-                    )
-                }
+            const action = actions[key.action]
+            const run = action.press?.(key, view, deps.convex)
+            if (!run) return
+            if (action.slot && clock.now() - key.changedAt < PRESS_GUARD_MS) {
+                return
             }
+            return await send(id, run)
         },
         dispose() {
             stopWatchingConnection()

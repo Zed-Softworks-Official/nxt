@@ -2,7 +2,11 @@ import streamDeck from '@elgato/streamdeck'
 
 import { actionsByUuid } from '~/actions'
 import { config } from '~/config'
-import { createDeckController, type DeckDisplay } from '~/controller'
+import {
+    createDeckController,
+    type DeckDisplay,
+    systemClock,
+} from '~/controller'
 import { keyImage } from '~/keyImage'
 import { type DeckConvex, deckConvex } from '~/lib/convex'
 import { createPairingFlow, type PairingStatus } from '~/pairing'
@@ -72,13 +76,7 @@ function sendStatus(status: PairingStatus = pairing.status()) {
 
 const pairing = createPairingFlow({
     convex,
-    clock: {
-        now: () => Date.now(),
-        setTimeout(callback, ms) {
-            const timer = setTimeout(callback, ms)
-            return () => clearTimeout(timer)
-        },
-    },
+    clock: systemClock,
     dashboardOrigin: config.dashboardUrl,
     onChange: sendStatus,
     onSecret(secret) {
