@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url'
 
 import type { KeyIcon } from '../src/controller'
 import { glyph, keyImage } from '../src/keyImage'
+import { appIcon } from './brand'
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)))
 const imgs = path.join(root, 'dev.zedsoftworks.nxtbot.sdPlugin', 'imgs')
@@ -67,10 +68,7 @@ const pluginIcon = path.join(
     mkdtempSync(path.join(tmpdir(), 'nxt-icon-')),
     'marketplace.svg'
 )
-write(
-    pluginIcon,
-    `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 144 144"><rect width="144" height="144" rx="28" fill="#18181b"/><g transform="translate(0 26)">${glyph('ping', '#f59e0b')}</g></svg>\n`
-)
+write(pluginIcon, appIcon(256))
 for (const [name, size] of [
     ['marketplace.png', 256],
     ['marketplace@2x.png', 512],

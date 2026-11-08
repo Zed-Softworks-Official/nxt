@@ -41,6 +41,9 @@ CONVEX_URL=https://<prod>.convex.cloud DASHBOARD_URL=https://nxtbot.app pnpm --f
 - `pnpm validate:plugin`: validate the plugin folder only.
 - `pnpm images`: regenerate the manifest's icons and default key images from
   `src/keyImage.ts`. The plugin icon PNGs need `rsvg-convert` (librsvg).
+- `pnpm marketplace`: render the Maker Console listing images (app icon,
+  thumbnail, gallery) into `marketplace/`. Needs `rsvg-convert` and the Geist
+  font. The brand mark lives in `scripts/brand.ts`.
 - `pnpm test`, `pnpm typecheck`.
 
 `build`, `package` and `validate:plugin` run anywhere. `streamdeck link`,
