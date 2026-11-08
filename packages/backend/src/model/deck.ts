@@ -10,14 +10,6 @@ import * as Queue from './queue'
 // References are carried so presses can target them (ADR-0005); the deck
 // does not display them.
 
-/** A deck Ping calls at most this many. `Queue.ping` itself has no cap. */
-export const MAX_DECK_PING = 10
-
-export function clampPingCount(count: number) {
-    if (!Number.isFinite(count)) return 1
-    return Math.min(MAX_DECK_PING, Math.max(1, Math.floor(count)))
-}
-
 export const unpaired = v.object({ kind: v.literal('unpaired') })
 
 const slot = {
@@ -55,15 +47,21 @@ export async function view(ctx: QueryCtx, communityId: Id<'communities'>) {
         state: queue.state,
         waitingCount: queue.waiting.length,
         pinged: queue.pinged.map((entry) => ({
-            reference: entry.reference,
-            name: entry.username,
-            platform: entry.platform,
+            ...slotOf(entry),
             announcementPendingSince: entry.announcementPendingSince ?? null,
         })),
-        playing: queue.playing.map((entry) => ({
-            reference: entry.reference,
-            name: entry.username,
-            platform: entry.platform,
-        })),
+        playing: queue.playing.map(slotOf),
+    }
+}
+
+function slotOf(entry: {
+    reference: number
+    username: string
+    platform: Queue.Platform
+}) {
+    return {
+        reference: entry.reference,
+        name: entry.username,
+        platform: entry.platform,
     }
 }
