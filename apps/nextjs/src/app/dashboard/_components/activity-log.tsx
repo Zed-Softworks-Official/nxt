@@ -4,7 +4,6 @@ import { api } from '@nxt/backend/api'
 import { useQuery } from '@nxt/backend/react'
 
 import { BellRing, CheckCheck, ScrollText, Undo2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
 
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import {
@@ -16,6 +15,7 @@ import {
 } from '~/components/ui/empty'
 import { cn } from '~/lib/utils'
 
+import { useTimeAgo } from '../_lib/time-ago'
 import { ActivityRowsSkeleton } from './skeletons'
 
 type Event = 'pinged' | 'returned_to_queue' | 'finished'
@@ -170,31 +170,4 @@ function LogEntry(props: {
             </div>
         </div>
     )
-}
-
-function computeTimeAgo(timestamp: number): string {
-    const ms = Math.max(0, Date.now() - timestamp)
-    const minutes = Math.floor(ms / 60_000)
-    const hours = Math.floor(minutes / 60)
-    const days = Math.floor(hours / 24)
-
-    if (minutes < 1) return 'just now'
-    if (hours < 1) return `${minutes}m ago`
-    if (days < 1) return `${hours}h ago`
-    return `${days}d ago`
-}
-
-function useTimeAgo(timestamp: number) {
-    const [value, setValue] = useState(() => computeTimeAgo(timestamp))
-
-    useEffect(() => {
-        setValue(computeTimeAgo(timestamp))
-        const id = window.setInterval(
-            () => setValue(computeTimeAgo(timestamp)),
-            30_000
-        )
-        return () => window.clearInterval(id)
-    }, [timestamp])
-
-    return value
 }
