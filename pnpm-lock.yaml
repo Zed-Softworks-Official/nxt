@@ -311,6 +311,31 @@ importers:
         specifier: ^5.8.2
         version: 5.9.2
 
+  apps/streamdeck:
+    dependencies:
+      '@nxt/backend':
+        specifier: workspace:*
+        version: link:../../packages/backend
+      convex:
+        specifier: ^1.49.0
+        version: 1.49.0(@clerk/react@6.6.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)
+    devDependencies:
+      '@edge-runtime/vm':
+        specifier: ^5.0.0
+        version: 5.0.0
+      '@nxt/typescript-config':
+        specifier: workspace:*
+        version: link:../../tooling/typescript-config
+      convex-test:
+        specifier: ^0.0.60
+        version: 0.0.60(convex@1.49.0(@clerk/react@6.6.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0))
+      typescript:
+        specifier: 5.9.2
+        version: 5.9.2
+      vitest:
+        specifier: ^5.0.2
+        version: 5.0.2(@edge-runtime/vm@5.0.0)(@types/node@20.19.40)(msw@2.14.5(@types/node@20.19.40)(typescript@5.9.2))(vite@8.3.1(@types/node@20.19.40)(esbuild@0.27.0)(jiti@2.7.0)(tsx@4.21.0)(yaml@2.9.1))
+
   apps/twitch:
     dependencies:
       '@nxt/backend':
@@ -5260,7 +5285,7 @@ snapshots:
     dependencies:
       '@hono/node-server': 1.19.14(hono@4.12.18)
       ajv: 8.20.0
-      ajv-formats: 3.0.1(ajv@8.20.0)
+      ajv-formats: 3.0.1
       content-type: 1.0.5
       cors: 2.8.6
       cross-spawn: 7.0.6
@@ -6489,8 +6514,8 @@ snapshots:
 
   agent-base@7.1.4: {}
 
-  ajv-formats@3.0.1(ajv@8.20.0):
-    optionalDependencies:
+  ajv-formats@3.0.1:
+    dependencies:
       ajv: 8.20.0
 
   ajv@8.20.0:
