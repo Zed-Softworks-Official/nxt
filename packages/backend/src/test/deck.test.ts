@@ -4,6 +4,7 @@ import { expect, test, vi } from 'vitest'
 import { isAnnouncementFailed } from '../failedAnnouncement'
 import {
     createTestBackend,
+    pairDeck,
     readActivityLog,
     readQueue,
     seedCommunity,
@@ -49,21 +50,6 @@ async function seed() {
         ],
     })
     return backend
-}
-
-async function pairDeck(backend: TestBackend, ownerId: string) {
-    const { code, pollToken } = await backend.mutation(
-        api.pairedDecks.startPairing,
-        {}
-    )
-    await backend
-        .withIdentity({ subject: ownerId })
-        .mutation(api.pairedDecks.approvePairing, { code, name: 'Deck' })
-    const polled = await backend.mutation(api.pairedDecks.pollPairing, {
-        pollToken,
-    })
-    if (polled.kind !== 'approved') throw new Error('pairing failed')
-    return polled.secret
 }
 
 async function revokeOnlyDeck(backend: TestBackend, ownerId: string) {

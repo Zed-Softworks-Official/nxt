@@ -17,6 +17,24 @@ export const PAIRING_TTL_MS = 10 * 60 * 1000
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 const CODE_LENGTH = 8
 
+/**
+ * At most this many pairing requests are live (unexpired) at once, across
+ * every plugin. Starting a pairing is unauthenticated, so this bounds how many
+ * rows anyone can make; a real plugin backs off and tries again.
+ */
+export const MAX_LIVE_PAIRINGS = 100
+
+export const startResult = v.union(
+    v.object({
+        kind: v.literal('started'),
+        code: v.string(),
+        pollToken: v.string(),
+        expiresAt: v.number(),
+    }),
+    // Too many live requests: try again later.
+    v.object({ kind: v.literal('rate_limited') })
+)
+
 export const approveResult = v.union(
     v.object({ kind: v.literal('ok') }),
     // No pairing request has this code.
@@ -37,6 +55,14 @@ export const pollResult = v.union(
 )
 
 export async function startPairing(ctx: MutationCtx, now: number) {
+    const live = await ctx.db
+        .query('pairingRequests')
+        .withIndex('byExpiresAt', (q) => q.gt('expiresAt', now))
+        .take(MAX_LIVE_PAIRINGS)
+    if (live.length >= MAX_LIVE_PAIRINGS) {
+        return { kind: 'rate_limited' as const }
+    }
+
     let code = randomCode()
     while (await liveRequestForCode(ctx, code, now)) code = randomCode()
 
@@ -47,7 +73,12 @@ export async function startPairing(ctx: MutationCtx, now: number) {
         expiresAt: now + PAIRING_TTL_MS,
         status: 'pending',
     })
-    return { code, pollToken, expiresAt: now + PAIRING_TTL_MS }
+    return {
+        kind: 'started' as const,
+        code,
+        pollToken,
+        expiresAt: now + PAIRING_TTL_MS,
+    }
 }
 
 export async function approvePairing(

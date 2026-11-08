@@ -1,8 +1,18 @@
 import { api, internal } from '@nxt/backend/api'
 import { expect, test, vi } from 'vitest'
 
-import { markPairedDeckUsed, resolvePairedDeck } from '../model/pairedDeck'
-import { createTestBackend, seedCommunity } from '../testing'
+import {
+    MAX_LIVE_PAIRINGS,
+    markPairedDeckUsed,
+    PAIRING_TTL_MS,
+    resolvePairedDeck,
+} from '../model/pairedDeck'
+import {
+    createTestBackend,
+    pairDeck,
+    seedCommunity,
+    startPairing,
+} from '../testing'
 
 async function seed() {
     const backend = createTestBackend()
@@ -15,10 +25,7 @@ test('start → approve → poll hands the secret over exactly once', async () =
     const backend = await seed()
     const owner = backend.withIdentity({ subject: 'owner-1' })
 
-    const { code, pollToken } = await backend.mutation(
-        api.pairedDecks.startPairing,
-        {}
-    )
+    const { code, pollToken } = await startPairing(backend)
     expect(code).toMatch(/^[A-Z0-9]{8}$/)
 
     expect(
@@ -49,7 +56,7 @@ test('an approved code cannot be approved again', async () => {
     const backend = await seed()
     const owner = backend.withIdentity({ subject: 'owner-1' })
     const other = backend.withIdentity({ subject: 'owner-2' })
-    const { code } = await backend.mutation(api.pairedDecks.startPairing, {})
+    const { code } = await startPairing(backend)
 
     await owner.mutation(api.pairedDecks.approvePairing, { code, name: 'A' })
 
@@ -73,10 +80,7 @@ test('an expired code is refused, and its poll reports expired', async () => {
     try {
         const backend = await seed()
         const owner = backend.withIdentity({ subject: 'owner-1' })
-        const { code, pollToken } = await backend.mutation(
-            api.pairedDecks.startPairing,
-            {}
-        )
+        const { code, pollToken } = await startPairing(backend)
 
         vi.advanceTimersByTime(10 * 60 * 1000 + 1)
 
@@ -98,7 +102,7 @@ test('an expired code is refused, and its poll reports expired', async () => {
 test('a hand-typed code is accepted in lower case and with a separator', async () => {
     const backend = await seed()
     const owner = backend.withIdentity({ subject: 'owner-1' })
-    const { code } = await backend.mutation(api.pairedDecks.startPairing, {})
+    const { code } = await startPairing(backend)
     const typed = `${code.slice(0, 4).toLowerCase()}-${code.slice(4).toLowerCase()}`
 
     expect(
@@ -112,10 +116,7 @@ test('a hand-typed code is accepted in lower case and with a separator', async (
 test('an approved deck is listed only once the plugin has collected its secret', async () => {
     const backend = await seed()
     const owner = backend.withIdentity({ subject: 'owner-1' })
-    const { code, pollToken } = await backend.mutation(
-        api.pairedDecks.startPairing,
-        {}
-    )
+    const { code, pollToken } = await startPairing(backend)
     await owner.mutation(api.pairedDecks.approvePairing, {
         code,
         name: 'Studio deck',
@@ -127,6 +128,25 @@ test('an approved deck is listed only once the plugin has collected its secret',
     expect(
         (await owner.query(api.pairedDecks.list, {})).map((d) => d.name)
     ).toEqual(['Studio deck'])
+})
+
+test('too many live pairing requests are refused until some expire', async () => {
+    vi.useFakeTimers()
+    try {
+        const backend = await seed()
+        for (let i = 0; i < MAX_LIVE_PAIRINGS; i++) await startPairing(backend)
+
+        expect(
+            await backend.mutation(api.pairedDecks.startPairing, {})
+        ).toEqual({ kind: 'rate_limited' })
+
+        vi.advanceTimersByTime(PAIRING_TTL_MS + 1)
+        expect(
+            (await backend.mutation(api.pairedDecks.startPairing, {})).kind
+        ).toBe('started')
+    } finally {
+        vi.useRealTimers()
+    }
 })
 
 test('an unknown code is refused', async () => {
@@ -143,10 +163,7 @@ test('an unknown code is refused', async () => {
 
 test('approving requires a signed-in owner', async () => {
     const backend = await seed()
-    const { code, pollToken } = await backend.mutation(
-        api.pairedDecks.startPairing,
-        {}
-    )
+    const { code, pollToken } = await startPairing(backend)
 
     await expect(
         backend.mutation(api.pairedDecks.approvePairing, { code, name: 'Deck' })
@@ -161,25 +178,6 @@ test('approving requires a signed-in owner', async () => {
         await backend.mutation(api.pairedDecks.pollPairing, { pollToken })
     ).toEqual({ kind: 'pending' })
 })
-
-async function pairDeck(
-    backend: Awaited<ReturnType<typeof seed>>,
-    ownerId: string,
-    name: string
-) {
-    const { code, pollToken } = await backend.mutation(
-        api.pairedDecks.startPairing,
-        {}
-    )
-    await backend
-        .withIdentity({ subject: ownerId })
-        .mutation(api.pairedDecks.approvePairing, { code, name })
-    const polled = await backend.mutation(api.pairedDecks.pollPairing, {
-        pollToken,
-    })
-    if (polled.kind !== 'approved') throw new Error('pairing failed')
-    return polled.secret
-}
 
 function resolve(backend: Awaited<ReturnType<typeof seed>>, secret: string) {
     return backend.run(async (ctx) => {
@@ -260,18 +258,15 @@ test('cleanup forgets old requests and decks that were never collected', async (
         const backend = await seed()
         const owner = backend.withIdentity({ subject: 'owner-1' })
         const kept = await pairDeck(backend, 'owner-1', 'Collected deck')
-        const { code } = await backend.mutation(
-            api.pairedDecks.startPairing,
-            {}
-        )
+        const { code } = await startPairing(backend)
         await owner.mutation(api.pairedDecks.approvePairing, {
             code,
             name: 'Never collected',
         })
-        const stale = await backend.mutation(api.pairedDecks.startPairing, {})
+        const stale = await startPairing(backend)
 
         vi.advanceTimersByTime(2 * 60 * 60 * 1000)
-        const fresh = await backend.mutation(api.pairedDecks.startPairing, {})
+        const fresh = await startPairing(backend)
         await backend.mutation(internal.pairedDecks.prune, {})
 
         expect(

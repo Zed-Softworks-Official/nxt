@@ -1,10 +1,13 @@
 import { api } from '@nxt/backend/api'
 import {
     createTestBackend,
+    MAX_LIVE_PAIRINGS,
+    pairDeck,
     readActivityLog,
     readQueue,
     type SeedParticipant,
     seedCommunity,
+    startPairing,
     type TestBackend,
 } from '@nxt/backend/testing'
 
@@ -20,24 +23,16 @@ import type { DeckConnectionState, DeckConvex } from '~/lib/convex'
 // The backend harness is shared with every adapter; this file adds only the
 // deck-specific fakes: a subscription-capable client over the in-memory
 // backend, a fake clock, and a display that records what each key shows.
-export { createTestBackend, readActivityLog, readQueue, seedCommunity }
-export type { SeedParticipant, TestBackend }
-
-// Pair a deck the way the plugin and the dashboard do, and return its secret.
-export async function pairDeck(backend: TestBackend, ownerId: string) {
-    const { code, pollToken } = await backend.mutation(
-        api.pairedDecks.startPairing,
-        {}
-    )
-    await backend
-        .withIdentity({ subject: ownerId })
-        .mutation(api.pairedDecks.approvePairing, { code, name: 'Deck' })
-    const polled = await backend.mutation(api.pairedDecks.pollPairing, {
-        pollToken,
-    })
-    if (polled.kind !== 'approved') throw new Error('pairing failed')
-    return polled.secret
+export {
+    createTestBackend,
+    MAX_LIVE_PAIRINGS,
+    pairDeck,
+    readActivityLog,
+    readQueue,
+    seedCommunity,
+    startPairing,
 }
+export type { SeedParticipant, TestBackend }
 
 export async function revokeOnlyDeck(backend: TestBackend, ownerId: string) {
     const owner = backend.withIdentity({ subject: ownerId })

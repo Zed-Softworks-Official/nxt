@@ -2,11 +2,18 @@ import { api } from '@nxt/backend/api'
 import { readPairingLink } from '@nxt/backend/pairingLink'
 import { afterEach, expect, test, vi } from 'vitest'
 
-import { createPairingFlow, type PairingStatus, POLL_EVERY_MS } from '~/pairing'
+import {
+    BUSY_RETRY_MS,
+    createPairingFlow,
+    type PairingStatus,
+    POLL_EVERY_MS,
+} from '~/pairing'
 import {
     createTestBackend,
     fakeClock,
+    MAX_LIVE_PAIRINGS,
     seedCommunity,
+    startPairing,
     type TestBackend,
 } from '~/test/deckHarness'
 
@@ -150,6 +157,23 @@ test('a failed request is retried, and pairing carries on', async () => {
     expect(latest()).toMatchObject({ status: 'waiting', code })
     await tick(POLL_EVERY_MS)
     await vi.waitFor(() => expect(latest()).toEqual({ status: 'paired' }))
+})
+
+test('when Nxt is busy pairing, the plugin backs off and then gets a code', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    const { backend, tick, flow, latest, statuses, waitForCode } = await setup()
+    for (let i = 0; i < MAX_LIVE_PAIRINGS; i++) await startPairing(backend)
+    flow.start('Desk')
+
+    await vi.waitFor(() => expect(latest()).toEqual({ status: 'busy' }))
+    const seen = statuses.length
+    await tick(BUSY_RETRY_MS - 1)
+    expect(statuses.length).toBe(seen)
+
+    // The earlier requests expire, so the retry gets through.
+    vi.setSystemTime(Date.now() + 11 * 60 * 1000)
+    await tick(1)
+    await waitForCode()
 })
 
 test('stopping drops the code, and a late approval of it is never collected', async () => {

@@ -201,6 +201,10 @@
                     status.textContent = "Can't reach Nxt. Retrying…"
                     status.classList.add('warn')
                     return
+                case 'busy':
+                    status.textContent = 'Nxt is busy. Trying again in a moment…'
+                    status.classList.add('warn')
+                    return
                 default:
                     status.textContent = 'Not paired.'
                     status.classList.add('warn')

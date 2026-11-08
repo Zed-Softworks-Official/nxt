@@ -9,14 +9,13 @@ import * as PairedDeck from '../model/pairedDeck'
 // by the unauthenticated Stream Deck plugin; approval and management belong to
 // the signed-in Community owner, whose Community is never an argument.
 
-/** Start a pairing request. Returns the code to show and a private poll token. */
+/**
+ * Start a pairing request. Returns the code to show and a private poll token,
+ * or `rate_limited` while too many requests are live.
+ */
 export const startPairing = mutation({
     args: {},
-    returns: v.object({
-        code: v.string(),
-        pollToken: v.string(),
-        expiresAt: v.number(),
-    }),
+    returns: PairedDeck.startResult,
     handler: async (ctx) => PairedDeck.startPairing(ctx, Date.now()),
 })
 

@@ -1,12 +1,9 @@
 import { api } from '@nxt/backend/api'
 import { pairingLink } from '@nxt/backend/pairingLink'
-import type {
-    FunctionArgs,
-    FunctionReference,
-    FunctionReturnType,
-} from 'convex/server'
+import type { FunctionReturnType } from 'convex/server'
 
 import type { Clock } from '~/controller'
+import type { DeckConvex } from '~/lib/convex'
 
 // Pairing a deck (ADR-0006), with no Stream Deck SDK types: start a pairing
 // request, show its code and approval link, and poll until the owner
@@ -20,16 +17,16 @@ export type PairingStatus =
     | { status: 'paired' }
     // Couldn't reach Nxt to get a code; retrying.
     | { status: 'error' }
+    // Nxt refused a code because too many are live; retrying later.
+    | { status: 'busy' }
 
-export type PairingConvex = {
-    mutation<Mutation extends FunctionReference<'mutation', 'public'>>(
-        mutation: Mutation,
-        args: FunctionArgs<Mutation>
-    ): Promise<FunctionReturnType<Mutation>>
-}
+export type PairingConvex = Pick<DeckConvex, 'mutation'>
 
 /** How often a waiting plugin asks whether its code was approved. */
 export const POLL_EVERY_MS = 2_000
+
+/** How long to wait before asking again when Nxt is too busy for a code. */
+export const BUSY_RETRY_MS = 30_000
 
 export function createPairingFlow(deps: {
     convex: PairingConvex
@@ -49,13 +46,15 @@ export function createPairingFlow(deps: {
         deps.onChange(next)
     }
 
-    function later(run: () => void) {
+    function later(run: () => void, ms = POLL_EVERY_MS) {
         cancelTimer?.()
-        cancelTimer = deps.clock.setTimeout(run, POLL_EVERY_MS)
+        cancelTimer = deps.clock.setTimeout(run, ms)
     }
 
     async function begin(current: number, deviceName: string | undefined) {
-        if (status.status !== 'error') set({ status: 'starting' })
+        if (status.status !== 'error' && status.status !== 'busy') {
+            set({ status: 'starting' })
+        }
         let started: FunctionReturnType<typeof api.pairedDecks.startPairing>
         try {
             started = await deps.convex.mutation(
@@ -69,6 +68,11 @@ export function createPairingFlow(deps: {
             return
         }
         if (current !== attempt) return
+        if (started.kind === 'rate_limited') {
+            set({ status: 'busy' })
+            later(() => void begin(current, deviceName), BUSY_RETRY_MS)
+            return
+        }
         set({
             status: 'waiting',
             code: started.code,
