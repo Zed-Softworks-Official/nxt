@@ -148,6 +148,18 @@ function RevokeDeck(props: { deck: PairedDeck }) {
     )
 }
 
+export function PairedDecksHeading() {
+    return (
+        <div className="flex flex-col gap-2">
+            <h2 className="text-xl font-bold uppercase">Paired decks</h2>
+            <span className="text-sm text-muted-foreground">
+                Stream Decks that can run your Queue. Revoke one to stop it
+                right away.
+            </span>
+        </div>
+    )
+}
+
 export function PairedDecksSkeleton() {
     return (
         <ItemGroup aria-busy="true">

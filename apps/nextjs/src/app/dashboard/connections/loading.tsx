@@ -1,5 +1,5 @@
 import { ConnectionsSkeleton } from './connection'
-import { PairedDecksSkeleton } from './paired-decks'
+import { PairedDecksHeading, PairedDecksSkeleton } from './paired-decks'
 
 export default function ConnectionsLoading() {
     return (
@@ -11,13 +11,7 @@ export default function ConnectionsLoading() {
                 </span>
             </div>
             <ConnectionsSkeleton />
-            <div className="flex flex-col gap-2">
-                <h2 className="text-xl font-bold uppercase">Paired decks</h2>
-                <span className="text-sm text-muted-foreground">
-                    Stream Decks that can run your Queue. Revoke one to stop it
-                    right away.
-                </span>
-            </div>
+            <PairedDecksHeading />
             <PairedDecksSkeleton />
         </div>
     )

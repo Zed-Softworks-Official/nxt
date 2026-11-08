@@ -1,6 +1,7 @@
 'use client'
 
 import { api } from '@nxt/backend/api'
+import { isAnnouncementFailed } from '@nxt/backend/failedAnnouncement'
 import { useQuery } from '@nxt/backend/react'
 
 import { ArrowUp, BellRing, TriangleAlert, Undo2 } from 'lucide-react'
@@ -20,7 +21,7 @@ import {
     ItemGroup,
     ItemTitle,
 } from '~/components/ui/item'
-import { isAnnouncementFailed, useNow } from '../_lib/failed-announcement'
+import { useNow } from '../_lib/failed-announcement'
 import { useQueueActions } from '../_lib/queue-actions'
 import { PlatformBadge, ReferenceBadge } from './participant-badges'
 import { ParticipantRowsSkeleton } from './skeletons'
@@ -87,7 +88,10 @@ export function Pinged() {
                                             platform={participant.platform}
                                         />
                                     </div>
-                                    {isAnnouncementFailed(participant, now) && (
+                                    {isAnnouncementFailed(
+                                        participant.announcementPendingSince,
+                                        now
+                                    ) && (
                                         <span className="flex items-center gap-1.5 text-xs font-medium text-red-400">
                                             <TriangleAlert className="size-3 shrink-0" />
                                             Couldn't reach them yet. Nxt is
