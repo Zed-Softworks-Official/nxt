@@ -88,6 +88,14 @@ _Avoid_: broadcaster account, Community account
 An Admin command that moves Participants between the Queue, Pinged, and Playing: ping, play, return, and done. Discord, Twitch, the dashboard, and a Paired deck offer the same Turn commands.
 _Avoid_: dashboard action, mod command
 
+**Quick Ping**:
+Pinging the front N waiting Participants in one go with the Saved ping note, from the dashboard or a Paired deck's Ping key. A Paired deck calls at most 10 at once.
+_Avoid_: bulk ping, mass ping
+
+**Slot**:
+A numbered place in the Pinged or Playing list, starting at 1 for the earliest join, matching the dashboard's order. A Paired deck's Play and Return keys act on a Pinged slot and its Done key on a Playing slot, on whoever is in that slot at the time.
+_Avoid_: index, seat
+
 **Activity log**:
 The history of turns on a Queue: a Participant being pinged, returning to the Queue, or finishing. Joining, leaving, and clearing the Queue are not turns.
 _Avoid_: audit log, queue history
