@@ -1,7 +1,7 @@
 import type { DeckAction } from '~/controller'
 
 /** The plugin's UUID (never change it once published). */
-export const PLUGIN_UUID = 'dev.zedsoftworks.nxt'
+export const PLUGIN_UUID = 'dev.zedsoftworks.nxtbot'
 
 /** Each manifest action, by its UUID, and the deck action it runs. */
 export const actionsByUuid: Record<string, DeckAction> = {

@@ -1,4 +1,6 @@
-# Checks the Stream Deck plugin on PRs, and packages it on a `deck-v*` tag.
+# Checks and packages the Stream Deck plugin when a `deck-v*` tag is pushed.
+# It runs only on release tags (not on PRs or branch pushes), so forks of this
+# public repo can't start builds. Pushing a tag requires write access.
 #
 # A tag builds the .streamDeckPlugin against production and attaches it to a
 # GitHub Release. Uploading it to Maker Console stays manual: Elgato has no
@@ -12,15 +14,6 @@
 name: Stream Deck
 
 on:
-    pull_request:
-        paths:
-            - apps/streamdeck/**
-            - packages/backend/**
-            - packages/typescript-config/**
-            - pnpm-lock.yaml
-            - package.json
-            - turbo.json
-            - .github/workflows/streamdeck.yml
     push:
         tags:
             - deck-v*
@@ -73,7 +66,7 @@ jobs:
             - name: Check the tag matches the manifest
               run: |
                   tag="${GITHUB_REF_NAME#deck-v}"
-                  manifest=$(node -p "require('./apps/streamdeck/dev.zedsoftworks.nxt.sdPlugin/manifest.json').Version")
+                  manifest=$(node -p "require('./apps/streamdeck/dev.zedsoftworks.nxtbot.sdPlugin/manifest.json').Version")
                   if [ "$tag.0" != "$manifest" ]; then
                       echo "::error::Tag $GITHUB_REF_NAME needs manifest Version $tag.0, found $manifest."
                       exit 1
@@ -87,6 +80,6 @@ jobs:
                   GH_TOKEN: ${{ github.token }}
               run: |
                   gh release create "$GITHUB_REF_NAME" \
-                      apps/streamdeck/dist/dev.zedsoftworks.nxt.streamDeckPlugin \
+                      apps/streamdeck/dist/dev.zedsoftworks.nxtbot.streamDeckPlugin \
                       --title "Stream Deck $GITHUB_REF_NAME" \
                       --generate-notes

@@ -1,13 +1,13 @@
 # Nxt Stream Deck plugin
 
-The Elgato Stream Deck plugin (`dev.zedsoftworks.nxt`) that runs a Community's
+The Elgato Stream Deck plugin (`dev.zedsoftworks.nxtbot`) that runs a Community's
 Queue from a **Paired deck** (see `CONTEXT.md`, ADR-0006 and spec #20).
 
 - `src/controller.ts`: the deck controller. All key behaviour, no SDK types.
 - `src/pairing.ts`: the pairing flow (start, show the code and link, poll).
 - `src/keyImage.ts`: draws a key's appearance as an SVG data URL.
 - `src/plugin.ts`: the thin SDK adapter that wires these to `@elgato/streamdeck`.
-- `dev.zedsoftworks.nxt.sdPlugin/`: the plugin folder: manifest, images and
+- `dev.zedsoftworks.nxtbot.sdPlugin/`: the plugin folder: manifest, images and
   the Property Inspector (`ui/key.html`). `bin/` is build output.
 
 The deck secret is kept only in the plugin's global settings. Never log it,
@@ -36,7 +36,7 @@ CONVEX_URL=https://<prod>.convex.cloud DASHBOARD_URL=https://nxtbot.app pnpm --f
 - `pnpm build`: bundle `src/plugin.ts` into `*.sdPlugin/bin/plugin.js` (rollup).
 - `pnpm watch`: rebuild on change and restart the plugin in Stream Deck.
 - `pnpm package`: build, then `streamdeck pack` into
-  `dist/dev.zedsoftworks.nxt.streamDeckPlugin`. `pack` validates the manifest
+  `dist/dev.zedsoftworks.nxtbot.streamDeckPlugin`. `pack` validates the manifest
   first.
 - `pnpm validate:plugin`: validate the plugin folder only.
 - `pnpm images`: regenerate the manifest's icons and default key images from
@@ -51,7 +51,7 @@ CONVEX_URL=https://<prod>.convex.cloud DASHBOARD_URL=https://nxtbot.app pnpm --f
 ```sh
 pnpm --filter @nxt/streamdeck build
 pnpm --filter @nxt/streamdeck exec streamdeck dev      # once: developer mode
-pnpm --filter @nxt/streamdeck exec streamdeck link dev.zedsoftworks.nxt.sdPlugin
+pnpm --filter @nxt/streamdeck exec streamdeck link dev.zedsoftworks.nxtbot.sdPlugin
 ```
 
 Drag an Nxt key onto the deck and open its settings: the Property Inspector

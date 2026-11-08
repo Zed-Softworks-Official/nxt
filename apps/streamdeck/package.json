@@ -6,11 +6,11 @@
     "scripts": {
         "build": "pnpm with-env rollup -c",
         "images": "tsx scripts/images.ts",
-        "package": "pnpm build --environment RELEASE && streamdeck pack dev.zedsoftworks.nxt.sdPlugin -o dist -f --no-update-check && biome format --write dev.zedsoftworks.nxt.sdPlugin/manifest.json",
+        "package": "pnpm build --environment RELEASE && streamdeck pack dev.zedsoftworks.nxtbot.sdPlugin -o dist -f --no-update-check && biome format --write dev.zedsoftworks.nxtbot.sdPlugin/manifest.json",
         "test": "vitest run",
         "typecheck": "tsc --noEmit",
-        "validate:plugin": "streamdeck validate dev.zedsoftworks.nxt.sdPlugin --no-update-check",
-        "watch": "pnpm with-env rollup -c -w --watch.onEnd=\"streamdeck restart dev.zedsoftworks.nxt\"",
+        "validate:plugin": "streamdeck validate dev.zedsoftworks.nxtbot.sdPlugin --no-update-check",
+        "watch": "pnpm with-env rollup -c -w --watch.onEnd=\"streamdeck restart dev.zedsoftworks.nxtbot\"",
         "with-env": "dotenv -e ../../.env --"
     },
     "dependencies": {

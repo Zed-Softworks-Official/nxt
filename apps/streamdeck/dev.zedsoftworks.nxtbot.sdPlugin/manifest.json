@@ -1,13 +1,13 @@
 {
-    "Name": "Nxt Queue",
+    "Name": "nxtbot",
     "Version": "0.1.0.0",
     "Author": "Zed Softworks",
-    "Description": "Run your Nxt Queue from your Stream Deck: Ping the next people, Open or Pause the Queue, move Pinged Participants to Playing, and see who's waiting at a glance.",
+    "Description": "Run your nxtbot Queue from your Stream Deck: Ping the next people, Open or Pause the Queue, move Pinged Participants to Playing, and see who's waiting at a glance.",
     "URL": "https://nxtbot.app",
     "Actions": [
         {
             "Name": "Ping",
-            "UUID": "dev.zedsoftworks.nxt.ping",
+            "UUID": "dev.zedsoftworks.nxtbot.ping",
             "Icon": "imgs/actions/ping/icon",
             "Tooltip": "Ping the next waiting Participants (set how many in the key's settings).",
             "PropertyInspectorPath": "ui/key.html",
@@ -23,7 +23,7 @@
         },
         {
             "Name": "Open/Pause",
-            "UUID": "dev.zedsoftworks.nxt.open-pause",
+            "UUID": "dev.zedsoftworks.nxtbot.open-pause",
             "Icon": "imgs/actions/open-pause/icon",
             "Tooltip": "Shows whether the Queue is Open or Paused; press to toggle.",
             "PropertyInspectorPath": "ui/key.html",
@@ -39,7 +39,7 @@
         },
         {
             "Name": "Play",
-            "UUID": "dev.zedsoftworks.nxt.play",
+            "UUID": "dev.zedsoftworks.nxtbot.play",
             "Icon": "imgs/actions/play/icon",
             "Tooltip": "Move the Participant in a Pinged slot to Playing.",
             "PropertyInspectorPath": "ui/key.html",
@@ -55,7 +55,7 @@
         },
         {
             "Name": "Return",
-            "UUID": "dev.zedsoftworks.nxt.return",
+            "UUID": "dev.zedsoftworks.nxtbot.return",
             "Icon": "imgs/actions/return/icon",
             "Tooltip": "Send the Participant in a Pinged slot back to the Queue.",
             "PropertyInspectorPath": "ui/key.html",
@@ -71,7 +71,7 @@
         },
         {
             "Name": "Done",
-            "UUID": "dev.zedsoftworks.nxt.done",
+            "UUID": "dev.zedsoftworks.nxtbot.done",
             "Icon": "imgs/actions/done/icon",
             "Tooltip": "Finish the turn of the Participant in a Playing slot.",
             "PropertyInspectorPath": "ui/key.html",
@@ -87,7 +87,7 @@
         },
         {
             "Name": "Waiting",
-            "UUID": "dev.zedsoftworks.nxt.waiting-count",
+            "UUID": "dev.zedsoftworks.nxtbot.waiting-count",
             "Icon": "imgs/actions/waiting-count/icon",
             "Tooltip": "How many Participants are waiting.",
             "PropertyInspectorPath": "ui/key.html",
@@ -103,7 +103,7 @@
         },
         {
             "Name": "Pinged",
-            "UUID": "dev.zedsoftworks.nxt.pinged-count",
+            "UUID": "dev.zedsoftworks.nxtbot.pinged-count",
             "Icon": "imgs/actions/pinged-count/icon",
             "Tooltip": "How many Participants are Pinged.",
             "PropertyInspectorPath": "ui/key.html",
@@ -118,7 +118,7 @@
             "SupportedInMultiActions": false
         }
     ],
-    "Category": "Nxt Queue",
+    "Category": "nxtbot",
     "CategoryIcon": "imgs/plugin/category-icon",
     "CodePath": "bin/plugin.js",
     "Icon": "imgs/plugin/marketplace",
@@ -140,5 +140,5 @@
     "Nodejs": {
         "Version": "24"
     },
-    "UUID": "dev.zedsoftworks.nxt"
+    "UUID": "dev.zedsoftworks.nxtbot"
 }

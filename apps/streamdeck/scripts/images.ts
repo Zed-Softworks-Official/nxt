@@ -13,7 +13,7 @@ import type { KeyIcon } from '../src/controller'
 import { glyph, keyImage } from '../src/keyImage'
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)))
-const imgs = path.join(root, 'dev.zedsoftworks.nxt.sdPlugin', 'imgs')
+const imgs = path.join(root, 'dev.zedsoftworks.nxtbot.sdPlugin', 'imgs')
 
 // Manifest image folder, glyph and default title, per action.
 const actions: [folder: string, icon: KeyIcon, title: string][] = [

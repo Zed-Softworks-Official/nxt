@@ -8,11 +8,11 @@ import terser from '@rollup/plugin-terser'
 import esbuild from 'rollup-plugin-esbuild'
 
 // Bundles the plugin, workspace code and `convex` included, into
-// dev.zedsoftworks.nxt.sdPlugin/bin/plugin.js: an installed plugin has no
+// dev.zedsoftworks.nxtbot.sdPlugin/bin/plugin.js: an installed plugin has no
 // node_modules. The Convex URL and dashboard origin are baked in from the
 // environment (the repo's .env through `pnpm with-env`).
 
-const sdPlugin = 'dev.zedsoftworks.nxt.sdPlugin'
+const sdPlugin = 'dev.zedsoftworks.nxtbot.sdPlugin'
 const isWatching = Boolean(process.env.ROLLUP_WATCH)
 const root = path.dirname(fileURLToPath(import.meta.url))
 
