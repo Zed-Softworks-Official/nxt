@@ -10,4 +10,11 @@ crons.interval(
     {}
 )
 
+crons.interval(
+    'prune expired pairing requests',
+    { hours: 1 },
+    internal.pairedDecks.prune,
+    {}
+)
+
 export default crons
