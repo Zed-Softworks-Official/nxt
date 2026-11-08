@@ -2,6 +2,8 @@ import type { Doc, Id } from '@nxt/backend/dataModel'
 import type { MutationCtx, QueryCtx } from '@nxt/backend/server'
 import { v } from 'convex/values'
 
+import { MAX_DECK_NAME_LENGTH } from '../pairingLink'
+
 // Paired decks and their pairing (ADR-0006). A Stream Deck plugin starts a
 // pairing request and shows its code; the Community owner approves the code on
 // the dashboard; the plugin polls with its private poll token and collects the
@@ -15,7 +17,7 @@ export const PAIRING_TTL_MS = 10 * 60 * 1000
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 const CODE_LENGTH = 8
 
-export const MAX_DECK_NAME_LENGTH = 64
+export { MAX_DECK_NAME_LENGTH }
 
 export const approveResult = v.union(
     v.object({ kind: v.literal('ok') }),
