@@ -18,6 +18,10 @@
             "cache": false,
             "persistent": true
         },
+        "package": {
+            "cache": false,
+            "outputs": ["dist/**"]
+        },
         "deploy:discord": {
             "cache": false,
             "persistent": false

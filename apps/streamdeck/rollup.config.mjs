@@ -43,6 +43,11 @@ if (env('DASHBOARD_URL') === undefined) {
         'DASHBOARD_URL is not set: pairing links will point at http://localhost:3000.'
     )
 }
+if (isRelease && new URL(dashboardUrl).hostname === 'localhost') {
+    throw new Error(
+        `DASHBOARD_URL is ${dashboardUrl}: a release build needs the production dashboard.`
+    )
+}
 
 /** @type {import('rollup').RollupOptions} */
 export default {

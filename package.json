@@ -6,6 +6,7 @@
         "deploy:discord": "turbo run deploy:discord",
         "dev": "turbo run dev",
         "dev:deck": "turbo run dev watch --filter=@nxt/nextjs --filter=@nxt/streamdeck",
+        "package:deck": "turbo run package --filter=@nxt/streamdeck",
         "check:write": "turbo run check:write",
         "check-types": "turbo run check-types",
         "typecheck": "turbo run typecheck",

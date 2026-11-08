@@ -60,7 +60,24 @@ One pairing covers every key and every device in that Stream Deck app.
 
 ## Publishing
 
-Upload `dist/dev.zedsoftworks.nxt.streamDeckPlugin` in Elgato's Maker Console
-(maker.elgato.com). Bump `Version` in `manifest.json` (four parts, e.g.
-`0.2.0.0`) or pass `--version` to `streamdeck pack`. Never change the plugin
-or action UUIDs once published. The icons are placeholders.
+Bump `Version` in `manifest.json` (four parts, e.g. `0.2.0.0`), merge, then
+push a matching tag:
+
+```sh
+git tag deck-v0.2.0 && git push origin deck-v0.2.0
+```
+
+The `Stream Deck` workflow builds against production (the
+`STREAMDECK_CONVEX_URL` and `STREAMDECK_DASHBOARD_URL` repository variables)
+and attaches the `.streamDeckPlugin` to a GitHub Release. Download it and
+upload it in Elgato's Maker Console (maker.elgato.com):
+
+```sh
+gh release download deck-v0.2.0 -p '*.streamDeckPlugin'
+```
+
+To package locally instead, run `pnpm package:deck` from the repo root with
+`CONVEX_URL` and `DASHBOARD_URL` set; shell values win over `.env`. A release
+build refuses to run without a Convex URL or with a localhost `DASHBOARD_URL`.
+
+Never change the plugin or action UUIDs once published. The icons are placeholders.
