@@ -1,6 +1,7 @@
 import { currentUser } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 
+import { PairedDecks, PairedDecksHeading } from './paired-decks'
 import { SavedPingNote } from './saved-ping-note'
 
 export default async function SettingsPage() {
@@ -16,6 +17,8 @@ export default async function SettingsPage() {
                 </span>
             </div>
             <SavedPingNote />
+            <PairedDecksHeading />
+            <PairedDecks />
         </div>
     )
 }

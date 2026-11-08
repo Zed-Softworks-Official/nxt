@@ -70,7 +70,7 @@ export function ApprovePairing(props: { code: string; name: string }) {
                 </CardHeader>
                 <CardContent>
                     <Button asChild variant="outline">
-                        <Link href="/dashboard/connections">
+                        <Link href="/dashboard/settings">
                             See your Paired decks
                         </Link>
                     </Button>

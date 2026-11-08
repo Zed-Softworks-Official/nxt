@@ -2,7 +2,6 @@ import { currentUser } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 
 import { Connections } from './connection'
-import { PairedDecks, PairedDecksHeading } from './paired-decks'
 
 export default async function ConnectionsPage() {
     const user = await currentUser()
@@ -17,8 +16,6 @@ export default async function ConnectionsPage() {
                 </span>
             </div>
             <Connections />
-            <PairedDecksHeading />
-            <PairedDecks />
         </div>
     )
 }

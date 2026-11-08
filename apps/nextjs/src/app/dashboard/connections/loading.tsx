@@ -1,5 +1,4 @@
 import { ConnectionsSkeleton } from './connection'
-import { PairedDecksHeading, PairedDecksSkeleton } from './paired-decks'
 
 export default function ConnectionsLoading() {
     return (
@@ -11,8 +10,6 @@ export default function ConnectionsLoading() {
                 </span>
             </div>
             <ConnectionsSkeleton />
-            <PairedDecksHeading />
-            <PairedDecksSkeleton />
         </div>
     )
 }
