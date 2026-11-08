@@ -23,7 +23,9 @@ repo's `.env` (or the shell):
 | `CONVEX_URL`, else `NEXT_PUBLIC_CONVEX_URL` | the Convex deployment | none: the plugin stays offline |
 | `DASHBOARD_URL` | the pairing link's origin | `http://localhost:3000` |
 
-For a Marketplace build, set both to production:
+An empty value counts as unset. `build` warns about a missing value;
+`package` fails, so a release can't ship offline or with localhost pairing
+links. For a Marketplace build, set both to production:
 
 ```sh
 CONVEX_URL=https://<prod>.convex.cloud DASHBOARD_URL=https://nxtbot.app pnpm --filter @nxt/streamdeck package

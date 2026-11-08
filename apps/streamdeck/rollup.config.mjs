@@ -16,12 +16,31 @@ const sdPlugin = 'dev.zedsoftworks.nxt.sdPlugin'
 const isWatching = Boolean(process.env.ROLLUP_WATCH)
 const root = path.dirname(fileURLToPath(import.meta.url))
 
-const convexUrl =
-    process.env.CONVEX_URL ?? process.env.NEXT_PUBLIC_CONVEX_URL ?? ''
-const dashboardUrl = process.env.DASHBOARD_URL ?? 'http://localhost:3000'
+// `--environment RELEASE` (the package script) refuses a build that would
+// ship without a server or with localhost pairing links.
+const isRelease = Boolean(process.env.RELEASE)
+
+/** An env var, with an empty value treated as unset. */
+function env(name) {
+    const value = process.env[name]?.trim()
+    return value ? value : undefined
+}
+
+function missing(message) {
+    if (isRelease) throw new Error(`${message} A release build needs it.`)
+    console.warn(message)
+}
+
+const convexUrl = env('CONVEX_URL') ?? env('NEXT_PUBLIC_CONVEX_URL') ?? ''
 if (convexUrl === '') {
-    console.warn(
+    missing(
         'CONVEX_URL (or NEXT_PUBLIC_CONVEX_URL) is not set: the plugin will stay offline.'
+    )
+}
+const dashboardUrl = env('DASHBOARD_URL') ?? 'http://localhost:3000'
+if (env('DASHBOARD_URL') === undefined) {
+    missing(
+        'DASHBOARD_URL is not set: pairing links will point at http://localhost:3000.'
     )
 }
 
