@@ -37,7 +37,7 @@ jobs:
         name: Check
         runs-on: blacksmith-2vcpu-ubuntu-2404
         steps:
-            - uses: actions/checkout@v5
+            - uses: useblacksmith/checkout@v1
             - uses: pnpm/action-setup@v4
             - uses: actions/setup-node@v6
               with:
@@ -60,7 +60,7 @@ jobs:
             CONVEX_URL: ${{ vars.STREAMDECK_CONVEX_URL }}
             DASHBOARD_URL: ${{ vars.STREAMDECK_DASHBOARD_URL }}
         steps:
-            - uses: actions/checkout@v5
+            - uses: useblacksmith/checkout@v1
             - uses: pnpm/action-setup@v4
             - uses: actions/setup-node@v6
               with:
