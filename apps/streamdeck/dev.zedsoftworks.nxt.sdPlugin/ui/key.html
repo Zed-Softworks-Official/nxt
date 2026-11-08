@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Nxt</title>
+    <!--
+        The Property Inspector for every Nxt key: the deck's pairing state
+        (shared by all keys) and this key's settings. Thin wiring only: the
+        plugin runs pairing and holds the secret, which never reaches this
+        page. Talks the Stream Deck SDK socket protocol directly.
+    -->
+    <style>
+        :root {
+            color-scheme: dark;
+        }
+        body {
+            margin: 0;
+            padding: 8px 12px;
+            background: #2d2d2d;
+            color: #d8d8d8;
+            font: 9pt -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+        }
+        .row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 6px 0;
+            min-height: 26px;
+        }
+        .label {
+            flex: 0 0 90px;
+            text-align: right;
+            color: #969696;
+        }
+        .value {
+            flex: 1;
+        }
+        select,
+        button {
+            font: inherit;
+            color: #d8d8d8;
+            background: #3d3d3d;
+            border: 1px solid #4a4a4a;
+            border-radius: 3px;
+            padding: 3px 8px;
+        }
+        select {
+            width: 100%;
+        }
+        button {
+            cursor: pointer;
+        }
+        .code {
+            font: bold 16pt ui-monospace, Menlo, Consolas, monospace;
+            letter-spacing: 2px;
+            color: #ffffff;
+        }
+        .hint {
+            color: #969696;
+        }
+        .ok {
+            color: #4ade80;
+        }
+        .warn {
+            color: #f59e0b;
+        }
+        .row[hidden],
+        section[hidden] {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <section id="pairing">
+        <div class="row">
+            <span class="label">Nxt</span>
+            <span class="value" id="pairing-status">Connecting…</span>
+        </div>
+        <div class="row" id="pairing-code-row" hidden>
+            <span class="label">Code</span>
+            <span class="value code" id="pairing-code"></span>
+        </div>
+        <div class="row" id="pairing-open-row" hidden>
+            <span class="label"></span>
+            <span class="value">
+                <button type="button" id="pairing-open">Approve on the dashboard</button>
+            </span>
+        </div>
+        <div class="row" id="pairing-start-row" hidden>
+            <span class="label"></span>
+            <span class="value">
+                <button type="button" id="pairing-start">Pair this Stream Deck</button>
+            </span>
+        </div>
+    </section>
+
+    <section id="settings-ping" hidden>
+        <div class="row">
+            <label class="label" for="count">Ping</label>
+            <select class="value" id="count" data-setting="count"></select>
+        </div>
+    </section>
+
+    <section id="settings-slot" hidden>
+        <div class="row">
+            <label class="label" for="slot" id="slot-label">Slot</label>
+            <select class="value" id="slot" data-setting="slot"></select>
+        </div>
+    </section>
+
+    <script>
+        const PLUGIN = 'dev.zedsoftworks.nxt'
+        const MAX_PING = 10
+        const MAX_SLOT = 20
+
+        let socket = null
+        let context = null
+        let action = null
+        let settings = {}
+
+        function send(event, payload) {
+            if (!socket || socket.readyState !== WebSocket.OPEN) return
+            socket.send(JSON.stringify({ event, context, action, payload }))
+        }
+
+        function toPlugin(message) {
+            send('sendToPlugin', message)
+        }
+
+        function fillSelect(select, max, label) {
+            select.replaceChildren()
+            for (let n = 1; n <= max; n++) {
+                const option = document.createElement('option')
+                option.value = String(n)
+                option.textContent = label(n)
+                select.append(option)
+            }
+        }
+
+        function showSettings() {
+            const kind = action.slice(PLUGIN.length + 1)
+            const count = document.getElementById('count')
+            const slot = document.getElementById('slot')
+            if (kind === 'ping') {
+                fillSelect(count, MAX_PING, (n) =>
+                    n === 1 ? 'the next 1 waiting' : `the next ${n} waiting`
+                )
+                count.value = String(settings.count ?? 1)
+                document.getElementById('settings-ping').hidden = false
+            }
+            if (kind === 'play' || kind === 'return' || kind === 'done') {
+                const list = kind === 'done' ? 'Playing' : 'Pinged'
+                document.getElementById('slot-label').textContent = `${list} slot`
+                fillSelect(slot, MAX_SLOT, (n) => `#${n}`)
+                slot.value = String(settings.slot ?? 1)
+                document.getElementById('settings-slot').hidden = false
+            }
+        }
+
+        // Settings save on change, as numbers; no Save button.
+        for (const select of document.querySelectorAll('[data-setting]')) {
+            select.addEventListener('change', () => {
+                settings = {
+                    ...settings,
+                    [select.dataset.setting]: Number(select.value),
+                }
+                send('setSettings', settings)
+            })
+        }
+
+        function showPairing(message) {
+            const status = document.getElementById('pairing-status')
+            const show = (id, visible) => {
+                document.getElementById(id).hidden = !visible
+            }
+            status.className = 'value'
+            show('pairing-code-row', false)
+            show('pairing-open-row', false)
+            show('pairing-start-row', false)
+
+            if (!message.configured) {
+                status.textContent = 'This build has no Nxt server set.'
+                status.classList.add('warn')
+                return
+            }
+            switch (message.status) {
+                case 'paired':
+                    status.textContent = 'Paired. Every key on this computer is connected.'
+                    status.classList.add('ok')
+                    return
+                case 'starting':
+                    status.textContent = 'Getting a pairing code…'
+                    return
+                case 'waiting':
+                    status.textContent = 'Approve this code on the Nxt dashboard.'
+                    document.getElementById('pairing-code').textContent = message.code
+                    show('pairing-code-row', true)
+                    show('pairing-open-row', true)
+                    return
+                case 'error':
+                    status.textContent = "Can't reach Nxt. Retrying…"
+                    status.classList.add('warn')
+                    return
+                default:
+                    status.textContent = 'Not paired.'
+                    status.classList.add('warn')
+                    show('pairing-start-row', true)
+            }
+        }
+
+        document.getElementById('pairing-open').addEventListener('click', () =>
+            toPlugin({ type: 'pairing:open' })
+        )
+        document.getElementById('pairing-start').addEventListener('click', () =>
+            toPlugin({ type: 'pairing:start' })
+        )
+
+        // Called by Stream Deck when the Property Inspector loads.
+        window.connectElgatoStreamDeckSocket = (
+            port,
+            uuid,
+            registerEvent,
+            _info,
+            actionInfo
+        ) => {
+            const parsed = JSON.parse(actionInfo)
+            context = uuid
+            action = parsed.action
+            settings = parsed.payload?.settings ?? {}
+            showSettings()
+
+            socket = new WebSocket(`ws://127.0.0.1:${port}`)
+            socket.addEventListener('open', () => {
+                socket.send(JSON.stringify({ event: registerEvent, uuid }))
+                toPlugin({ type: 'pairing:get' })
+            })
+            socket.addEventListener('message', (event) => {
+                const message = JSON.parse(event.data)
+                if (message.event === 'sendToPropertyInspector') {
+                    if (message.payload?.type === 'pairing') {
+                        showPairing(message.payload)
+                    }
+                }
+                if (message.event === 'didReceiveSettings') {
+                    settings = message.payload?.settings ?? {}
+                    showSettings()
+                }
+            })
+        }
+    </script>
+</body>
+</html>
