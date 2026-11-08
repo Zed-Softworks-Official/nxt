@@ -1,0 +1,14 @@
+{
+    "extends": "@nxt/typescript-config/base.json",
+    "compilerOptions": {
+        "module": "ESNext",
+        "moduleResolution": "Bundler",
+        "noImplicitOverride": true,
+        "baseUrl": ".",
+        "paths": {
+            "~/*": ["./src/*"]
+        }
+    },
+    "include": ["**/*.ts", "**/*.mts"],
+    "exclude": ["node_modules", "*.sdPlugin"]
+}

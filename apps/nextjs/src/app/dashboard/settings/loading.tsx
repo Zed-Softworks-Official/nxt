@@ -1,3 +1,4 @@
+import { PairedDecksHeading, PairedDecksSkeleton } from './paired-decks'
 import { SavedPingNoteSkeleton } from './saved-ping-note'
 
 export default function SettingsLoading() {
@@ -10,6 +11,8 @@ export default function SettingsLoading() {
                 </span>
             </div>
             <SavedPingNoteSkeleton />
+            <PairedDecksHeading />
+            <PairedDecksSkeleton />
         </div>
     )
 }

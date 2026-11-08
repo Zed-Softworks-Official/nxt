@@ -36,3 +36,7 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+
+# Stream Deck plugin build output and logs
+**/*.sdPlugin/bin
+**/*.sdPlugin/logs

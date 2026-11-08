@@ -1,0 +1,144 @@
+{
+    "Name": "Nxt Queue",
+    "Version": "0.1.0.0",
+    "Author": "Zed Softworks",
+    "Description": "Run your Nxt Queue from your Stream Deck: Ping the next people, Open or Pause the Queue, move Pinged Participants to Playing, and see who's waiting at a glance.",
+    "URL": "https://nxtbot.app",
+    "Actions": [
+        {
+            "Name": "Ping",
+            "UUID": "dev.zedsoftworks.nxt.ping",
+            "Icon": "imgs/actions/ping/icon",
+            "Tooltip": "Ping the next waiting Participants (set how many in the key's settings).",
+            "PropertyInspectorPath": "ui/key.html",
+            "Controllers": ["Keypad"],
+            "States": [
+                {
+                    "Image": "imgs/actions/ping/key",
+                    "ShowTitle": false
+                }
+            ],
+            "UserTitleEnabled": false,
+            "SupportedInMultiActions": false
+        },
+        {
+            "Name": "Open/Pause",
+            "UUID": "dev.zedsoftworks.nxt.open-pause",
+            "Icon": "imgs/actions/open-pause/icon",
+            "Tooltip": "Shows whether the Queue is Open or Paused; press to toggle.",
+            "PropertyInspectorPath": "ui/key.html",
+            "Controllers": ["Keypad"],
+            "States": [
+                {
+                    "Image": "imgs/actions/open-pause/key",
+                    "ShowTitle": false
+                }
+            ],
+            "UserTitleEnabled": false,
+            "SupportedInMultiActions": false
+        },
+        {
+            "Name": "Play",
+            "UUID": "dev.zedsoftworks.nxt.play",
+            "Icon": "imgs/actions/play/icon",
+            "Tooltip": "Move the Participant in a Pinged slot to Playing.",
+            "PropertyInspectorPath": "ui/key.html",
+            "Controllers": ["Keypad"],
+            "States": [
+                {
+                    "Image": "imgs/actions/play/key",
+                    "ShowTitle": false
+                }
+            ],
+            "UserTitleEnabled": false,
+            "SupportedInMultiActions": false
+        },
+        {
+            "Name": "Return",
+            "UUID": "dev.zedsoftworks.nxt.return",
+            "Icon": "imgs/actions/return/icon",
+            "Tooltip": "Send the Participant in a Pinged slot back to the Queue.",
+            "PropertyInspectorPath": "ui/key.html",
+            "Controllers": ["Keypad"],
+            "States": [
+                {
+                    "Image": "imgs/actions/return/key",
+                    "ShowTitle": false
+                }
+            ],
+            "UserTitleEnabled": false,
+            "SupportedInMultiActions": false
+        },
+        {
+            "Name": "Done",
+            "UUID": "dev.zedsoftworks.nxt.done",
+            "Icon": "imgs/actions/done/icon",
+            "Tooltip": "Finish the turn of the Participant in a Playing slot.",
+            "PropertyInspectorPath": "ui/key.html",
+            "Controllers": ["Keypad"],
+            "States": [
+                {
+                    "Image": "imgs/actions/done/key",
+                    "ShowTitle": false
+                }
+            ],
+            "UserTitleEnabled": false,
+            "SupportedInMultiActions": false
+        },
+        {
+            "Name": "Waiting",
+            "UUID": "dev.zedsoftworks.nxt.waiting-count",
+            "Icon": "imgs/actions/waiting-count/icon",
+            "Tooltip": "How many Participants are waiting.",
+            "PropertyInspectorPath": "ui/key.html",
+            "Controllers": ["Keypad"],
+            "States": [
+                {
+                    "Image": "imgs/actions/waiting-count/key",
+                    "ShowTitle": false
+                }
+            ],
+            "UserTitleEnabled": false,
+            "SupportedInMultiActions": false
+        },
+        {
+            "Name": "Pinged",
+            "UUID": "dev.zedsoftworks.nxt.pinged-count",
+            "Icon": "imgs/actions/pinged-count/icon",
+            "Tooltip": "How many Participants are Pinged.",
+            "PropertyInspectorPath": "ui/key.html",
+            "Controllers": ["Keypad"],
+            "States": [
+                {
+                    "Image": "imgs/actions/pinged-count/key",
+                    "ShowTitle": false
+                }
+            ],
+            "UserTitleEnabled": false,
+            "SupportedInMultiActions": false
+        }
+    ],
+    "Category": "Nxt Queue",
+    "CategoryIcon": "imgs/plugin/category-icon",
+    "CodePath": "bin/plugin.js",
+    "Icon": "imgs/plugin/marketplace",
+    "PropertyInspectorPath": "ui/key.html",
+    "SDKVersion": 3,
+    "Software": {
+        "MinimumVersion": "7.1"
+    },
+    "OS": [
+        {
+            "Platform": "mac",
+            "MinimumVersion": "12"
+        },
+        {
+            "Platform": "windows",
+            "MinimumVersion": "10"
+        }
+    ],
+    "Nodejs": {
+        "Version": "24"
+    },
+    "UUID": "dev.zedsoftworks.nxt"
+}

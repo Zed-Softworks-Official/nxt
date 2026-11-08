@@ -1,0 +1,37 @@
+{
+    "name": "@nxt/streamdeck",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build": "pnpm with-env rollup -c",
+        "images": "tsx scripts/images.ts",
+        "package": "pnpm build --environment RELEASE && streamdeck pack dev.zedsoftworks.nxt.sdPlugin -o dist -f --no-update-check && biome format --write dev.zedsoftworks.nxt.sdPlugin/manifest.json",
+        "test": "vitest run",
+        "typecheck": "tsc --noEmit",
+        "validate:plugin": "streamdeck validate dev.zedsoftworks.nxt.sdPlugin --no-update-check",
+        "watch": "pnpm with-env rollup -c -w --watch.onEnd=\"streamdeck restart dev.zedsoftworks.nxt\"",
+        "with-env": "dotenv -e ../../.env --"
+    },
+    "dependencies": {
+        "@elgato/streamdeck": "^3.0.4",
+        "@nxt/backend": "workspace:*",
+        "convex": "^1.49.0"
+    },
+    "devDependencies": {
+        "@edge-runtime/vm": "^5.0.0",
+        "@elgato/cli": "^1.10.4",
+        "@nxt/typescript-config": "workspace:*",
+        "@rollup/plugin-commonjs": "^29.0.3",
+        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@rollup/plugin-replace": "^6.0.3",
+        "@rollup/plugin-terser": "^1.0.2",
+        "convex-test": "^0.0.60",
+        "esbuild": "^0.28.2",
+        "rollup": "^4.60.3",
+        "rollup-plugin-esbuild": "^6.2.1",
+        "tsx": "^4.21.0",
+        "typescript": "5.9.2",
+        "vitest": "^5.0.2"
+    }
+}

@@ -1,12 +1,13 @@
 'use client'
 
 import { api } from '@nxt/backend/api'
+import { isAnnouncementFailed } from '@nxt/backend/failedAnnouncement'
 import { platformLabel } from '@nxt/backend/participant'
 import { useQuery } from '@nxt/backend/react'
 import { useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 
-import { isAnnouncementFailed, useNow } from '../_lib/failed-announcement'
+import { useNow } from '../_lib/failed-announcement'
 
 // Toasts once when Announcements newly fail while the dashboard is open, one
 // updating toast per platform. Failures already there on load only get their
@@ -20,7 +21,7 @@ export function FailedAnnouncementToasts() {
         if (!data || now === null) return
 
         const failed = data.pinged.filter((participant) =>
-            isAnnouncementFailed(participant, now)
+            isAnnouncementFailed(participant.announcementPendingSince, now)
         )
         const known = knownFailures.current
         knownFailures.current = new Set(failed.map((p) => p.reference))

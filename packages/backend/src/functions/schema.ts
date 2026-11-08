@@ -74,6 +74,35 @@ export default defineSchema({
         ),
         expiresAt: v.number(),
     }),
+    // A Stream Deck approved to run its Community's Queue with the owner's
+    // authority (ADR-0006). Only a hash of its secret is stored. The hash is
+    // set when the plugin collects the secret; until then the deck is unusable.
+    pairedDecks: defineTable({
+        communityId: v.id('communities'),
+        name: v.string(),
+        secretHash: v.optional(v.string()),
+        createdAt: v.number(),
+        lastUsedAt: v.optional(v.number()),
+        revokedAt: v.optional(v.number()),
+    })
+        .index('bySecretHash', ['secretHash'])
+        .index('byCommunity', ['communityId']),
+    // A short-lived request from the plugin to become a Paired deck. The
+    // plugin holds the poll token; the owner approves the code.
+    pairingRequests: defineTable({
+        code: v.string(),
+        pollTokenHash: v.string(),
+        expiresAt: v.number(),
+        status: v.union(
+            v.literal('pending'),
+            v.literal('approved'),
+            v.literal('consumed')
+        ),
+        pairedDeckId: v.optional(v.id('pairedDecks')),
+    })
+        .index('byCode', ['code'])
+        .index('byPollTokenHash', ['pollTokenHash'])
+        .index('byExpiresAt', ['expiresAt']),
     platformLinks: defineTable({
         communityId: v.id('communities'),
         enabled: v.boolean(),

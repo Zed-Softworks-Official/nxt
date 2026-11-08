@@ -1,4 +1,5 @@
 /// <reference path="./import-meta.d.ts" />
+import { api } from '@nxt/backend/api'
 import { convexTest } from 'convex-test'
 
 import schema from '../functions/schema'
@@ -306,7 +307,9 @@ export function installFakeTwitch(signIns: Record<string, FakeTwitchSignIn>) {
 // A fake Discord, installed as the backend's Discord client. Each
 // authorization `code` is a bot install in one guild; an unknown code fails
 // the exchange.
-export function installFakeDiscord(installs: Record<string, { guildId: string }>) {
+export function installFakeDiscord(
+    installs: Record<string, { guildId: string }>
+) {
     setDiscordClient({
         async exchangeBotInstallCode(code) {
             const install = installs[code]
@@ -315,4 +318,30 @@ export function installFakeDiscord(installs: Record<string, { guildId: string }>
         },
     })
     return { uninstall: () => setDiscordClient(null) }
+}
+
+export { MAX_LIVE_PAIRINGS } from '../model/pairedDeck'
+
+/** Start a pairing request as the plugin does; fails if it was refused. */
+export async function startPairing(backend: TestBackend) {
+    const started = await backend.mutation(api.pairedDecks.startPairing, {})
+    if (started.kind !== 'started') throw new Error('pairing was refused')
+    return started
+}
+
+/** Pair a deck the way the plugin and the dashboard do; returns its secret. */
+export async function pairDeck(
+    backend: TestBackend,
+    ownerId: string,
+    name = 'Deck'
+) {
+    const { code, pollToken } = await startPairing(backend)
+    await backend
+        .withIdentity({ subject: ownerId })
+        .mutation(api.pairedDecks.approvePairing, { code, name })
+    const polled = await backend.mutation(api.pairedDecks.pollPairing, {
+        pollToken,
+    })
+    if (polled.kind !== 'approved') throw new Error('pairing failed')
+    return polled.secret
 }

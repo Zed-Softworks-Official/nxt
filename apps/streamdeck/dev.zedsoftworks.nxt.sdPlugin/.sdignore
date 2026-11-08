@@ -1,0 +1,3 @@
+# Kept out of the packaged plugin.
+*.map
+logs

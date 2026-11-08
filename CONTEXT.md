@@ -16,6 +16,10 @@ _Avoid_: Admin, broadcaster
 An enabled connection between a Community and a platform space, such as a Discord guild or Twitch channel. Its Participants share the Community's Queue. Removing a Platform Link removes that platform's waiting Participants. Its Pinged and Playing Participants stay until their turn ends.
 _Avoid_: integration, server connection
 
+**Paired deck**:
+A Stream Deck that a Community owner has approved to run that Community's Queue with the owner's authority. No Participants arrive through it, so it is not a Platform Link. The owner may pair several and revoke any of them at any time.
+_Avoid_: integration, connection, device link
+
 **Queue**:
 The ordered line of Participants who are waiting, earliest join first. It starts Paused. Clearing it removes every waiting Participant and leaves pinged and playing Participants in place.
 _Avoid_: pinged list, now playing, the full set of Participants
@@ -81,8 +85,16 @@ The Nxt-operated Twitch account that receives Queue commands and posts replies i
 _Avoid_: broadcaster account, Community account
 
 **Turn command**:
-An Admin command that moves Participants between the Queue, Pinged, and Playing: ping, play, return, and done. Discord, Twitch, and the dashboard offer the same Turn commands.
+An Admin command that moves Participants between the Queue, Pinged, and Playing: ping, play, return, and done. Discord, Twitch, the dashboard, and a Paired deck offer the same Turn commands.
 _Avoid_: dashboard action, mod command
+
+**Quick Ping**:
+Pinging the front N waiting Participants in one go with the Saved ping note, from the dashboard or a Paired deck's Ping key. A Paired deck calls at most 10 at once.
+_Avoid_: bulk ping, mass ping
+
+**Slot**:
+A numbered place in the Pinged or Playing list, starting at 1 for the earliest join, matching the dashboard's order. A Paired deck's Play and Return keys act on a Pinged slot and its Done key on a Playing slot, on whoever is in that slot at the time.
+_Avoid_: index, seat
 
 **Activity log**:
 The history of turns on a Queue: a Participant being pinged, returning to the Queue, or finishing. Joining, leaving, and clearing the Queue are not turns.

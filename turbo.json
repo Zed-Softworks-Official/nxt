@@ -4,11 +4,19 @@
     "tasks": {
         "build": {
             "dependsOn": ["^build"],
-            "outputs": [".cache/tsbuildinfo.json", "dist/**"]
+            "outputs": [
+                ".cache/tsbuildinfo.json",
+                "dist/**",
+                "*.sdPlugin/bin/**"
+            ]
         },
         "dev": {
             "cache": false,
             "persistent": false
+        },
+        "watch": {
+            "cache": false,
+            "persistent": true
         },
         "deploy:discord": {
             "cache": false,
@@ -46,7 +54,9 @@
         "NEXT_PUBLIC_TWITCH_CLIENT_ID",
         "NEXT_PUBLIC_TWITCH_REDIRECT_URI",
         "CONVEX_DEPLOY_KEY",
-        "DISCORD_TOKEN"
+        "DISCORD_TOKEN",
+        "CONVEX_URL",
+        "DASHBOARD_URL"
     ],
     "globalPassThroughEnv": [
         "NODE_ENV",
