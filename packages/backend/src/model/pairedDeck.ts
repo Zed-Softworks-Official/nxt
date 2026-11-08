@@ -2,7 +2,7 @@ import type { Doc, Id } from '@nxt/backend/dataModel'
 import type { MutationCtx, QueryCtx } from '@nxt/backend/server'
 import { v } from 'convex/values'
 
-import { MAX_DECK_NAME_LENGTH } from '../pairingLink'
+import { MAX_DECK_NAME_LENGTH, normalizePairingCode } from '../pairingLink'
 
 // Paired decks and their pairing (ADR-0006). A Stream Deck plugin starts a
 // pairing request and shows its code; the Community owner approves the code on
@@ -16,8 +16,6 @@ export const PAIRING_TTL_MS = 10 * 60 * 1000
 // No 0/O or 1/I, so a code read off a key is hard to mistype.
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 const CODE_LENGTH = 8
-
-export { MAX_DECK_NAME_LENGTH }
 
 export const approveResult = v.union(
     v.object({ kind: v.literal('ok') }),
@@ -57,7 +55,7 @@ export async function approvePairing(
     input: { communityId: Id<'communities'>; code: string; name: string },
     now: number
 ) {
-    const code = input.code.trim().toUpperCase()
+    const code = normalizePairingCode(input.code)
     // A code is only reissued once its earlier request expired, so the newest
     // request with it is the one the owner means.
     const request = await ctx.db
@@ -127,14 +125,20 @@ export async function pollPairing(
     return { kind: 'approved' as const, secret }
 }
 
-/** The Community's Paired decks that are usable or awaiting collection. */
+/**
+ * The Community's usable Paired decks. A deck approved but not yet collected
+ * by its plugin has no secret, so it can't run the Queue and isn't listed.
+ */
 export async function list(ctx: QueryCtx, communityId: Id<'communities'>) {
     const decks = await ctx.db
         .query('pairedDecks')
         .withIndex('byCommunity', (q) => q.eq('communityId', communityId))
         .collect()
     return decks
-        .filter((deck) => deck.revokedAt === undefined)
+        .filter(
+            (deck) =>
+                deck.revokedAt === undefined && deck.secretHash !== undefined
+        )
         .map((deck) => ({
             id: deck._id,
             name: deck.name,

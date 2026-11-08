@@ -65,7 +65,6 @@ test('an approved code cannot be approved again', async () => {
             name: 'C',
         })
     ).toEqual({ kind: 'used' })
-    expect(await owner.query(api.pairedDecks.list, {})).toHaveLength(1)
     expect(await other.query(api.pairedDecks.list, {})).toEqual([])
 })
 
@@ -94,6 +93,40 @@ test('an expired code is refused, and its poll reports expired', async () => {
     } finally {
         vi.useRealTimers()
     }
+})
+
+test('a hand-typed code is accepted in lower case and with a separator', async () => {
+    const backend = await seed()
+    const owner = backend.withIdentity({ subject: 'owner-1' })
+    const { code } = await backend.mutation(api.pairedDecks.startPairing, {})
+    const typed = `${code.slice(0, 4).toLowerCase()}-${code.slice(4).toLowerCase()}`
+
+    expect(
+        await owner.mutation(api.pairedDecks.approvePairing, {
+            code: typed,
+            name: 'Deck',
+        })
+    ).toEqual({ kind: 'ok' })
+})
+
+test('an approved deck is listed only once the plugin has collected its secret', async () => {
+    const backend = await seed()
+    const owner = backend.withIdentity({ subject: 'owner-1' })
+    const { code, pollToken } = await backend.mutation(
+        api.pairedDecks.startPairing,
+        {}
+    )
+    await owner.mutation(api.pairedDecks.approvePairing, {
+        code,
+        name: 'Studio deck',
+    })
+
+    expect(await owner.query(api.pairedDecks.list, {})).toEqual([])
+
+    await backend.mutation(api.pairedDecks.pollPairing, { pollToken })
+    expect(
+        (await owner.query(api.pairedDecks.list, {})).map((d) => d.name)
+    ).toEqual(['Studio deck'])
 })
 
 test('an unknown code is refused', async () => {
