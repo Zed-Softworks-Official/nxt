@@ -14,6 +14,10 @@
             "cache": false,
             "persistent": false
         },
+        "watch": {
+            "cache": false,
+            "persistent": true
+        },
         "deploy:discord": {
             "cache": false,
             "persistent": false
