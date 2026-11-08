@@ -12,6 +12,7 @@ import type * as announcements from '../announcements.js'
 import type * as commandChannel from '../commandChannel.js'
 import type * as communities from '../communities.js'
 import type * as crons from '../crons.js'
+import type * as deck from '../deck.js'
 import type * as discordGuild from '../discordGuild.js'
 import type * as http from '../http.js'
 import type * as linkStates from '../linkStates.js'
@@ -33,6 +34,7 @@ declare const fullApi: ApiFromModules<{
     commandChannel: typeof commandChannel
     communities: typeof communities
     crons: typeof crons
+    deck: typeof deck
     discordGuild: typeof discordGuild
     http: typeof http
     linkStates: typeof linkStates

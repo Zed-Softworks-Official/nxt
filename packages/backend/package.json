@@ -26,7 +26,8 @@
         "./reference": "./src/reference.ts",
         "./participant": "./src/participant.ts",
         "./pingNote": "./src/pingNote.ts",
-        "./pairingLink": "./src/pairingLink.ts"
+        "./pairingLink": "./src/pairingLink.ts",
+        "./failedAnnouncement": "./src/failedAnnouncement.ts"
     },
     "devDependencies": {
         "@edge-runtime/vm": "^5.0.0",
