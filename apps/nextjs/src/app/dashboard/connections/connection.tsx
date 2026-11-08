@@ -22,6 +22,7 @@ import { env } from '~/env'
 
 export function Connections() {
     const platforms = useQuery(api.platformLinks.getPlatformLinks, {})
+    const twitchSettings = useQuery(api.subRequirement.settings, {})
 
     if (!platforms) return <ConnectionsSkeleton />
 
@@ -31,6 +32,7 @@ export function Connections() {
     const twitch = platforms.find(
         (link) => link.platform === 'twitch' && link.enabled
     )
+    const needsReconnect = twitchSettings?.needsReconnect === true
 
     return (
         <ItemGroup>
@@ -65,6 +67,9 @@ export function Connections() {
                     </ItemDescription>
                 </ItemContent>
                 <ItemActions>
+                    {twitch && needsReconnect && (
+                        <TwitchConnection label="Reconnect" />
+                    )}
                     {twitch ? <TwitchUnlink /> : <TwitchConnection />}
                 </ItemActions>
             </Item>
@@ -137,7 +142,7 @@ function DiscordConnection() {
     )
 }
 
-function TwitchConnection() {
+export function TwitchConnection(props: { label?: string }) {
     const mintLinkState = useMutation(api.linkStates.mintLinkState)
     const [pending, setPending] = useState(false)
 
@@ -148,7 +153,9 @@ function TwitchConnection() {
 
             // Authorization-code flow (ADR-0002). The broadcaster who signs in
             // decides the channel; `channel:bot` lets the Nxt bot account into
-            // their chat.
+            // their chat, and `channel:read:subscriptions` lets Nxt check a
+            // chatter's sub tier for the Sub requirement (ADR-0006). A linked
+            // channel signing in again is a Reconnect, which keeps the link.
             const authorizeUrl = new URL(
                 'https://id.twitch.tv/oauth2/authorize'
             )
@@ -161,7 +168,10 @@ function TwitchConnection() {
                 env.NEXT_PUBLIC_TWITCH_REDIRECT_URI
             )
             authorizeUrl.searchParams.set('response_type', 'code')
-            authorizeUrl.searchParams.set('scope', 'channel:bot')
+            authorizeUrl.searchParams.set(
+                'scope',
+                'channel:bot channel:read:subscriptions'
+            )
             authorizeUrl.searchParams.set('force_verify', 'true')
             authorizeUrl.searchParams.set('state', state)
 
@@ -174,7 +184,7 @@ function TwitchConnection() {
 
     return (
         <Button disabled={pending} onClick={() => void connect()}>
-            Connect
+            {props.label ?? 'Connect'}
         </Button>
     )
 }

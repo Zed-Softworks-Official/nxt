@@ -81,7 +81,7 @@ test('!nxt gets a usage reply', async () => {
             kind: 'reply',
             channelId: 'broadcaster-1',
             parentMessageId: message.messageId,
-            text: '@ada Usage: !joinq | !leaveq | !pos | !viewq',
+            text: '@ada Usage: !joinq | !leaveq | !pos | !viewq | !subq',
         },
     ])
 })
@@ -110,7 +110,7 @@ test('!nxt from a Twitch Admin lists the Admin commands too', async () => {
     await handle(chatMessage('!nxt', { badges: { moderator: '1' } }))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@ada Usage: !joinq | !leaveq | !pos | !viewq. Admins: !startq | !endq | !clearq | !pingq [count [note]] | !playq <ref> | !returnq <ref> | !doneq <ref>',
+        '@ada Usage: !joinq | !leaveq | !pos | !viewq | !subq. Admins: !startq | !endq | !clearq | !pingq [count [note]] | !playq <ref> | !returnq <ref> | !doneq <ref> | !subq [off|any|2|3]',
     ])
 })
 

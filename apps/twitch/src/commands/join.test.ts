@@ -3,6 +3,7 @@ import {
     chatMessage,
     createTestBackend,
     readQueue,
+    seedCommunity,
     seedTwitchCommunity,
     twitchBot,
 } from '../test/chatHarness'
@@ -139,4 +140,35 @@ test('a Twitch chatter with the same ID as a Discord participant gets a separate
     expect(sent.map((entry) => entry.text)).toEqual([
         '@ada You joined the queue as q-2.',
     ])
+})
+
+test('!joinq with Twitch Joins off says so, for Twitch Admins too, and adds nobody', async () => {
+    const backend = createTestBackend()
+    await seedCommunity(backend, {
+        ownerId: 'owner-1',
+        state: 'open',
+        links: [
+            {
+                platform: 'twitch',
+                platformId: 'broadcaster-1',
+                joinsOff: true,
+            },
+        ],
+    })
+    const { handle, sent } = twitchBot(backend)
+
+    await handle(chatMessage('!joinq'))
+    await handle(
+        chatMessage('!joinq', {
+            chatterId: 'mod-1',
+            chatterLogin: 'mod',
+            badges: { moderator: '1' },
+        })
+    )
+
+    expect(sent.map((entry) => entry.text)).toEqual([
+        '@ada Joining from Twitch is off right now.',
+        '@mod Joining from Twitch is off right now.',
+    ])
+    expect((await readQueue(backend, 'owner-1'))?.participants).toEqual([])
 })

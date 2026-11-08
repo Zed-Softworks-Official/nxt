@@ -4,6 +4,7 @@ import {
     createTestBackend,
     fakeInteraction,
     readQueue,
+    seedCommunity,
     seedDiscordCommunity,
 } from '../test/queueHarness'
 import { joinQ } from './join'
@@ -365,4 +366,44 @@ test('joinq on a community with no queue creates it paused and does not open it'
         state: 'paused',
         participants: [],
     })
+})
+
+test('joinq with Discord Joins off says so and adds nobody', async () => {
+    const backend = createTestBackend()
+    await seedCommunity(backend, {
+        ownerId: 'owner-1',
+        state: 'open',
+        links: [{ platform: 'discord', platformId: 'guild-1', joinsOff: true }],
+    })
+    const { interaction, replies } = fakeInteraction({ guildId: 'guild-1' })
+
+    await joinQ.execute(interaction, asQueueConvex(backend))
+
+    expect(replies).toEqual([
+        { content: 'Joining from Discord is off right now.', ephemeral: false },
+    ])
+    expect((await readQueue(backend, 'owner-1'))?.participants).toEqual([])
+})
+
+test('the Sub requirement on the Twitch channel does not affect Discord joins', async () => {
+    const backend = createTestBackend()
+    await seedCommunity(backend, {
+        ownerId: 'owner-1',
+        state: 'open',
+        links: [
+            { platform: 'discord', platformId: 'guild-1' },
+            {
+                platform: 'twitch',
+                platformId: 'broadcaster-1',
+                twitch: { subRequirement: 'tier3' },
+            },
+        ],
+    })
+    const { interaction, replies } = fakeInteraction({ guildId: 'guild-1' })
+
+    await joinQ.execute(interaction, asQueueConvex(backend))
+
+    expect(replies).toEqual([
+        { content: 'Joined the queue.', ephemeral: false },
+    ])
 })

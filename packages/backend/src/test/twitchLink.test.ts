@@ -6,6 +6,7 @@ import {
     installFakeTwitch,
     readQueue,
     seedCommunity,
+    seedTwitchCommunity,
     type TestBackend,
 } from '../testing'
 
@@ -267,10 +268,30 @@ test('unlinking removes waiting Twitch Participants and keeps Pinged, Playing an
         state: 'open',
         links: [{ platform: 'discord', platformId: 'guild-1' }],
         participants: [
-            { platformUserId: 't-1', username: 'waiter', status: 'waiting', platform: 'twitch' },
-            { platformUserId: 't-2', username: 'called', status: 'notified', platform: 'twitch' },
-            { platformUserId: 't-3', username: 'player', status: 'playing', platform: 'twitch' },
-            { platformUserId: 'd-1', username: 'discorder', status: 'waiting', platform: 'discord' },
+            {
+                platformUserId: 't-1',
+                username: 'waiter',
+                status: 'waiting',
+                platform: 'twitch',
+            },
+            {
+                platformUserId: 't-2',
+                username: 'called',
+                status: 'notified',
+                platform: 'twitch',
+            },
+            {
+                platformUserId: 't-3',
+                username: 'player',
+                status: 'playing',
+                platform: 'twitch',
+            },
+            {
+                platformUserId: 'd-1',
+                username: 'discorder',
+                status: 'waiting',
+                platform: 'discord',
+            },
         ],
     })
     await linkTwitch(backend, 'owner-1', 'code-1')
@@ -279,7 +300,10 @@ test('unlinking removes waiting Twitch Participants and keeps Pinged, Playing an
 
     const queue = await readQueue(backend, 'owner-1')
     expect(
-        queue?.participants.map(({ username, status }) => ({ username, status }))
+        queue?.participants.map(({ username, status }) => ({
+            username,
+            status,
+        }))
     ).toEqual([
         { username: 'called', status: 'notified' },
         { username: 'player', status: 'playing' },
@@ -298,7 +322,12 @@ test('unlinking drops pending Twitch Announcements so they are never posted', as
         ownerId: 'owner-1',
         state: 'open',
         participants: [
-            { platformUserId: 't-1', username: 'viewer', status: 'waiting', platform: 'twitch' },
+            {
+                platformUserId: 't-1',
+                username: 'viewer',
+                status: 'waiting',
+                platform: 'twitch',
+            },
         ],
     })
     await linkTwitch(backend, 'owner-1', 'code-1')
@@ -306,13 +335,17 @@ test('unlinking drops pending Twitch Announcements so they are never posted', as
         .withIdentity({ subject: 'owner-1' })
         .mutation(api.queue.ping, { count: 1 })
     expect(
-        await backend.query(internal.announcements.pending, { platform: 'twitch' })
+        await backend.query(internal.announcements.pending, {
+            platform: 'twitch',
+        })
     ).toMatchObject([{ action: 'post' }])
 
     await unlinkAs(backend, 'owner-1')
 
     expect(
-        await backend.query(internal.announcements.pending, { platform: 'twitch' })
+        await backend.query(internal.announcements.pending, {
+            platform: 'twitch',
+        })
     ).toEqual([])
 })
 
@@ -323,9 +356,9 @@ test('only the signed-in Community owner can unlink their own channel', async ()
     await seedCommunity(backend, { ownerId: 'owner-2', state: 'open' })
     await linkTwitch(backend, 'owner-1', 'code-1')
 
-    await expect(
-        backend.action(api.twitchLink.unlink, {})
-    ).rejects.toThrow('Not signed in')
+    await expect(backend.action(api.twitchLink.unlink, {})).rejects.toThrow(
+        'Not signed in'
+    )
     await unlinkAs(backend, 'owner-2')
 
     expect(await dashboardLinks(backend, 'owner-1')).toMatchObject([
@@ -354,7 +387,7 @@ test('an unlinked channel can be linked again, by the same or another Community'
     expect(twitch.subscribedChannels()).toEqual(['broadcaster-1'])
 })
 
-test('the dashboard lists only the signed-in owner\'s links', async () => {
+test("the dashboard lists only the signed-in owner's links", async () => {
     const backend = createTestBackend()
     await seedCommunity(backend, {
         ownerId: 'owner-1',
@@ -362,9 +395,9 @@ test('the dashboard lists only the signed-in owner\'s links', async () => {
         links: [{ platform: 'discord', platformId: 'guild-1' }],
     })
 
-    expect(
-        await backend.query(api.platformLinks.getPlatformLinks, {})
-    ).toEqual([])
+    expect(await backend.query(api.platformLinks.getPlatformLinks, {})).toEqual(
+        []
+    )
     expect(await dashboardLinks(backend, 'stranger')).toEqual([])
     expect(await dashboardLinks(backend, 'owner-1')).toEqual([
         {
@@ -374,4 +407,138 @@ test('the dashboard lists only the signed-in owner\'s links', async () => {
             enabled: true,
         },
     ])
+})
+
+async function twitchSettings(backend: TestBackend, ownerId: string) {
+    return await backend
+        .withIdentity({ subject: ownerId })
+        .query(api.subRequirement.settings, {})
+}
+
+test('a sign-in without the subscriptions permission is refused', async () => {
+    const backend = createTestBackend()
+    const twitch = fakeTwitch({
+        'code-1': { user: broadcaster, scopes: ['channel:bot'] },
+    })
+    await seedCommunity(backend, { ownerId: 'owner-1', state: 'none' })
+    const state = await mintTwitchState(backend, 'owner-1')
+
+    expect(await twitchCallback(backend, { code: 'code-1', state })).toBe(
+        'error'
+    )
+
+    expect(await dashboardLinks(backend, 'owner-1')).toEqual([])
+    expect(twitch.subscribedChannels()).toEqual([])
+})
+
+test('a link from before the subscriptions permission needs a Reconnect', async () => {
+    const backend = createTestBackend()
+    await seedTwitchCommunity(backend, {
+        ownerId: 'owner-1',
+        broadcasterId: 'broadcaster-1',
+        state: 'open',
+        twitch: { grant: { scopes: ['channel:bot'] } },
+    })
+
+    expect(await twitchSettings(backend, 'owner-1')).toEqual({
+        requirement: 'off',
+        needsReconnect: true,
+    })
+})
+
+test('Reconnect by the same channel keeps its link, waiting Participants and settings', async () => {
+    const backend = createTestBackend()
+    fakeTwitch({ 'code-1': { user: broadcaster } })
+    await seedTwitchCommunity(backend, {
+        ownerId: 'owner-1',
+        broadcasterId: 'broadcaster-1',
+        state: 'open',
+        joinsOff: true,
+        twitch: {
+            subRequirement: 'tier2',
+            grantRevoked: true,
+            grant: { scopes: ['channel:bot'] },
+        },
+        participants: [
+            { platformUserId: 'user-1', username: 'Ada', status: 'waiting' },
+        ],
+    })
+    const state = await mintTwitchState(backend, 'owner-1')
+
+    expect(await twitchCallback(backend, { code: 'code-1', state })).toBe(
+        'success'
+    )
+
+    expect(await twitchSettings(backend, 'owner-1')).toEqual({
+        requirement: 'tier2',
+        needsReconnect: false,
+    })
+    expect(
+        await backend
+            .withIdentity({ subject: 'owner-1' })
+            .query(api.platformLinks.joinSettings, {})
+    ).toEqual([
+        { platform: 'twitch', platformId: 'broadcaster-1', joins: false },
+    ])
+    expect((await readQueue(backend, 'owner-1'))?.participants).toHaveLength(1)
+})
+
+test('Reconnect by a different channel is refused and links nothing new', async () => {
+    const backend = createTestBackend()
+    const twitch = fakeTwitch({
+        'code-1': {
+            user: { id: 'other-1', login: 'other', displayName: 'Other' },
+        },
+    })
+    await seedTwitchCommunity(backend, {
+        ownerId: 'owner-1',
+        broadcasterId: 'broadcaster-1',
+        state: 'open',
+        twitch: { grant: { scopes: ['channel:bot'] } },
+    })
+    const state = await mintTwitchState(backend, 'owner-1')
+
+    expect(await twitchCallback(backend, { code: 'code-1', state })).toBe(
+        'error'
+    )
+
+    expect(await twitchSettings(backend, 'owner-1')).toEqual({
+        requirement: 'off',
+        needsReconnect: true,
+    })
+    expect(
+        (await dashboardLinks(backend, 'owner-1')).map(
+            (link) => link.platformId
+        )
+    ).toEqual(['broadcaster-1'])
+    expect(twitch.subscribedChannels()).toEqual([])
+})
+
+test('unlinking resets the Sub requirement, so relinking starts at Off', async () => {
+    const backend = createTestBackend()
+    fakeTwitch({ 'code-1': { user: broadcaster } })
+    await seedTwitchCommunity(backend, {
+        ownerId: 'owner-1',
+        broadcasterId: 'broadcaster-1',
+        state: 'open',
+        twitch: { subRequirement: 'tier3' },
+    })
+
+    await backend
+        .withIdentity({ subject: 'owner-1' })
+        .action(api.twitchLink.unlink, {})
+    const state = await mintTwitchState(backend, 'owner-1')
+    await twitchCallback(backend, { code: 'code-1', state })
+
+    expect(await twitchSettings(backend, 'owner-1')).toEqual({
+        requirement: 'off',
+        needsReconnect: false,
+    })
+})
+
+test('a Community with no Twitch channel has no Sub requirement settings', async () => {
+    const backend = createTestBackend()
+    await seedCommunity(backend, { ownerId: 'owner-1', state: 'open' })
+
+    expect(await twitchSettings(backend, 'owner-1')).toBeNull()
 })

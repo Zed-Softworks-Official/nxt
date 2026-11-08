@@ -30,7 +30,10 @@ export const joinQ: Command = {
                 if (
                     error ||
                     data.kind === 'already' ||
-                    data.kind === 'unlinked'
+                    data.kind === 'unlinked' ||
+                    // Only a Twitch channel has a Sub requirement.
+                    data.kind === 'sub_check_needed' ||
+                    data.kind === 'sub_required'
                 ) {
                     await editDeferred(interaction, 'Error joining the queue.')
                     return
@@ -38,6 +41,14 @@ export const joinQ: Command = {
 
                 if (data.kind === 'paused') {
                     await editDeferred(interaction, 'The queue is paused.')
+                    return
+                }
+
+                if (data.kind === 'joins_off') {
+                    await editDeferred(
+                        interaction,
+                        'Joining from Discord is off right now.'
+                    )
                     return
                 }
 

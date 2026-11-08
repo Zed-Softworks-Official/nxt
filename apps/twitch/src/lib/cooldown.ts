@@ -16,5 +16,10 @@ export function createCooldown(windowMs: number, now: () => number) {
             }
             return true
         },
+        // Whether `key` is still cooling down, without starting a window.
+        isCooling(key: string): boolean {
+            const last = lastAllowed.get(key)
+            return last !== undefined && now() - last < windowMs
+        },
     }
 }

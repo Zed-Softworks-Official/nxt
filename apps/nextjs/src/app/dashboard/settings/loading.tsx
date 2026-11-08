@@ -1,4 +1,6 @@
+import { JoinsSkeleton } from './joins'
 import { SavedPingNoteSkeleton } from './saved-ping-note'
+import { SubRequirementSkeleton } from './sub-requirement'
 
 export default function SettingsLoading() {
     return (
@@ -10,6 +12,8 @@ export default function SettingsLoading() {
                 </span>
             </div>
             <SavedPingNoteSkeleton />
+            <SubRequirementSkeleton />
+            <JoinsSkeleton />
         </div>
     )
 }

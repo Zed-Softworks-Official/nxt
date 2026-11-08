@@ -5,6 +5,7 @@ import schema from '../functions/schema'
 import { setDiscordClient } from '../model/discordClient'
 import {
     setTwitchClient,
+    TwitchAuthError,
     type TwitchClient,
     type TwitchUser,
 } from '../model/twitchClient'
@@ -35,6 +36,23 @@ export type SeedPlatformLink = {
     platformId: string
     enabled?: boolean
     commandChannelId?: string
+    // Seeds this platform's Joins as off.
+    joinsOff?: boolean
+    // Seeds a Twitch channel's link details.
+    twitch?: SeedTwitchLink
+}
+
+// A Twitch link as the broadcaster left it. The grant defaults to a live one
+// with every scope Nxt asks for.
+export type SeedTwitchLink = {
+    subRequirement?: 'any' | 'tier2' | 'tier3'
+    grantRevoked?: boolean
+    grant?: {
+        accessToken?: string
+        refreshToken?: string
+        scopes?: string[]
+        expiresAt?: number
+    }
 }
 
 // Seed a Community, its Queue (unless state is 'none') and its Platform Links.
@@ -88,6 +106,28 @@ export async function seedCommunity(
                 ...(link.commandChannelId
                     ? { commandChannelId: link.commandChannelId }
                     : {}),
+                ...(link.joinsOff ? { joinsOff: true } : {}),
+                ...(link.twitch
+                    ? {
+                          twitch: {
+                              login: 'streamer',
+                              displayName: 'Streamer',
+                              subRequirement: link.twitch.subRequirement,
+                              grantRevoked: link.twitch.grantRevoked,
+                              grant: {
+                                  accessToken: 'seed-access',
+                                  refreshToken: 'seed-refresh',
+                                  scopes: [
+                                      'channel:bot',
+                                      'channel:read:subscriptions',
+                                  ],
+                                  expiresAt: Date.now() + 4 * 60 * 60 * 1000,
+                                  ...link.twitch.grant,
+                              },
+                              subscriptionId: 'seed-subscription',
+                          },
+                      }
+                    : {}),
             })
         }
 
@@ -128,6 +168,8 @@ export async function seedTwitchCommunity(
         broadcasterId: string
         state: 'open' | 'paused' | 'none'
         enabled?: boolean
+        joinsOff?: boolean
+        twitch?: SeedTwitchLink
         participants?: SeedParticipant[]
     }
 ) {
@@ -143,6 +185,8 @@ export async function seedTwitchCommunity(
                 platform: 'twitch',
                 platformId: input.broadcasterId,
                 enabled: input.enabled,
+                joinsOff: input.joinsOff,
+                twitch: input.twitch,
             },
         ],
     })
@@ -248,7 +292,7 @@ function platformName(platform: Platform) {
 
 export type FakeTwitchSignIn = {
     user: TwitchUser
-    // Scopes the user granted. Defaults to the broadcaster's `channel:bot`.
+    // Scopes the user granted. Defaults to everything a broadcaster is asked for.
     scopes?: string[]
 }
 
@@ -259,6 +303,14 @@ export function installFakeTwitch(signIns: Record<string, FakeTwitchSignIn>) {
     const subscriptions = new Map<string, string>()
     let nextSubscription = 0
     const tokens = new Map<string, FakeTwitchSignIn>()
+    const tiers = new Map<string, 1 | 2 | 3>()
+    const seenSubCheckTokens: string[] = []
+    let refreshes = 0
+    let down = false
+    let revoked = false
+    let channelsCanHaveSubs = true
+    const rejectedAccessTokens = new Set<string>()
+    const spentRefreshTokens = new Set<string>()
 
     const client: TwitchClient = {
         async exchangeCode(code) {
@@ -269,7 +321,10 @@ export function installFakeTwitch(signIns: Record<string, FakeTwitchSignIn>) {
             return {
                 accessToken,
                 refreshToken: `refresh-${code}`,
-                scopes: signIn.scopes ?? ['channel:bot'],
+                scopes: signIn.scopes ?? [
+                    'channel:bot',
+                    'channel:read:subscriptions',
+                ],
                 expiresAt: Date.now() + 4 * 60 * 60 * 1000,
             }
         },
@@ -291,12 +346,61 @@ export function installFakeTwitch(signIns: Record<string, FakeTwitchSignIn>) {
                 if (id === subscriptionId) subscriptions.delete(broadcasterId)
             }
         },
+        async refreshGrant(refreshToken) {
+            // Long enough for a concurrent caller to overlap this one.
+            await new Promise((resolve) => setTimeout(resolve, 20))
+            if (down) throw new Error('Twitch is down')
+            if (revoked || spentRefreshTokens.has(refreshToken)) {
+                throw new TwitchAuthError('Invalid refresh token')
+            }
+            // Twitch may rotate the refresh token, so the old one stops working.
+            spentRefreshTokens.add(refreshToken)
+            refreshes += 1
+            return {
+                accessToken: `refreshed-access-${refreshes}`,
+                refreshToken: `refreshed-refresh-${refreshes}`,
+                scopes: ['channel:bot', 'channel:read:subscriptions'],
+                expiresAt: Date.now() + 4 * 60 * 60 * 1000,
+            }
+        },
+        async getSubscriberTier(_broadcasterId, userId, accessToken) {
+            seenSubCheckTokens.push(accessToken)
+            if (down) throw new Error('Twitch is down')
+            if (revoked || rejectedAccessTokens.has(accessToken)) {
+                throw new TwitchAuthError('Invalid access token')
+            }
+            return tiers.get(userId) ?? null
+        },
+        async canHaveSubs() {
+            if (down) throw new Error('Twitch is down')
+            return channelsCanHaveSubs
+        },
     }
     setTwitchClient(client)
 
     return {
         // Broadcaster IDs whose chat Nxt is subscribed to.
         subscribedChannels: () => [...subscriptions.keys()].sort(),
+        // Makes `userId` a subscriber at `tier`.
+        setSub: (userId: string, tier: 1 | 2 | 3) => tiers.set(userId, tier),
+        // The access token behind each subscriber check, in order.
+        subCheckTokens: () => [...seenSubCheckTokens],
+        // How many refreshes Twitch has honoured.
+        refreshCount: () => refreshes,
+        // Twitch fails every call, as in an outage.
+        setDown: (value: boolean) => {
+            down = value
+        },
+        // The broadcaster revokes Nxt's access.
+        revokeGrant: () => {
+            revoked = true
+        },
+        // Twitch rejects this access token before its stored expiry.
+        rejectAccessToken: (token: string) => rejectedAccessTokens.add(token),
+        // Whether channels are Affiliate or Partner.
+        setChannelsCanHaveSubs: (value: boolean) => {
+            channelsCanHaveSubs = value
+        },
         uninstall: () => setTwitchClient(null),
     }
 }
@@ -306,7 +410,9 @@ export function installFakeTwitch(signIns: Record<string, FakeTwitchSignIn>) {
 // A fake Discord, installed as the backend's Discord client. Each
 // authorization `code` is a bot install in one guild; an unknown code fails
 // the exchange.
-export function installFakeDiscord(installs: Record<string, { guildId: string }>) {
+export function installFakeDiscord(
+    installs: Record<string, { guildId: string }>
+) {
     setDiscordClient({
         async exchangeBotInstallCode(code) {
             const install = installs[code]

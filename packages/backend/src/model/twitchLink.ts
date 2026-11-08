@@ -8,6 +8,10 @@ import type { TwitchClient } from './twitchClient'
 // their chat with an app access token (ADR-0003).
 export const BROADCASTER_SCOPE = 'channel:bot'
 
+// The scope that lets Nxt check a chatter's sub tier for the Sub requirement
+// (ADR-0006).
+export const BROADCASTER_SUBSCRIPTIONS_SCOPE = 'channel:read:subscriptions'
+
 export type TwitchLinkResult =
     | { ok: true }
     | {
@@ -18,6 +22,7 @@ export type TwitchLinkResult =
               | 'exchange_failed'
               | 'not_broadcaster_grant'
               | 'taken'
+              | 'wrong_channel'
               | 'subscribe_failed'
       }
 
@@ -53,10 +58,13 @@ export async function completeTwitchLink(
     }
     const { grant, user } = signIn.data
 
-    // Only a broadcaster's own `channel:bot` consent lets the bot into the
-    // channel. A grant without it (scopes trimmed, or an unrelated sign-in)
-    // is not a broadcaster grant.
-    if (!grant.scopes.includes(BROADCASTER_SCOPE)) {
+    // Only a broadcaster's own consent lets the bot into the channel. A grant
+    // without the scopes (trimmed, or an unrelated sign-in) is not a
+    // broadcaster grant.
+    if (
+        !grant.scopes.includes(BROADCASTER_SCOPE) ||
+        !grant.scopes.includes(BROADCASTER_SUBSCRIPTIONS_SCOPE)
+    ) {
         return { ok: false, reason: 'not_broadcaster_grant' }
     }
 
@@ -65,6 +73,18 @@ export async function completeTwitchLink(
         broadcasterId: user.id,
     })
     if (taken) return { ok: false, reason: 'taken' }
+
+    // A Community has one Twitch channel, so while it is linked a sign-in can
+    // only be that channel's Reconnect.
+    const linkedChannel = await ctx.runQuery(
+        internal.twitchLink.linkedChannel,
+        {
+            communityId: linkState.communityId,
+        }
+    )
+    if (linkedChannel && linkedChannel !== user.id) {
+        return { ok: false, reason: 'wrong_channel' }
+    }
 
     const subscribed = await tryCatch(client.subscribeToChat(user.id))
     if (subscribed.error) {

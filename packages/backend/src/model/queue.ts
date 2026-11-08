@@ -2,6 +2,7 @@ import type { Doc, Id } from '@nxt/backend/dataModel'
 import type { MutationCtx, QueryCtx } from '@nxt/backend/server'
 import { v } from 'convex/values'
 import { parsePingNote } from '../pingNote'
+import { meetsSubRequirement } from '../subRequirement'
 import {
     announcePinged,
     dropPendingForParticipant,
@@ -32,7 +33,10 @@ export type QueueDoc = Doc<'queues'>
 
 // ---- Resolving a Queue --------------------------------------------------
 
-async function enabledLink(ctx: QueryCtx | MutationCtx, link: PlatformLinkRef) {
+export async function enabledLink(
+    ctx: QueryCtx | MutationCtx,
+    link: PlatformLinkRef
+) {
     const row = await ctx.db
         .query('platformLinks')
         .withIndex('byPlatform', (q) =>
@@ -79,10 +83,32 @@ export async function ensureQueue(
 
 export const unlinked = v.object({ kind: v.literal('unlinked') })
 
+// A Sub requirement that is on.
+export const activeSubRequirement = v.union(
+    v.literal('any'),
+    v.literal('tier2'),
+    v.literal('tier3')
+)
+
+export const subRequirementSetting = v.union(
+    v.literal('off'),
+    activeSubRequirement
+)
+
 export const joinResult = v.union(
     v.object({ kind: v.literal('ok'), reference: v.number() }),
     v.object({ kind: v.literal('paused') }),
-    v.object({ kind: v.literal('already'), reference: v.number() })
+    v.object({ kind: v.literal('joins_off') }),
+    v.object({ kind: v.literal('already'), reference: v.number() }),
+    // The caller must look up the person's sub tier and join again with it.
+    v.object({
+        kind: v.literal('sub_check_needed'),
+        requirement: activeSubRequirement,
+    }),
+    v.object({
+        kind: v.literal('sub_required'),
+        requirement: activeSubRequirement,
+    })
 )
 
 // ---- Operations -----------------------------------------------------------
@@ -119,7 +145,11 @@ async function nextReference(ctx: MutationCtx, communityId: Id<'communities'>) {
 export async function join(
     ctx: MutationCtx,
     queue: QueueDoc,
-    who: Who & { username: string; login?: string; channelId?: string }
+    who: Who & { username: string; login?: string; channelId?: string },
+    link: Pick<Doc<'platformLinks'>, 'joinsOff' | 'twitch'>,
+    // What is known about the person's sub: exempt as a Twitch Admin, or their
+    // tier (0 for none). Absent until someone has looked it up.
+    sub?: { exempt?: boolean; tier?: number }
 ) {
     const existing = await findParticipant(ctx, queue._id, who)
     if (existing) {
@@ -137,6 +167,17 @@ export async function join(
         return { kind: 'already' as const, reference: existing.reference }
     }
     if (queue.state !== 'open') return { kind: 'paused' as const }
+    if (link.joinsOff) return { kind: 'joins_off' as const }
+
+    const requirement = link.twitch?.subRequirement
+    if (requirement && !sub?.exempt) {
+        if (sub?.tier === undefined) {
+            return { kind: 'sub_check_needed' as const, requirement }
+        }
+        if (!meetsSubRequirement(requirement, sub.tier)) {
+            return { kind: 'sub_required' as const, requirement }
+        }
+    }
 
     const reference = await nextReference(ctx, queue.communityId)
     await ctx.db.insert('participants', {

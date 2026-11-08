@@ -3,6 +3,8 @@ import {
     action,
     internalMutation,
     internalQuery,
+    type MutationCtx,
+    type QueryCtx,
 } from '@nxt/backend/server'
 import { v } from 'convex/values'
 
@@ -11,10 +13,24 @@ import { communityForOwner } from '../model/community'
 import { consumedLinkState, consumeLinkState } from '../model/linkState'
 import { queueForCommunity } from '../model/pausedQueue'
 import { twitchClient } from '../model/twitchClient'
+import { BROADCASTER_SUBSCRIPTIONS_SCOPE } from '../model/twitchLink'
 
 // Twitch linking (ADR-0002). The `/twitch` HTTP route drives the link
 // callback through these internal functions; the dashboard unlinks with
 // `unlink`. Twitch network calls go through the injectable Twitch client.
+
+async function enabledTwitchLink(
+    ctx: QueryCtx | MutationCtx,
+    broadcasterId: string
+) {
+    const link = await ctx.db
+        .query('platformLinks')
+        .withIndex('byPlatform', (q) =>
+            q.eq('platform', 'twitch').eq('platformId', broadcasterId)
+        )
+        .first()
+    return link?.enabled ? link : null
+}
 
 /** Consume a Twitch link `state`. Good once; see model/linkState.ts. */
 export const consumeState = internalMutation({
@@ -49,11 +65,136 @@ export const linkedElsewhere = internalQuery({
     },
 })
 
+/** The broadcaster ID of the Community's enabled Twitch channel, if any. */
+export const linkedChannel = internalQuery({
+    args: { communityId: v.id('communities') },
+    returns: v.union(v.string(), v.null()),
+    handler: async (ctx, args) => {
+        const link = await ctx.db
+            .query('platformLinks')
+            .withIndex('byCommunityAndPlatformAndEnabled', (q) =>
+                q
+                    .eq('communityId', args.communityId)
+                    .eq('platform', 'twitch')
+                    .eq('enabled', true)
+            )
+            .first()
+        return link?.platformId ?? null
+    },
+})
+
 const grant = v.object({
     accessToken: v.string(),
     refreshToken: v.string(),
     scopes: v.array(v.string()),
     expiresAt: v.number(),
+})
+
+/**
+ * The stored grant of an enabled Twitch channel, or null if it has none Nxt can
+ * use. Internal, so tokens never reach a browser.
+ */
+export const grantFor = internalQuery({
+    args: { broadcasterId: v.string() },
+    returns: v.union(grant, v.null()),
+    handler: async (ctx, args) => {
+        const link = await enabledTwitchLink(ctx, args.broadcasterId)
+        if (!link?.twitch || link.twitch.grantRevoked) return null
+        if (
+            !link.twitch.grant.scopes.includes(BROADCASTER_SUBSCRIPTIONS_SCOPE)
+        ) {
+            return null
+        }
+        return link.twitch.grant
+    },
+})
+
+// How long one action may hold the claim to refresh a grant, in case it dies.
+const GRANT_REFRESH_CLAIM_MS = 15_000
+
+/**
+ * Claim the one refresh of a grant (see model/twitchGrant.ts). `changed` means
+ * the stored grant is no longer the one the caller saw, so it should look again.
+ */
+export const claimGrantRefresh = internalMutation({
+    args: { broadcasterId: v.string(), refreshToken: v.string() },
+    returns: v.union(
+        v.literal('claimed'),
+        v.literal('held'),
+        v.literal('changed')
+    ),
+    handler: async (ctx, args) => {
+        const link = await enabledTwitchLink(ctx, args.broadcasterId)
+        if (!link?.twitch) return 'changed' as const
+        if (link.twitch.grant.refreshToken !== args.refreshToken) {
+            return 'changed' as const
+        }
+        if ((link.twitch.grantRefreshUntil ?? 0) > Date.now()) {
+            return 'held' as const
+        }
+        await ctx.db.patch('platformLinks', link._id, {
+            twitch: {
+                ...link.twitch,
+                grantRefreshUntil: Date.now() + GRANT_REFRESH_CLAIM_MS,
+            },
+        })
+        return 'claimed' as const
+    },
+})
+
+/**
+ * Store a refreshed grant, unless a Reconnect replaced the grant meanwhile.
+ * Twitch may leave out the scopes, and a refresh cannot change them.
+ */
+export const saveRefreshedGrant = internalMutation({
+    args: {
+        broadcasterId: v.string(),
+        previousRefreshToken: v.string(),
+        grant,
+    },
+    returns: v.null(),
+    handler: async (ctx, args) => {
+        const link = await enabledTwitchLink(ctx, args.broadcasterId)
+        if (link?.twitch?.grant.refreshToken !== args.previousRefreshToken) {
+            return null
+        }
+        await ctx.db.patch('platformLinks', link._id, {
+            twitch: {
+                ...link.twitch,
+                grant: {
+                    ...args.grant,
+                    scopes:
+                        args.grant.scopes.length > 0
+                            ? args.grant.scopes
+                            : link.twitch.grant.scopes,
+                },
+                grantRefreshUntil: undefined,
+            },
+        })
+        return null
+    },
+})
+
+/** End a failed refresh, recording a grant Twitch refused as revoked. */
+export const endGrantRefresh = internalMutation({
+    args: {
+        broadcasterId: v.string(),
+        refreshToken: v.string(),
+        revoked: v.boolean(),
+    },
+    returns: v.null(),
+    handler: async (ctx, args) => {
+        const link = await enabledTwitchLink(ctx, args.broadcasterId)
+        if (link?.twitch?.grant.refreshToken !== args.refreshToken) return null
+        await ctx.db.patch('platformLinks', link._id, {
+            twitch: {
+                ...link.twitch,
+                grantRefreshUntil: undefined,
+                ...(args.revoked ? { grantRevoked: true } : {}),
+            },
+        })
+        return null
+    },
 })
 
 /**
@@ -98,6 +239,8 @@ export const saveLink = internalMutation({
                 displayName: args.broadcaster.displayName,
                 grant: args.grant,
                 subscriptionId: args.subscriptionId,
+                // A Reconnect keeps the setting. Unlinking already cleared it.
+                subRequirement: existing?.twitch?.subRequirement,
             },
         }
         if (existing) {
@@ -159,8 +302,15 @@ export const disableLink = internalMutation({
             }
             await ctx.db.patch('platformLinks', link._id, {
                 enabled: false,
+                joinsOff: undefined,
                 ...(link.twitch
-                    ? { twitch: { ...link.twitch, subscriptionId: undefined } }
+                    ? {
+                          twitch: {
+                              ...link.twitch,
+                              subscriptionId: undefined,
+                              subRequirement: undefined,
+                          },
+                      }
                     : {}),
             })
         }
@@ -190,7 +340,10 @@ export const unlink = action({
             try {
                 await client.deleteSubscription(id)
             } catch (error) {
-                console.error('Error deleting Twitch EventSub subscription', error)
+                console.error(
+                    'Error deleting Twitch EventSub subscription',
+                    error
+                )
             }
         }
         return null
