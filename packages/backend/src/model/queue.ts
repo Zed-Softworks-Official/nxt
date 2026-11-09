@@ -425,6 +425,35 @@ export async function done(
     })
 }
 
+export const removeResult = v.union(
+    v.object({ kind: v.literal('ok'), participant: entry }),
+    v.object({ kind: v.literal('unknown_reference') })
+)
+
+// An Admin ends one entry, whatever its state (waiting, Pinged, or Playing).
+// Silent: no Activity log entry and no Announcement. Like leaving, it drops
+// any Announcement still owed to a Pinged Participant.
+export async function remove(
+    ctx: MutationCtx,
+    queue: QueueDoc,
+    reference: number
+) {
+    const participant = await ctx.db
+        .query('participants')
+        .withIndex('byQueueAndReference', (q) =>
+            q.eq('queueId', queue._id).eq('reference', reference)
+        )
+        .first()
+    if (!participant || !turnStateOf(participant)) {
+        return { kind: 'unknown_reference' as const }
+    }
+    if (participant.status === 'notified') {
+        await dropPendingForParticipant(ctx, queue.communityId, participant)
+    }
+    await ctx.db.delete('participants', participant._id)
+    return { kind: 'ok' as const, participant: toEntry(participant) }
+}
+
 // ---- Reading the Queue -----------------------------------------------------
 
 export const positionResult = v.union(
