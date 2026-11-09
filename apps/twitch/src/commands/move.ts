@@ -2,7 +2,7 @@ import { internal } from '@nxt/backend/api'
 import { describeParticipant } from '@nxt/backend/participant'
 import { parseReference } from '@nxt/backend/reference'
 
-import { unknownReference, wrongState } from './turn'
+import { refusalFor } from './turn'
 import type { TwitchCommand } from './types'
 
 const USAGE =
@@ -21,20 +21,14 @@ export const move: TwitchCommand = {
             reference: parsed.reference,
             to: { position: parsed.position },
         })
-        switch (result.kind) {
-            case 'unlinked':
-                return null
-            case 'unknown_reference':
-                return unknownReference(parsed.reference)
-            case 'wrong_state':
-                return wrongState(
-                    parsed.reference,
-                    result.status,
-                    'Only a waiting Participant can be moved.'
-                )
-            case 'ok':
-                return `Moved ${describeParticipant(result.participant)} to Position ${result.position}.`
+        if (result.kind !== 'ok') {
+            return refusalFor(
+                result,
+                parsed.reference,
+                'Only a waiting Participant can be moved.'
+            )
         }
+        return `Moved ${describeParticipant(result.participant)} to Position ${result.position}.`
     },
 }
 

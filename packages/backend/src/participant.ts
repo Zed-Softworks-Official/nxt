@@ -15,12 +15,15 @@ export function platformLabel(platform: Platform): string {
     return PLATFORM_LABELS[platform]
 }
 
-// `q-42 ada (Twitch)`: how chat replies name a Participant.
-export function describeParticipant(entry: {
+// A Participant as the platform commands see them.
+export type Participant = {
     reference: number
     username: string
     platform: Platform
-}): string {
+}
+
+// `q-42 ada (Twitch)`: how chat replies name a Participant.
+export function describeParticipant(entry: Participant): string {
     return `${formatReference(entry.reference)} ${entry.username} (${platformLabel(entry.platform)})`
 }
 

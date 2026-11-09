@@ -214,7 +214,7 @@ test('moving after a neighbour who is no longer waiting lands directly after the
     ])
 })
 
-test('moving after a neighbour who has left lands after whoever joined just before them', async () => {
+test('moving after a neighbour who has left, with no neighbour below to go by, lands after whoever joined just before them', async () => {
     const backend = await seedFive()
 
     // cat leaves during the drag: eve lands where cat was, after bob.
@@ -229,6 +229,27 @@ test('moving after a neighbour who has left lands after whoever joined just befo
         })
     ).toMatchObject({ kind: 'ok', position: 3 })
     expect(await waitingOrder(backend)).toEqual(['ada', 'bob', 'eve', 'dan'])
+})
+
+test('moving after a neighbour who has left, in a moved Queue, lands where they were', async () => {
+    const backend = await seedFive()
+    const owner = asOwner(backend)
+
+    // bob is moved to the back: ada, cat, dan, eve, bob. The owner drops eve
+    // between cat and dan, but cat leaves during the drag: eve still lands
+    // between ada and dan, not after bob (who joined just before cat).
+    await owner.mutation(api.queue.move, { reference: 2, to: { position: 99 } })
+    await backend.mutation(internal.platformQueue.leave, {
+        link: discord,
+        platformUserId: 'd-cat',
+    })
+    expect(
+        await owner.mutation(api.queue.move, {
+            reference: 5,
+            to: { after: 3, before: 4 },
+        })
+    ).toMatchObject({ kind: 'ok', position: 2 })
+    expect(await waitingOrder(backend)).toEqual(['ada', 'eve', 'dan', 'bob'])
 })
 
 test('new joiners go to the back after Moves', async () => {

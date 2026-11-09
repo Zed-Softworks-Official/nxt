@@ -3,7 +3,7 @@ import { internal } from '@nxt/backend/api'
 import { describeParticipant } from '@nxt/backend/participant'
 import { parseReference } from '@nxt/backend/reference'
 
-import { unknownReference, wrongState } from './turn'
+import { notAReference, refusalFor } from './turn'
 import type { TwitchCommand } from './types'
 
 // Twitch chat messages are capped at 500 characters, so one ping calls at
@@ -17,27 +17,24 @@ export const ping: TwitchCommand = {
     async run({ convex, link, arg }) {
         const targeted = parseTargeted(arg)
         if (targeted !== null) {
+            const { reference } = targeted
             // `q-` followed by something that isn't a reference.
-            if (targeted.reference === null) return USAGE
+            if (reference === null) return notAReference(targeted.text)
             const result = await convex.mutation(
                 internal.platformQueue.pingOne,
-                { link, reference: targeted.reference, note: targeted.note }
+                { link, reference, note: targeted.note }
             )
             switch (result.kind) {
-                case 'unlinked':
-                    return null
-                case 'note_too_long':
-                    return noteTooLong(result.max)
-                case 'unknown_reference':
-                    return unknownReference(targeted.reference)
-                case 'wrong_state':
-                    return wrongState(
-                        targeted.reference,
-                        result.status,
-                        'Only a waiting Participant can be Pinged.'
-                    )
                 case 'ok':
                     return `Pinged ${describeParticipant(result.participant)}.`
+                case 'note_too_long':
+                    return noteTooLong(result.max)
+                default:
+                    return refusalFor(
+                        result,
+                        reference,
+                        'Only a waiting Participant can be Pinged.'
+                    )
             }
         }
 
@@ -70,10 +67,14 @@ function noteTooLong(max: number): string {
 // always a count and never a reference.
 function parseTargeted(
     arg: string
-): { reference: number | null; note?: string } | null {
+): { text: string; reference: number | null; note?: string } | null {
     const match = /^(q-\S+)(?:\s+(.+))?$/is.exec(arg)
     if (!match?.[1]) return null
-    return { reference: parseReference(match[1]), note: match[2] }
+    return {
+        text: match[1],
+        reference: parseReference(match[1]),
+        note: match[2],
+    }
 }
 
 // Empty means a count of 1. Otherwise a whole number in range comes first, and
