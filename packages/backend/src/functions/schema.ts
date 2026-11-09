@@ -114,6 +114,8 @@ export default defineSchema({
         platformId: v.string(),
         platformName: v.string(),
         commandChannelId: v.optional(v.string()),
+        // Set when the Community owner has turned this platform's Joins off.
+        joinsOff: v.optional(v.boolean()),
         accessToken: v.optional(v.string()),
         refreshToken: v.optional(v.string()),
         // Twitch links only (ADR-0002). platformId is the broadcaster's user
@@ -133,6 +135,19 @@ export default defineSchema({
                 }),
                 // Absent once unlinked.
                 subscriptionId: v.optional(v.string()),
+                // The Sub requirement. Absent means Off.
+                subRequirement: v.optional(
+                    v.union(
+                        v.literal('any'),
+                        v.literal('tier2'),
+                        v.literal('tier3')
+                    )
+                ),
+                // Twitch refused the grant, so the channel must Reconnect.
+                grantRevoked: v.optional(v.boolean()),
+                // While set and in the future, one action is refreshing the
+                // grant and others wait for it (ADR-0006).
+                grantRefreshUntil: v.optional(v.number()),
             })
         ),
     })

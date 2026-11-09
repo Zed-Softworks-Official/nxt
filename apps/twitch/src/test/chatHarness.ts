@@ -1,5 +1,6 @@
 import {
     createTestBackend,
+    installFakeTwitch,
     readActivityLog,
     readQueue,
     type SeedParticipant,
@@ -15,6 +16,7 @@ import type { QueueConvex } from '~/lib/convex'
 // only the Twitch-specific fakes. No Twurple types appear here.
 export {
     createTestBackend,
+    installFakeTwitch,
     readActivityLog,
     readQueue,
     seedCommunity,

@@ -1,8 +1,10 @@
 import { currentUser } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 
+import { Joins } from './joins'
 import { PairedDecks, PairedDecksHeading } from './paired-decks'
 import { SavedPingNote } from './saved-ping-note'
+import { SubRequirement } from './sub-requirement'
 
 export default async function SettingsPage() {
     const user = await currentUser()
@@ -19,6 +21,8 @@ export default async function SettingsPage() {
             <SavedPingNote />
             <PairedDecksHeading />
             <PairedDecks />
+            <SubRequirement />
+            <Joins />
         </div>
     )
 }

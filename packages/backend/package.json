@@ -28,7 +28,8 @@
         "./pingNote": "./src/pingNote.ts",
         "./pairingLink": "./src/pairingLink.ts",
         "./failedAnnouncement": "./src/failedAnnouncement.ts",
-        "./deckPing": "./src/deckPing.ts"
+        "./deckPing": "./src/deckPing.ts",
+        "./subRequirement": "./src/subRequirement.ts"
     },
     "devDependencies": {
         "@edge-runtime/vm": "^5.0.0",

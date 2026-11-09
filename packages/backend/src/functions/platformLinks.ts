@@ -1,8 +1,9 @@
-import { query, internalMutation } from '@nxt/backend/server'
+import { internalMutation, mutation, query } from '@nxt/backend/server'
 import { v } from 'convex/values'
 
-import { ownedCommunity } from '../model/community'
+import { ownedCommunity, requireOwnedCommunity } from '../model/community'
 import { consumedLinkState, consumeLinkState } from '../model/linkState'
+import { platform as platformValidator } from '../model/queue'
 
 const platformLink = v.object({
     enabled: v.boolean(),
@@ -39,6 +40,66 @@ export const getPlatformLinks = query({
                 ? { channelName: platformLink.twitch.displayName }
                 : {}),
         }))
+    },
+})
+
+// Joins for each of the signed-in owner's enabled Platform Links. Empty when
+// signed out.
+export const joinSettings = query({
+    args: {},
+    returns: v.array(
+        v.object({
+            platform: platformValidator,
+            platformId: v.string(),
+            joins: v.boolean(),
+        })
+    ),
+    handler: async (ctx) => {
+        const community = await ownedCommunity(ctx)
+        if (!community) return []
+
+        const links = await ctx.db
+            .query('platformLinks')
+            .withIndex('byCommunity', (q) => q.eq('communityId', community._id))
+            .collect()
+        return links
+            .filter((link) => link.enabled)
+            .map((link) => ({
+                platform: link.platform,
+                platformId: link.platformId,
+                joins: !link.joinsOff,
+            }))
+    },
+})
+
+// Only the Community owner sets a platform's Joins, so an Admin on one platform
+// cannot close another.
+export const setJoins = mutation({
+    args: {
+        platform: platformValidator,
+        platformId: v.string(),
+        on: v.boolean(),
+    },
+    returns: v.object({
+        kind: v.union(v.literal('ok'), v.literal('unlinked')),
+    }),
+    handler: async (ctx, args) => {
+        const community = await requireOwnedCommunity(ctx)
+        const link = await ctx.db
+            .query('platformLinks')
+            .withIndex('byPlatform', (q) =>
+                q
+                    .eq('platform', args.platform)
+                    .eq('platformId', args.platformId)
+            )
+            .first()
+        if (!link?.enabled || link.communityId !== community._id) {
+            return { kind: 'unlinked' as const }
+        }
+        await ctx.db.patch('platformLinks', link._id, {
+            joinsOff: args.on ? undefined : true,
+        })
+        return { kind: 'ok' as const }
     },
 })
 

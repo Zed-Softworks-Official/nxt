@@ -3,7 +3,10 @@ import { redirect } from 'next/navigation'
 
 import { Connections } from './connection'
 
-export default async function ConnectionsPage() {
+export default async function ConnectionsPage(props: {
+    searchParams: Promise<{ reason?: string }>
+}) {
+    const { reason } = await props.searchParams
     const user = await currentUser()
     if (!user) return redirect('/u/login')
 
@@ -15,6 +18,13 @@ export default async function ConnectionsPage() {
                     Manage your bot connections here.
                 </span>
             </div>
+            {reason === 'wrong_channel' && (
+                <p className="text-sm text-destructive" role="alert">
+                    That Twitch account isn't the linked channel. Sign in as the
+                    linked channel's broadcaster to reconnect, or unlink it
+                    first.
+                </p>
+            )}
             <Connections />
         </div>
     )

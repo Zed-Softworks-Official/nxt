@@ -20,6 +20,7 @@ import type * as pairedDecks from '../pairedDecks.js'
 import type * as platformLinks from '../platformLinks.js'
 import type * as platformQueue from '../platformQueue.js'
 import type * as queue from '../queue.js'
+import type * as subRequirement from '../subRequirement.js'
 import type * as twitchChannels from '../twitchChannels.js'
 import type * as twitchLink from '../twitchLink.js'
 
@@ -42,6 +43,7 @@ declare const fullApi: ApiFromModules<{
     platformLinks: typeof platformLinks
     platformQueue: typeof platformQueue
     queue: typeof queue
+    subRequirement: typeof subRequirement
     twitchChannels: typeof twitchChannels
     twitchLink: typeof twitchLink
 }>

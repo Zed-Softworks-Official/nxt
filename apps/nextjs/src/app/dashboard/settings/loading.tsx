@@ -1,5 +1,7 @@
+import { JoinsSkeleton } from './joins'
 import { PairedDecksHeading, PairedDecksSkeleton } from './paired-decks'
 import { SavedPingNoteSkeleton } from './saved-ping-note'
+import { SubRequirementSkeleton } from './sub-requirement'
 
 export default function SettingsLoading() {
     return (
@@ -13,6 +15,8 @@ export default function SettingsLoading() {
             <SavedPingNoteSkeleton />
             <PairedDecksHeading />
             <PairedDecksSkeleton />
+            <SubRequirementSkeleton />
+            <JoinsSkeleton />
         </div>
     )
 }

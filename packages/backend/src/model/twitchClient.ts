@@ -21,6 +21,12 @@ export type TwitchUser = {
     displayName: string
 }
 
+/** Twitch refused the token: the grant is no longer good. */
+export class TwitchAuthError extends Error {}
+
+/** A subscriber's tier. */
+export type SubTier = 1 | 2 | 3
+
 export interface TwitchClient {
     /** Exchange an authorization code for the user's grant. */
     exchangeCode(code: string): Promise<TwitchGrant>
@@ -33,6 +39,22 @@ export interface TwitchClient {
     subscribeToChat(broadcasterId: string): Promise<string>
     /** Delete an EventSub subscription. A missing one counts as deleted. */
     deleteSubscription(subscriptionId: string): Promise<void>
+    /**
+     * Swap a refresh token for a new grant. Throws `TwitchAuthError` when
+     * Twitch refuses the refresh token.
+     */
+    refreshGrant(refreshToken: string): Promise<TwitchGrant>
+    /**
+     * The tier `userId` subscribes to the broadcaster at, or null. Throws
+     * `TwitchAuthError` when Twitch refuses the broadcaster's access token.
+     */
+    getSubscriberTier(
+        broadcasterId: string,
+        userId: string,
+        accessToken: string
+    ): Promise<SubTier | null>
+    /** Whether the channel is Affiliate or Partner, so it can have subs. */
+    canHaveSubs(broadcasterId: string): Promise<boolean>
 }
 
 let override: TwitchClient | null = null
@@ -121,7 +143,69 @@ type Subscription = {
     condition: { broadcaster_user_id?: string; user_id?: string }
 }
 
+const TIERS: Record<string, SubTier> = { '1000': 1, '2000': 2, '3000': 3 }
+
 export const httpTwitchClient: TwitchClient = {
+    async refreshGrant(refreshToken) {
+        const env = twitchEnv()
+        const response = await fetch(`${ID_URL}/token`, {
+            method: 'POST',
+            body: new URLSearchParams({
+                client_id: env.TWITCH_CLIENT_ID,
+                client_secret: env.TWITCH_CLIENT_SECRET,
+                grant_type: 'refresh_token',
+                refresh_token: refreshToken,
+            }),
+        })
+        if (response.status === 400 || response.status === 401) {
+            throw new TwitchAuthError(
+                `Twitch refused the refresh token (${response.status})`
+            )
+        }
+        await expectOk(response, 'grant refresh')
+        const body = (await response.json()) as {
+            access_token: string
+            refresh_token: string
+            expires_in: number
+            scope?: string[]
+        }
+        return {
+            accessToken: body.access_token,
+            refreshToken: body.refresh_token,
+            scopes: body.scope ?? [],
+            expiresAt: Date.now() + body.expires_in * 1000,
+        }
+    },
+
+    async getSubscriberTier(broadcasterId, userId, accessToken) {
+        const query = new URLSearchParams({
+            broadcaster_id: broadcasterId,
+            user_id: userId,
+        })
+        const response = await helix(`/subscriptions?${query}`, {}, accessToken)
+        if (response.status === 401) {
+            throw new TwitchAuthError('Twitch refused the access token (401)')
+        }
+        await expectOk(response, 'get subscription')
+        const body = (await response.json()) as { data: { tier: string }[] }
+        const subscription = body.data[0]
+        if (!subscription) return null
+        // Any row is a sub, so an unrecognised tier still counts as Tier 1.
+        return TIERS[subscription.tier] ?? 1
+    },
+
+    async canHaveSubs(broadcasterId) {
+        const token = await appAccessToken()
+        const query = new URLSearchParams({ id: broadcasterId })
+        const response = await helix(`/users?${query}`, {}, token)
+        await expectOk(response, 'get broadcaster')
+        const body = (await response.json()) as {
+            data: { broadcaster_type: string }[]
+        }
+        const type = body.data[0]?.broadcaster_type
+        return type === 'affiliate' || type === 'partner'
+    },
+
     async exchangeCode(code) {
         const env = twitchEnv()
         const response = await fetch(`${ID_URL}/token`, {

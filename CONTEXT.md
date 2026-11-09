@@ -61,12 +61,20 @@ A waiting Participant's place in the Queue, starting at 1 at the front. A pinged
 _Avoid_: index, rank, spot
 
 **Open**:
-The Queue state in which Participants may join.
+The Queue state in which Participants may join, subject to their platform's Joins and, on Twitch, the Sub requirement.
 _Avoid_: started, live, active
 
 **Paused**:
 The Queue state in which Participants may not join. Waiting Participants may still leave and ask their Position.
 _Avoid_: ended, closed, stopped
+
+**Sub requirement**:
+The minimum Twitch subscription a person needs to join a Community's Queue from its Twitch channel: Off, Any sub, Tier 2 and up, or Tier 3. It is separate from Open and Paused and stays set until changed. It is checked only when someone joins, so a Participant already waiting keeps their place. Twitch Admins are exempt. It does not apply to other platforms. It can only be turned on for a channel that can have subs, and it returns to Off when the Twitch channel is unlinked.
+_Avoid_: sub only mode, sub mode, sub gate
+
+**Joins**:
+Whether people may join a Community's Queue from one Platform Link, on or off, set by the Community owner. With Joins off, nobody can join from that platform, Admins included, while its waiting Participants keep their place and may still leave and ask their Position. Turn commands are unaffected. Joins return to on when the Platform Link is removed.
+_Avoid_: platform pause, platform disable, Paused
 
 **Admin**:
 A member of a Platform Link who may administer a Community's Queue. A Discord Admin has Manage Server in the linked guild; a Twitch Admin is the broadcaster or an active channel moderator. An Admin is not the Community's owner.
