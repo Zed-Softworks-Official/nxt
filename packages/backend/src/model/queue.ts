@@ -1,6 +1,6 @@
 import type { Doc, Id } from '@nxt/backend/dataModel'
 import type { MutationCtx, QueryCtx } from '@nxt/backend/server'
-import { v } from 'convex/values'
+import { type Infer, v } from 'convex/values'
 import { parsePingNote } from '../pingNote'
 import { meetsSubRequirement } from '../subRequirement'
 import {
@@ -189,6 +189,7 @@ export async function join(
         platformUserId: who.platformUserId,
         ...(who.channelId ? { lastChannelId: who.channelId } : {}),
         status: 'waiting',
+        orderKey: await backOrderKey(ctx, queue._id),
     })
     return { kind: 'ok' as const, reference }
 }
@@ -258,8 +259,24 @@ function toEntry(participant: Doc<'participants'>): Entry {
     }
 }
 
-// Every Participant row in join order. A returned Participant keeps their
-// original spot because ordering is by when the entry was created.
+// ---- Queue order (ADR-0008) -------------------------------------------------
+
+// A row's place in Queue order. Rows the backfill hasn't reached yet fall back
+// to `_creationTime`, which is also what the backfill copies into the key.
+function orderKeyOf(row: Doc<'participants'>) {
+    return row.orderKey ?? row._creationTime
+}
+
+function byOrderKey(a: Doc<'participants'>, b: Doc<'participants'>) {
+    return orderKeyOf(a) - orderKeyOf(b) || a._creationTime - b._creationTime
+}
+
+function byJoinTime(a: Doc<'participants'>, b: Doc<'participants'>) {
+    return a._creationTime - b._creationTime
+}
+
+// Every Participant row of a Queue's Community, waiting or not, sorted by
+// order key. Pinged and Playing rows keep their key for when they come Back.
 async function participantsInOrder(
     ctx: QueryCtx | MutationCtx,
     queueId: Id<'queues'>
@@ -268,7 +285,49 @@ async function participantsInOrder(
         .query('participants')
         .withIndex('byQueue', (q) => q.eq('queueId', queueId))
         .collect()
-    return rows.sort((a, b) => a._creationTime - b._creationTime)
+    return rows.sort(byOrderKey)
+}
+
+// The Queue: waiting Participants, front first.
+async function waitingInOrder(
+    ctx: QueryCtx | MutationCtx,
+    queueId: Id<'queues'>
+) {
+    const rows = await ctx.db
+        .query('participants')
+        .withIndex('byQueueAndStatusAndOrderKey', (q) =>
+            q.eq('queueId', queueId).eq('status', 'waiting')
+        )
+        .collect()
+    // Rows without a key come first from the index; sort them into place.
+    return rows.sort(byOrderKey)
+}
+
+// A key after every existing key, so a new joiner goes to the back.
+async function backOrderKey(ctx: MutationCtx, queueId: Id<'queues'>) {
+    const rows = await participantsInOrder(ctx, queueId)
+    const last = rows.at(-1)
+    return last ? Math.floor(orderKeyOf(last)) + 1 : 1
+}
+
+// Give every row a fresh, evenly spaced key in its current order, so there is
+// room between neighbours again. Returns the rows with their new keys.
+async function rebalance(ctx: MutationCtx, rows: Doc<'participants'>[]) {
+    const spaced = rows.map((row, index) => ({ ...row, orderKey: index + 1 }))
+    for (const row of spaced) {
+        await ctx.db.patch('participants', row._id, { orderKey: row.orderKey })
+    }
+    return spaced
+}
+
+// A key strictly between two neighbouring keys (either may be missing), or
+// null when floating point has run out of room between them.
+function keyBetween(lower: number | null, upper: number | null) {
+    if (lower === null && upper === null) return 1
+    if (lower === null) return (upper as number) - 1
+    if (upper === null) return Math.floor(lower) + 1
+    const middle = lower + (upper - lower) / 2
+    return middle > lower && middle < upper ? middle : null
 }
 
 export const clearResult = v.union(
@@ -277,8 +336,7 @@ export const clearResult = v.union(
 )
 
 export async function clear(ctx: MutationCtx, queue: QueueDoc) {
-    const rows = await participantsInOrder(ctx, queue._id)
-    const waiting = rows.filter((row) => row.status === 'waiting')
+    const waiting = await waitingInOrder(ctx, queue._id)
     if (waiting.length === 0) return { kind: 'empty' as const }
     for (const row of waiting) {
         await ctx.db.delete('participants', row._id)
@@ -306,6 +364,29 @@ export const pingResult = v.union(
     v.object({ kind: v.literal('note_too_long'), max: v.number() })
 )
 
+// The note a Ping carries: the typed note, else the Saved ping note.
+async function pingNote(
+    ctx: MutationCtx,
+    queue: QueueDoc,
+    typed: string | null
+) {
+    if (typed !== null) return typed
+    const community = await ctx.db.get('communities', queue.communityId)
+    return community?.savedPingNote ?? null
+}
+
+// Pings one waiting Participant: Pinged, logged, and announced.
+async function pingParticipant(
+    ctx: MutationCtx,
+    queue: QueueDoc,
+    participant: Doc<'participants'>,
+    note: string | null
+) {
+    await ctx.db.patch('participants', participant._id, { status: 'notified' })
+    await logTurn(ctx, participant, 'pinged')
+    await announcePinged(ctx, queue.communityId, participant, note)
+}
+
 // Pings the front `count` waiting Participants (at least one). A typed note
 // replaces the Community's Saved ping note for this Ping.
 export async function ping(
@@ -317,21 +398,15 @@ export async function ping(
     const typed = parsePingNote(typedNote ?? '')
     if (typed.kind === 'note_too_long') return typed
 
-    const rows = await participantsInOrder(ctx, queue._id)
-    const front = rows
-        .filter((row) => row.status === 'waiting')
-        .slice(0, Math.max(1, Math.floor(count)))
+    const front = (await waitingInOrder(ctx, queue._id)).slice(
+        0,
+        Math.max(1, Math.floor(count))
+    )
     if (front.length === 0) return { kind: 'empty' as const }
 
-    const community = await ctx.db.get('communities', queue.communityId)
-    const note = typed.note ?? community?.savedPingNote ?? null
-
+    const note = await pingNote(ctx, queue, typed.note)
     for (const participant of front) {
-        await ctx.db.patch('participants', participant._id, {
-            status: 'notified',
-        })
-        await logTurn(ctx, participant, 'pinged')
-        await announcePinged(ctx, queue.communityId, participant, note)
+        await pingParticipant(ctx, queue, participant, note)
     }
     return { kind: 'ok' as const, pinged: front.map(toEntry) }
 }
@@ -363,6 +438,38 @@ function turnStateOf(participant: Doc<'participants'>): TurnState | null {
     }
 }
 
+async function findByReference(
+    ctx: QueryCtx | MutationCtx,
+    queueId: Id<'queues'>,
+    reference: number
+) {
+    return await ctx.db
+        .query('participants')
+        .withIndex('byQueueAndReference', (q) =>
+            q.eq('queueId', queueId).eq('reference', reference)
+        )
+        .first()
+}
+
+// Looks up a Participant by reference and checks they are in the state an
+// operation needs. Returns the Participant, or the refusal to return.
+async function findInState(
+    ctx: MutationCtx,
+    queue: QueueDoc,
+    reference: number,
+    from: TurnState
+) {
+    const participant = await findByReference(ctx, queue._id, reference)
+    const state = participant ? turnStateOf(participant) : null
+    if (!participant || !state) {
+        return { refused: { kind: 'unknown_reference' as const } }
+    }
+    if (state !== from) {
+        return { refused: { kind: 'wrong_state' as const, status: state } }
+    }
+    return { participant }
+}
+
 async function turn(
     ctx: MutationCtx,
     queue: QueueDoc,
@@ -370,18 +477,33 @@ async function turn(
     from: TurnState,
     apply: (participant: Doc<'participants'>) => Promise<void>
 ) {
-    const participant = await ctx.db
-        .query('participants')
-        .withIndex('byQueueAndReference', (q) =>
-            q.eq('queueId', queue._id).eq('reference', reference)
-        )
-        .first()
-    const state = participant ? turnStateOf(participant) : null
-    if (!participant || !state) return { kind: 'unknown_reference' as const }
-    if (state !== from) return { kind: 'wrong_state' as const, status: state }
+    const found = await findInState(ctx, queue, reference, from)
+    if (found.refused) return found.refused
 
-    await apply(participant)
-    return { kind: 'ok' as const, participant: toEntry(participant) }
+    await apply(found.participant)
+    return { kind: 'ok' as const, participant: toEntry(found.participant) }
+}
+
+export const targetedPingResult = v.union(
+    turnResult,
+    v.object({ kind: v.literal('note_too_long'), max: v.number() })
+)
+
+// A targeted Ping (ADR-0007): calls one waiting Participant wherever they are
+// in the Queue. Otherwise the same as Ping.
+export async function pingOne(
+    ctx: MutationCtx,
+    queue: QueueDoc,
+    reference: number,
+    typedNote?: string
+) {
+    const typed = parsePingNote(typedNote ?? '')
+    if (typed.kind === 'note_too_long') return typed
+
+    return await turn(ctx, queue, reference, 'waiting', async (participant) => {
+        const note = await pingNote(ctx, queue, typed.note)
+        await pingParticipant(ctx, queue, participant, note)
+    })
 }
 
 // Pinged → Playing.
@@ -398,7 +520,8 @@ export async function play(
     })
 }
 
-// Pinged → back in the Queue, in their original spot, same reference.
+// Pinged → back in the Queue, same reference. Their order key is kept, so
+// they return to the place they held, including any earlier Move.
 export async function returnToQueue(
     ctx: MutationCtx,
     queue: QueueDoc,
@@ -423,6 +546,155 @@ export async function done(
         await logTurn(ctx, participant, 'finished')
         await ctx.db.delete('participants', participant._id)
     })
+}
+
+// ---- Move -------------------------------------------------------------------
+
+// Where a Move puts the Participant. The dashboard asks relative to what the
+// Admin saw: the front, or after the neighbour above the drop (`after`), with
+// the neighbour below it (`before`) as a second anchor in case `after` leaves
+// during the drag. Chat asks for a Position; past the end means the back.
+export const moveDestination = v.union(
+    v.object({ after: v.number(), before: v.optional(v.number()) }),
+    v.object({ toFront: v.literal(true) }),
+    v.object({ position: v.number() })
+)
+
+export type MoveDestination = Infer<typeof moveDestination>
+
+export const moveResult = v.union(
+    v.object({
+        kind: v.literal('ok'),
+        participant: entry,
+        // The Participant's new Position in the Queue.
+        position: v.number(),
+    }),
+    v.object({ kind: v.literal('unknown_reference') }),
+    v.object({ kind: v.literal('wrong_state'), status: turnState })
+)
+
+// Moves a waiting Participant, Open or Paused. The destination is resolved to
+// two neighbours by order key and the Participant gets a key between them, so
+// only their row is written (unless the gap has run out and every row is
+// rebalanced).
+export async function move(
+    ctx: MutationCtx,
+    queue: QueueDoc,
+    reference: number,
+    to: MoveDestination
+) {
+    const found = await findInState(ctx, queue, reference, 'waiting')
+    if (found.refused) return found.refused
+    const target = found.participant
+
+    // Everyone else by order key, every state: a Pinged Participant keeps
+    // their place for when they come Back, so the Move goes around it.
+    let others = (await participantsInOrder(ctx, queue._id)).filter(
+        (row) => row._id !== target._id
+    )
+    // `others` before this many rows, after the rest.
+    const ahead = rowsAhead(others, target, to)
+    const keyBetweenNeighbours = () => {
+        const above = others[ahead - 1]
+        const below = others[ahead]
+        return keyBetween(
+            above ? orderKeyOf(above) : null,
+            below ? orderKeyOf(below) : null
+        )
+    }
+    let key = keyBetweenNeighbours()
+    if (key === null) {
+        others = await rebalance(ctx, others)
+        key = keyBetweenNeighbours() as number
+    }
+    await ctx.db.patch('participants', target._id, { orderKey: key })
+
+    const waitingAhead = others
+        .slice(0, ahead)
+        .filter((row) => row.status === 'waiting').length
+    return {
+        kind: 'ok' as const,
+        participant: toEntry(target),
+        position: waitingAhead + 1,
+    }
+}
+
+// How many of `others` (by order key, without the target) end up ahead of
+// the target.
+function rowsAhead(
+    others: Doc<'participants'>[],
+    target: Doc<'participants'>,
+    to: MoveDestination
+) {
+    const rowsAheadOfPosition = (position: number) => {
+        let waitingSeen = 0
+        const at = others.findIndex(
+            (row) => row.status === 'waiting' && ++waitingSeen === position
+        )
+        return at === -1 ? others.length : at
+    }
+    const rowsAheadOfTarget = () =>
+        others.filter((row) => byOrderKey(row, target) < 0).length
+
+    if ('toFront' in to) return rowsAheadOfPosition(1)
+    if ('position' in to) {
+        return rowsAheadOfPosition(Math.max(1, Math.floor(to.position)))
+    }
+    // After themselves: stay where they are.
+    if (to.after === target.reference) return rowsAheadOfTarget()
+
+    // A neighbour who is still here, waiting or not: directly after their
+    // place.
+    const above = others.findIndex((row) => row.reference === to.after)
+    if (above !== -1) return above + 1
+
+    // The neighbour above has left: the drop was also directly before the
+    // neighbour below, so go there.
+    if (to.before !== undefined) {
+        if (to.before === target.reference) return rowsAheadOfTarget()
+        const below = others.findIndex((row) => row.reference === to.before)
+        if (below !== -1) return below
+    }
+
+    // Both neighbours have left. With no key to go by, land after whoever
+    // joined just before the neighbour above (references are handed out in
+    // join order), or at the front if nobody did.
+    let joinedBefore: Doc<'participants'> | null = null
+    for (const row of others) {
+        if (
+            row.reference < to.after &&
+            (!joinedBefore || row.reference > joinedBefore.reference)
+        ) {
+            joinedBefore = row
+        }
+    }
+    return joinedBefore
+        ? others.indexOf(joinedBefore) + 1
+        : rowsAheadOfPosition(1)
+}
+
+export const removeResult = v.union(
+    v.object({ kind: v.literal('ok'), participant: entry }),
+    v.object({ kind: v.literal('unknown_reference') })
+)
+
+// An Admin ends one entry, whatever its state (waiting, Pinged, or Playing).
+// Silent: no Activity log entry and no Announcement. Like leaving, it drops
+// any Announcement still owed to a Pinged Participant.
+export async function remove(
+    ctx: MutationCtx,
+    queue: QueueDoc,
+    reference: number
+) {
+    const participant = await findByReference(ctx, queue._id, reference)
+    if (!participant || !turnStateOf(participant)) {
+        return { kind: 'unknown_reference' as const }
+    }
+    if (participant.status === 'notified') {
+        await dropPendingForParticipant(ctx, queue.communityId, participant)
+    }
+    await ctx.db.delete('participants', participant._id)
+    return { kind: 'ok' as const, participant: toEntry(participant) }
 }
 
 // ---- Reading the Queue -----------------------------------------------------
@@ -451,15 +723,10 @@ export async function position(
         return { kind: state, reference: participant.reference }
     }
 
-    const rows = await participantsInOrder(ctx, queue._id)
-    const ahead = rows.filter(
-        (row) =>
-            row.status === 'waiting' &&
-            row._creationTime < participant._creationTime
-    ).length
+    const waiting = await waitingInOrder(ctx, queue._id)
     return {
         kind: 'waiting' as const,
-        position: ahead + 1,
+        position: waiting.findIndex((row) => row._id === participant._id) + 1,
         reference: participant.reference,
     }
 }
@@ -497,10 +764,13 @@ export async function view(ctx: QueryCtx, queue: QueueDoc | null) {
             playing: [],
         }
     }
+    // The Queue is in Queue order; Pinged and Playing stay in join order, so
+    // their Slots don't shift when someone is moved.
     const rows = await participantsInOrder(ctx, queue._id)
     const list = (status: Doc<'participants'>['status']) =>
         rows
             .filter((row) => row.status === status)
+            .sort(status === 'waiting' ? byOrderKey : byJoinTime)
             .map((row) => ({ ...toEntry(row), joinedAt: row._creationTime }))
     const pendingSince = await pendingSinceByReference(ctx, queue.communityId)
     return {

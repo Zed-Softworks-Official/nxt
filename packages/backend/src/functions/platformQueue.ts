@@ -177,6 +177,20 @@ export const ping = internalMutation({
         ),
 })
 
+// A targeted Ping (ADR-0007): calls one waiting Participant by reference.
+export const pingOne = internalMutation({
+    args: {
+        link: Queue.platformLink,
+        reference: v.number(),
+        note: v.optional(v.string()),
+    },
+    returns: v.union(Queue.targetedPingResult, Queue.unlinked),
+    handler: async (ctx, args) =>
+        onLinkedQueue(ctx, args.link, (queue) =>
+            Queue.pingOne(ctx, queue, args.reference, args.note)
+        ),
+})
+
 const turnArgs = { link: Queue.platformLink, reference: v.number() }
 
 export const play = internalMutation({
@@ -203,6 +217,24 @@ export const done = internalMutation({
     handler: async (ctx, args) =>
         onLinkedQueue(ctx, args.link, (queue) =>
             Queue.done(ctx, queue, args.reference)
+        ),
+})
+
+export const move = internalMutation({
+    args: { ...turnArgs, to: Queue.moveDestination },
+    returns: v.union(Queue.moveResult, Queue.unlinked),
+    handler: async (ctx, args) =>
+        onLinkedQueue(ctx, args.link, (queue) =>
+            Queue.move(ctx, queue, args.reference, args.to)
+        ),
+})
+
+export const remove = internalMutation({
+    args: turnArgs,
+    returns: v.union(Queue.removeResult, Queue.unlinked),
+    handler: async (ctx, args) =>
+        onLinkedQueue(ctx, args.link, (queue) =>
+            Queue.remove(ctx, queue, args.reference)
         ),
 })
 

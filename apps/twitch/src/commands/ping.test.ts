@@ -126,7 +126,7 @@ test.each([
     await handle(chatMessage(`!pingq ${count}`, MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@ada Use !pingq, !pingq <count>, or !pingq <count> <note>, with a count from 1 to 10.',
+        '@ada Use !pingq, !pingq <count>, !pingq <count> <note>, or !pingq q-<n> <note>, with a count from 1 to 10.',
     ])
     expect(await statuses(backend)).toEqual([
         [1, 'waiting'],
@@ -176,4 +176,78 @@ test('!pingq with an over-limit note says so and calls nobody', async () => {
         [2, 'waiting'],
         [3, 'waiting'],
     ])
+})
+
+test('!pingq q-3 calls that waiting Participant out of order with the note', async () => {
+    const backend = await channelWithThreeWaiting()
+    const { handle, sent } = twitchBot(backend)
+
+    await handle(chatMessage('!pingq q-3 VC 2', MODERATOR))
+
+    expect(sent.map((entry) => entry.text)).toEqual([
+        '@ada Pinged q-3 dot (Twitch).',
+    ])
+    expect(await statuses(backend)).toEqual([
+        [1, 'waiting'],
+        [2, 'waiting'],
+        [3, 'notified'],
+    ])
+    expect(
+        (await readActivityLog(backend, 'owner-1')).map((e) => e.username)
+    ).toEqual(['dot'])
+    const [announcement] = await backend.query(internal.announcements.pending, {
+        platform: 'twitch',
+    })
+    expect(announcement).toMatchObject({ note: 'VC 2' })
+})
+
+test('!pingq on an unknown or non-waiting reference is refused and calls nobody', async () => {
+    const backend = await channelWithThreeWaiting()
+    const { handle, sent } = twitchBot(backend)
+
+    await handle(chatMessage('!pingq q-2', MODERATOR))
+    await handle(chatMessage('!pingq q-2', MODERATOR))
+    await handle(chatMessage('!pingq q-99', MODERATOR))
+
+    expect(sent.map((entry) => entry.text)).toEqual([
+        '@ada Pinged q-2 cy (Discord).',
+        '@ada q-2 is Pinged. Only a waiting Participant can be Pinged.',
+        '@ada Nobody in the queue has the reference q-99.',
+    ])
+    expect(await statuses(backend)).toEqual([
+        [1, 'waiting'],
+        [2, 'notified'],
+        [3, 'waiting'],
+    ])
+})
+
+test.each([
+    'q-0',
+    'q-x',
+])('!pingq %s is refused as not a reference and pings nobody', async (arg) => {
+    const backend = await channelWithThreeWaiting()
+    const { handle, sent } = twitchBot(backend)
+
+    await handle(chatMessage(`!pingq ${arg}`, MODERATOR))
+
+    expect(sent.map((entry) => entry.text)).toEqual([
+        `@ada "${arg}" is not a Participant reference. Use one like q-42.`,
+    ])
+    expect(await statuses(backend)).toEqual([
+        [1, 'waiting'],
+        [2, 'waiting'],
+        [3, 'waiting'],
+    ])
+})
+
+test('!pingq q-1 from a viewer is refused and pings nobody', async () => {
+    const backend = await channelWithThreeWaiting()
+    const { handle, sent } = twitchBot(backend)
+
+    await handle(chatMessage('!pingq q-1'))
+
+    expect(sent.map((entry) => entry.text)).toEqual([
+        '@ada Only the broadcaster and moderators can run !pingq.',
+    ])
+    expect(await readActivityLog(backend, 'owner-1')).toEqual([])
 })
