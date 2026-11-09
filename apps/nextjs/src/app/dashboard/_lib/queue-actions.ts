@@ -5,6 +5,8 @@ import { useMutation } from '@nxt/backend/react'
 import { toast } from 'sonner'
 
 type TurnTarget = { reference: number; username: string }
+// Where a Move puts a waiting Participant: after a neighbour or the front.
+export type MoveTo = { after: number } | { toFront: true }
 type TurnResult = { kind: 'ok' | 'unknown_reference' | 'wrong_state' }
 
 // Convex hides server error details in production, so the toast names the
@@ -35,6 +37,10 @@ export function useQueueActions() {
     const playMutation = useMutation(api.queue.play)
     const returnMutation = useMutation(api.queue.returnToQueue)
     const doneMutation = useMutation(api.queue.done)
+    const pingOneMutation = useMutation(api.queue.pingOne)
+    const removeMutation = useMutation(api.queue.remove)
+    const moveMutation = useMutation(api.queue.move)
+    const clearMutation = useMutation(api.queue.clear)
 
     return {
         ping: async (count: number) => {
@@ -58,6 +64,25 @@ export function useQueueActions() {
                 )
             }
         },
+        // A targeted Ping with no typed note, so the Saved ping note is used.
+        pingOne: async (target: TurnTarget) => {
+            const result = await attempt(`ping @${target.username}`, () =>
+                pingOneMutation({ reference: target.reference })
+            )
+            if (result?.kind === 'note_too_long') {
+                toast.error(
+                    `The saved ping note is over ${result.max} characters. Shorten it in Settings.`
+                )
+                return
+            }
+            reportTurn(result, target)
+        },
+        clear: async () => {
+            const result = await attempt('clear the Queue', () =>
+                clearMutation({})
+            )
+            if (result?.kind === 'empty') toast.info('No one is waiting.')
+        },
         open: () => attempt('resume the Queue', () => openMutation({})),
         pause: () => attempt('pause the Queue', () => pauseMutation({})),
         play: async (target: TurnTarget) => {
@@ -78,6 +103,18 @@ export function useQueueActions() {
             const result = await attempt(
                 `finish @${target.username}'s turn`,
                 () => doneMutation({ reference: target.reference })
+            )
+            reportTurn(result, target)
+        },
+        move: async (target: TurnTarget, to: MoveTo) => {
+            const result = await attempt(`move @${target.username}`, () =>
+                moveMutation({ reference: target.reference, to })
+            )
+            reportTurn(result, target)
+        },
+        remove: async (target: TurnTarget) => {
+            const result = await attempt(`remove @${target.username}`, () =>
+                removeMutation({ reference: target.reference })
             )
             reportTurn(result, target)
         },
