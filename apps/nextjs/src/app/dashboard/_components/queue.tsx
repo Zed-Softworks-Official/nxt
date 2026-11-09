@@ -24,7 +24,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { api } from '@nxt/backend/api'
 import { useQuery } from '@nxt/backend/react'
 import { GripVertical, ListX, Timer, Users } from 'lucide-react'
-import { type ComponentProps, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
     AlertDialog,
     AlertDialogAction,
@@ -48,7 +48,7 @@ import {
 import { Item, ItemContent, ItemGroup, ItemTitle } from '~/components/ui/item'
 import { cn } from '~/lib/utils'
 import { useQueueActions } from '../_lib/queue-actions'
-import { moveForDrop } from '../_lib/queue-reorder'
+import { moveForDrop, type WaitingParticipant } from '../_lib/queue-move'
 import { PlatformBadge, ReferenceBadge } from './participant-badges'
 import { ParticipantContextMenu } from './participant-context-menu'
 import { ParticipantRowsSkeleton } from './skeletons'
@@ -108,13 +108,6 @@ export function Queue() {
             </CardContent>
         </Card>
     )
-}
-
-type WaitingParticipant = {
-    reference: number
-    username: string
-    platform: ComponentProps<typeof PlatformBadge>['platform']
-    joinedAt: number
 }
 
 // The waiting rows as a sortable list. Dragging a row's grip (mouse, touch,
