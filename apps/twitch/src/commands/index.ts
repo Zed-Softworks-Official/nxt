@@ -4,6 +4,7 @@ import { leave } from './leave'
 import { ping } from './ping'
 import { pos } from './pos'
 import { open, pause } from './queueState'
+import { remove } from './remove'
 import { subq } from './subq'
 import { done, play, returnToQueue } from './turn'
 import type { TwitchCommand } from './types'
@@ -21,6 +22,7 @@ export const commands: ReadonlyMap<string, TwitchCommand> = new Map([
     ['pingq', ping],
     ['playq', play],
     ['pos', pos],
+    ['removeq', remove],
     ['returnq', returnToQueue],
     ['startq', open],
     ['subq', subq],

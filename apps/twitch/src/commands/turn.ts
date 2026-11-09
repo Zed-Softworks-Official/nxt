@@ -8,6 +8,15 @@ import { formatReference, parseReference } from '@nxt/backend/reference'
 
 import type { TwitchCommand } from './types'
 
+// Reads the reference a command targets, or returns the usage reply.
+export function readReference(name: string, arg: string): number | string {
+    if (arg === '') return `Use !${name} <reference>, such as !${name} q-42.`
+    return (
+        parseReference(arg) ??
+        `"${arg}" is not a Participant reference. Use one like q-42.`
+    )
+}
+
 // The replies every reference-targeting command gives when the reference
 // matches nobody, or a Participant in the wrong state for the command.
 export function unknownReference(reference: number): string {
@@ -37,13 +46,8 @@ function turnCommand(spec: {
     return {
         admin: true,
         async run({ convex, link, arg }) {
-            if (arg === '') {
-                return `Use !${spec.name} <reference>, such as !${spec.name} q-42.`
-            }
-            const reference = parseReference(arg)
-            if (reference === null) {
-                return `"${arg}" is not a Participant reference. Use one like q-42.`
-            }
+            const reference = readReference(spec.name, arg)
+            if (typeof reference === 'string') return reference
 
             const result = await convex.mutation(spec.mutation, {
                 link,
