@@ -186,8 +186,13 @@ export default defineSchema({
             v.literal('playing'),
             v.literal('done')
         ),
+        // Where the Participant sits in the Queue (ADR-0008). Admins change it
+        // with a Move; it survives Ping and Back. Optional until the backfill
+        // has run: a row without one sorts by `_creationTime`.
+        orderKey: v.optional(v.number()),
     })
         .index('byQueue', ['queueId'])
+        .index('byQueueAndStatusAndOrderKey', ['queueId', 'status', 'orderKey'])
         .index('byQueueAndReference', ['queueId', 'reference'])
         .index('byQueueAndPlatformAndStatus', ['queueId', 'platform', 'status'])
         .index('byUser', ['platformUserId', 'platform', 'queueId']),

@@ -82,6 +82,15 @@ export const done = mutation({
         Queue.done(ctx, await requireOwnedQueue(ctx), args.reference),
 })
 
+// Move a waiting Participant: after another Participant, to the front, or to a
+// Position (past the end means the back).
+export const move = mutation({
+    args: { reference: v.number(), to: Queue.moveDestination },
+    returns: Queue.moveResult,
+    handler: async (ctx, args) =>
+        Queue.move(ctx, await requireOwnedQueue(ctx), args.reference, args.to),
+})
+
 // How many Activity log entries the dashboard shows.
 const ACTIVITY_LOG_LIMIT = 50
 
