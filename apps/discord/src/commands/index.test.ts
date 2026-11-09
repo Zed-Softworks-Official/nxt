@@ -7,3 +7,8 @@ test('the deployed commands include the Turn commands', () => {
         expect.arrayContaining(['pingq', 'playq', 'returnq', 'doneq'])
     )
 })
+
+test('the deployed commands include Remove and Move', () => {
+    const names = Object.values(commands).map((command) => command.data.name)
+    expect(names).toEqual(expect.arrayContaining(['removeq', 'moveq']))
+})

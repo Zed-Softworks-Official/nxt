@@ -210,3 +210,177 @@ test('pingq with an over-limit note says so and calls nobody', async () => {
     const queue = await readQueue(backend, 'owner-1')
     expect(queue?.participants[0]?.status).toBe('waiting')
 })
+
+async function seedForTargetedPing() {
+    const backend = createTestBackend()
+    await seedDiscordCommunity(backend, {
+        ownerId: 'owner-1',
+        guildId: 'guild-1',
+        state: 'open',
+        commandChannelId: 'commands',
+        participants: [
+            {
+                platformUserId: 'tw-1',
+                username: 'ada',
+                status: 'waiting',
+                platform: 'twitch',
+            },
+            { platformUserId: 'user-2', username: 'bea', status: 'waiting' },
+            { platformUserId: 'user-3', username: 'cy', status: 'playing' },
+            { platformUserId: 'user-4', username: 'dee', status: 'done' },
+        ],
+    })
+    return backend
+}
+
+async function statuses(backend: ReturnType<typeof createTestBackend>) {
+    const queue = await readQueue(backend, 'owner-1')
+    return queue?.participants
+        .filter((p) => p.status !== 'done')
+        .map((p) => [p.reference, p.status])
+}
+
+test('pingq with a participant calls that one Participant, out of order', async () => {
+    const backend = await seedForTargetedPing()
+    const { interaction, replies } = fakeInteraction({
+        guildId: 'guild-1',
+        manageServer: true,
+        options: { participant: 'q-2', note: 'VC 2' },
+    })
+
+    await pingQ.execute(interaction, asQueueConvex(backend))
+
+    expect(replies).toEqual([
+        { content: 'Pinged q-2 bea (Discord).', ephemeral: false },
+    ])
+    expect(await statuses(backend)).toEqual([
+        [1, 'waiting'],
+        [2, 'notified'],
+        [3, 'playing'],
+    ])
+    expect(await readActivityLog(backend, 'owner-1')).toEqual([
+        {
+            event: 'pinged',
+            username: 'bea',
+            platform: 'discord',
+            platformUserId: 'user-2',
+        },
+    ])
+    const [announcement] = await backend.query(internal.announcements.pending, {
+        platform: 'discord',
+    })
+    expect(announcement).toMatchObject({ note: 'VC 2' })
+})
+
+test('pingq with both a count and a participant is refused and calls nobody', async () => {
+    const backend = await seedForTargetedPing()
+    const { interaction, replies } = fakeInteraction({
+        guildId: 'guild-1',
+        manageServer: true,
+        options: { participant: 'q-2', count: 2 },
+    })
+
+    await pingQ.execute(interaction, asQueueConvex(backend))
+
+    expect(replies).toEqual([
+        {
+            content: 'Give either a count or a participant, not both.',
+            ephemeral: false,
+        },
+    ])
+    expect(await statuses(backend)).toEqual([
+        [1, 'waiting'],
+        [2, 'waiting'],
+        [3, 'playing'],
+    ])
+})
+
+test('pingq with an ended participant says nobody holds the reference', async () => {
+    const backend = await seedForTargetedPing()
+    const { interaction, replies } = fakeInteraction({
+        guildId: 'guild-1',
+        manageServer: true,
+        options: { participant: 'q-4' },
+    })
+
+    await pingQ.execute(interaction, asQueueConvex(backend))
+
+    expect(replies).toEqual([
+        {
+            content: 'Nobody in the queue has the reference q-4.',
+            ephemeral: false,
+        },
+    ])
+})
+
+test('pingq with a participant who is not waiting is refused', async () => {
+    const backend = await seedForTargetedPing()
+    const { interaction, replies } = fakeInteraction({
+        guildId: 'guild-1',
+        manageServer: true,
+        options: { participant: 'q-3' },
+    })
+
+    await pingQ.execute(interaction, asQueueConvex(backend))
+
+    expect(replies).toEqual([
+        {
+            content:
+                'q-3 is playing. Only a waiting Participant can be Pinged.',
+            ephemeral: false,
+        },
+    ])
+    expect(await readActivityLog(backend, 'owner-1')).toEqual([])
+})
+
+test('pingq with a participant that is not a reference says how to write one', async () => {
+    const backend = await seedForTargetedPing()
+    const { interaction, replies } = fakeInteraction({
+        guildId: 'guild-1',
+        manageServer: true,
+        options: { participant: 'bea' },
+    })
+
+    await pingQ.execute(interaction, asQueueConvex(backend))
+
+    expect(replies).toEqual([
+        {
+            content: '"bea" is not a Participant reference. Use one like q-42.',
+            ephemeral: false,
+        },
+    ])
+})
+
+test('pingq with a participant and an over-limit note says so and calls nobody', async () => {
+    const backend = await seedForTargetedPing()
+    const { interaction, replies } = fakeInteraction({
+        guildId: 'guild-1',
+        manageServer: true,
+        options: { participant: 'q-2', note: 'x'.repeat(201) },
+    })
+
+    await pingQ.execute(interaction, asQueueConvex(backend))
+
+    expect(replies).toEqual([
+        {
+            content: 'That note is too long. Keep it to 200 characters.',
+            ephemeral: false,
+        },
+    ])
+    expect(await readActivityLog(backend, 'owner-1')).toEqual([])
+})
+
+test('pingq with a participant and no Manage Server refuses', async () => {
+    const backend = await seedForTargetedPing()
+    const { interaction, replies } = fakeInteraction({
+        guildId: 'guild-1',
+        options: { participant: 'q-2' },
+    })
+
+    await pingQ.execute(interaction, asQueueConvex(backend))
+
+    expect(replies).toEqual([
+        { content: 'You need Manage Server to do that.', ephemeral: false },
+    ])
+    expect(await readActivityLog(backend, 'owner-1')).toEqual([])
+})
