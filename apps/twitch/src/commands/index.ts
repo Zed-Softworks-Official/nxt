@@ -1,6 +1,7 @@
 import { clear } from './clear'
 import { join } from './join'
 import { leave } from './leave'
+import { move } from './move'
 import { ping } from './ping'
 import { pos } from './pos'
 import { open, pause } from './queueState'
@@ -19,6 +20,7 @@ export const commands: ReadonlyMap<string, TwitchCommand> = new Map([
     ['endq', pause],
     ['joinq', join],
     ['leaveq', leave],
+    ['moveq', move],
     ['pingq', ping],
     ['playq', play],
     ['pos', pos],
