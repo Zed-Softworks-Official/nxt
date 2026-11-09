@@ -21,7 +21,7 @@ A Stream Deck that a Community owner has approved to run that Community's Queue 
 _Avoid_: integration, connection, device link
 
 **Queue**:
-The ordered line of Participants who are waiting, earliest join first. It starts Paused. Clearing it removes every waiting Participant and leaves pinged and playing Participants in place.
+The ordered line of Participants who are waiting, in join order unless an Admin has moved someone. It starts Paused. Clearing it removes every waiting Participant and leaves pinged and playing Participants in place.
 _Avoid_: pinged list, now playing, the full set of Participants
 
 **Participant**:
@@ -60,6 +60,14 @@ _Avoid_: default message, ping template
 A waiting Participant's place in the Queue, starting at 1 at the front. A pinged or playing Participant has no Position.
 _Avoid_: index, rank, spot
 
+**Move**:
+An Admin changing a waiting Participant's Position. Every platform sees the new order, and the next Ping calls the new front. A Move is not a turn.
+_Avoid_: reorder, drag, bump
+
+**Remove**:
+An Admin ending one Participant's entry, whether they are waiting, Pinged, or Playing. It is silent and is not a turn. The Participant's reference is never used again.
+_Avoid_: kick, leave, delete
+
 **Open**:
 The Queue state in which Participants may join, subject to their platform's Joins and, on Twitch, the Sub requirement.
 _Avoid_: started, live, active
@@ -93,7 +101,7 @@ The Nxt-operated Twitch account that receives Queue commands and posts replies i
 _Avoid_: broadcaster account, Community account
 
 **Turn command**:
-An Admin command that moves Participants between the Queue, Pinged, and Playing: ping, play, return, and done. Discord, Twitch, the dashboard, and a Paired deck offer the same Turn commands.
+An Admin command that moves Participants between the Queue, Pinged, and Playing: ping, play, return, and done. Ping calls either the front of the Queue or one chosen waiting Participant. Discord, Twitch, and the dashboard offer the same Turn commands. A Paired deck offers only Quick Ping and its slot keys.
 _Avoid_: dashboard action, mod command
 
 **Quick Ping**:
