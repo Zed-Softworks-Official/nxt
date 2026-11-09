@@ -1,8 +1,29 @@
 'use client'
 
+import {
+    closestCenter,
+    DndContext,
+    type DragEndEvent,
+    KeyboardSensor,
+    MouseSensor,
+    TouchSensor,
+    useSensor,
+    useSensors,
+} from '@dnd-kit/core'
+import {
+    restrictToParentElement,
+    restrictToVerticalAxis,
+} from '@dnd-kit/modifiers'
+import {
+    SortableContext,
+    sortableKeyboardCoordinates,
+    useSortable,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { api } from '@nxt/backend/api'
 import { useQuery } from '@nxt/backend/react'
-import { ListX, Timer, Users } from 'lucide-react'
+import { GripVertical, ListX, Timer, Users } from 'lucide-react'
 import { type ComponentProps, useEffect, useState } from 'react'
 import {
     AlertDialog,
@@ -25,7 +46,9 @@ import {
     EmptyTitle,
 } from '~/components/ui/empty'
 import { Item, ItemContent, ItemGroup, ItemTitle } from '~/components/ui/item'
+import { cn } from '~/lib/utils'
 import { useQueueActions } from '../_lib/queue-actions'
+import { moveForDrop } from '../_lib/queue-reorder'
 import { PlatformBadge, ReferenceBadge } from './participant-badges'
 import { ParticipantContextMenu } from './participant-context-menu'
 import { ParticipantRowsSkeleton } from './skeletons'
@@ -80,21 +103,7 @@ export function Queue() {
                         </EmptyHeader>
                     </Empty>
                 ) : (
-                    <ItemGroup>
-                        {waiting.map((participant, i) => (
-                            <QueueRow
-                                key={participant.reference}
-                                participant={participant}
-                                position={i + 1}
-                                now={now}
-                                backAfter={
-                                    i === waiting.length - 1
-                                        ? null
-                                        : (waiting.at(-1)?.reference ?? null)
-                                }
-                            />
-                        ))}
-                    </ItemGroup>
+                    <SortableQueue waiting={waiting} now={now} />
                 )}
             </CardContent>
         </Card>
@@ -108,6 +117,65 @@ type WaitingParticipant = {
     joinedAt: number
 }
 
+// The waiting rows as a sortable list. Dragging a row's grip (mouse, touch,
+// or keyboard: Space picks up, arrows move, Space drops) sends a relative
+// Move; the optimistic update on Move keeps the row where it was dropped.
+function SortableQueue(props: {
+    waiting: WaitingParticipant[]
+    now: number | null
+}) {
+    const { waiting } = props
+    const { move } = useQueueActions()
+    const sensors = useSensors(
+        useSensor(MouseSensor),
+        // A short hold, so a swipe on the grip still scrolls the page.
+        useSensor(TouchSensor, {
+            activationConstraint: { delay: 150, tolerance: 5 },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    )
+    const order = waiting.map((participant) => participant.reference)
+
+    const onDragEnd = ({ active, over }: DragEndEvent) => {
+        if (!over) return
+        const target = waiting.find((row) => row.reference === active.id)
+        const to = moveForDrop(order, Number(active.id), Number(over.id))
+        if (target && to) move(target, to)
+    }
+
+    return (
+        <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+            onDragEnd={onDragEnd}
+        >
+            <SortableContext
+                items={order}
+                strategy={verticalListSortingStrategy}
+            >
+                <ItemGroup>
+                    {waiting.map((participant, i) => (
+                        <QueueRow
+                            key={participant.reference}
+                            participant={participant}
+                            position={i + 1}
+                            now={props.now}
+                            backAfter={
+                                i === waiting.length - 1
+                                    ? null
+                                    : (waiting.at(-1)?.reference ?? null)
+                            }
+                        />
+                    ))}
+                </ItemGroup>
+            </SortableContext>
+        </DndContext>
+    )
+}
+
 // One waiting Participant's row, with its context menu.
 function QueueRow(props: {
     participant: WaitingParticipant
@@ -117,6 +185,16 @@ function QueueRow(props: {
     backAfter: number | null
 }) {
     const { participant } = props
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        setActivatorNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: participant.reference })
+
     return (
         <ParticipantContextMenu
             participant={participant}
@@ -127,12 +205,30 @@ function QueueRow(props: {
             }}
         >
             <Item
+                ref={setNodeRef}
+                style={{
+                    transform: CSS.Translate.toString(transform),
+                    transition,
+                }}
                 variant="outline"
-                className="group border-border/60 bg-card/50 shadow-xs transition-all hover:border-primary/35 hover:bg-accent/30"
+                className={cn(
+                    'group border-border/60 bg-card/50 shadow-xs transition-colors hover:border-primary/35 hover:bg-accent/30',
+                    isDragging && 'relative z-10 border-primary/50 shadow-md'
+                )}
             >
                 <ItemContent className="gap-2">
                     <div className="flex items-start justify-between gap-3">
                         <div className="flex min-w-0 items-center gap-3">
+                            <button
+                                ref={setActivatorNodeRef}
+                                type="button"
+                                aria-label={`Drag @${participant.username} to a new Position`}
+                                className="-mr-2 flex size-7 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 active:cursor-grabbing"
+                                {...attributes}
+                                {...listeners}
+                            >
+                                <GripVertical className="size-4" />
+                            </button>
                             <div className="flex size-7 shrink-0 items-center justify-center rounded-full border border-chart-2/30 bg-chart-2/10 text-xs font-semibold text-chart-2">
                                 {props.position}
                             </div>
@@ -143,7 +239,7 @@ function QueueRow(props: {
                         </div>
                         <PlatformBadge platform={participant.platform} />
                     </div>
-                    <div className="ml-10 flex items-center gap-2 text-muted-foreground">
+                    <div className="ml-[4.5rem] flex items-center gap-2 text-muted-foreground">
                         <div className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-background/80 px-2 py-1 text-xs">
                             <Timer className="size-3.5" />
                             {formatElapsedTime(participant.joinedAt, props.now)}
