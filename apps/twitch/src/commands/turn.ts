@@ -2,10 +2,34 @@ import { internal } from '@nxt/backend/api'
 import {
     describeParticipant,
     TURN_STATE_WORDING,
+    type TurnState,
 } from '@nxt/backend/participant'
 import { formatReference, parseReference } from '@nxt/backend/reference'
 
 import type { TwitchCommand } from './types'
+
+// Reads the reference a command targets, or returns the usage reply.
+export function readReference(name: string, arg: string): number | string {
+    if (arg === '') return `Use !${name} <reference>, such as !${name} q-42.`
+    return (
+        parseReference(arg) ??
+        `"${arg}" is not a Participant reference. Use one like q-42.`
+    )
+}
+
+// The replies every reference-targeting command gives when the reference
+// matches nobody, or a Participant in the wrong state for the command.
+export function unknownReference(reference: number): string {
+    return `Nobody in the queue has the reference ${formatReference(reference)}.`
+}
+
+export function wrongState(
+    reference: number,
+    status: TurnState,
+    requirement: string
+): string {
+    return `${formatReference(reference)} ${TURN_STATE_WORDING[status]}. ${requirement}`
+}
 
 // play, return and done share the backend's Turn mutation shape.
 type TurnMutation = typeof internal.platformQueue.play
@@ -22,13 +46,8 @@ function turnCommand(spec: {
     return {
         admin: true,
         async run({ convex, link, arg }) {
-            if (arg === '') {
-                return `Use !${spec.name} <reference>, such as !${spec.name} q-42.`
-            }
-            const reference = parseReference(arg)
-            if (reference === null) {
-                return `"${arg}" is not a Participant reference. Use one like q-42.`
-            }
+            const reference = readReference(spec.name, arg)
+            if (typeof reference === 'string') return reference
 
             const result = await convex.mutation(spec.mutation, {
                 link,
@@ -38,9 +57,13 @@ function turnCommand(spec: {
                 case 'unlinked':
                     return null
                 case 'unknown_reference':
-                    return `Nobody in the queue has the reference ${formatReference(reference)}.`
+                    return unknownReference(reference)
                 case 'wrong_state':
-                    return `${formatReference(reference)} ${TURN_STATE_WORDING[result.status]}. ${spec.requirement}`
+                    return wrongState(
+                        reference,
+                        result.status,
+                        spec.requirement
+                    )
                 case 'ok':
                     return spec.succeeded(
                         describeParticipant(result.participant)
