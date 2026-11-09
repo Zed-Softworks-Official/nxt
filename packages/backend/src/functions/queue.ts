@@ -61,6 +61,19 @@ export const ping = mutation({
         Queue.ping(ctx, await requireOwnedQueue(ctx), args.count),
 })
 
+// A targeted Ping (ADR-0007): calls one waiting Participant by reference.
+export const pingOne = mutation({
+    args: { reference: v.number(), note: v.optional(v.string()) },
+    returns: Queue.targetedPingResult,
+    handler: async (ctx, args) =>
+        Queue.pingOne(
+            ctx,
+            await requireOwnedQueue(ctx),
+            args.reference,
+            args.note
+        ),
+})
+
 export const play = mutation({
     args: { reference: v.number() },
     returns: Queue.turnResult,
