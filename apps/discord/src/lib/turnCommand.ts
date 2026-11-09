@@ -10,34 +10,49 @@ import type { CommandInteraction } from 'discord.js'
 import { PermissionFlagsBits, SlashCommandBuilder } from 'discord.js'
 
 import { getConvex, type QueueConvex } from '~/lib/convex'
-import { editDeferred, NOT_CONNECTED, runQueueCommand } from '~/lib/queueGate'
+import {
+    type DiscordLink,
+    editDeferred,
+    NOT_CONNECTED,
+    runQueueCommand,
+} from '~/lib/queueGate'
 import type { Command } from '~/lib/types'
 
 // playq, returnq and doneq share the backend's Turn mutation shape.
 type TurnMutation = typeof internal.platformQueue.play
 
-type TurnResult =
-    | {
-          kind: 'ok'
-          participant: {
-              reference: number
-              username: string
-              platform: Platform
-          }
-      }
+type Participant = {
+    reference: number
+    username: string
+    platform: Platform
+}
+
+type Refusal =
     | { kind: 'unknown_reference' }
     | { kind: 'wrong_state'; status: TurnState }
     | { kind: 'unlinked' }
 
-// A Turn command that targets one Participant by reference: playq, returnq,
-// doneq. Gated on Manage Server (ADR-0001), targeted by reference (ADR-0005).
-export function turnCommand(spec: {
+// An Admin command that targets one Participant by reference: the Turn
+// commands, removeq and moveq. Gated on Manage Server (ADR-0001), targeted by
+// reference (ADR-0005).
+export function referenceCommand<
+    Result extends { kind: 'ok'; participant: Participant } | Refusal,
+>(spec: {
     name: string
     description: string
-    mutation: TurnMutation
+    // Options after the reference, such as moveq's Position.
+    addOptions?: (data: SlashCommandBuilder) => void
+    act: (
+        convex: QueueConvex,
+        args: { link: DiscordLink; reference: number },
+        interaction: CommandInteraction
+    ) => Promise<Result>
     // Why the wrong-state reply is a refusal, e.g. "Only a Pinged Participant can start playing."
-    requirement: string
-    succeeded: (participant: string) => string
+    requirement?: string
+    succeeded: (
+        participant: string,
+        result: Extract<Result, { kind: 'ok' }>
+    ) => string
 }): Command {
     const data = new SlashCommandBuilder()
         .setName(spec.name)
@@ -50,6 +65,7 @@ export function turnCommand(spec: {
             .setDescription('Participant reference, such as q-42')
             .setRequired(true)
     )
+    spec.addOptions?.(data)
 
     return {
         data,
@@ -63,20 +79,28 @@ export function turnCommand(spec: {
                         : ''
                     const reference = parseReference(text)
                     if (reference === null) {
-                        await editDeferred(
-                            interaction,
-                            `"${text}" is not a Participant reference. Use one like q-42.`
-                        )
+                        await editDeferred(interaction, notAReference(text))
                         return
                     }
 
-                    const result = await convex.mutation(spec.mutation, {
-                        link,
-                        reference,
-                    })
+                    const result = await spec.act(
+                        convex,
+                        { link, reference },
+                        interaction
+                    )
                     await editDeferred(
                         interaction,
-                        replyFor(result, reference, spec)
+                        isOk(result)
+                            ? spec.succeeded(
+                                  describeParticipant(result.participant),
+                                  result
+                              )
+                            : // TS can't narrow a generic union in the else branch.
+                              refusalFor(
+                                  result as Refusal,
+                                  reference,
+                                  spec.requirement
+                              )
                     )
                 },
             })
@@ -84,10 +108,38 @@ export function turnCommand(spec: {
     }
 }
 
-function replyFor(
-    result: TurnResult,
+// A Turn command: playq, returnq, doneq.
+export function turnCommand(spec: {
+    name: string
+    description: string
+    mutation: TurnMutation
+    requirement: string
+    succeeded: (participant: string) => string
+}): Command {
+    return referenceCommand({
+        name: spec.name,
+        description: spec.description,
+        act: (convex, args) => convex.mutation(spec.mutation, args),
+        requirement: spec.requirement,
+        succeeded: spec.succeeded,
+    })
+}
+
+function isOk<Result extends { kind: string }>(
+    result: Result
+): result is Extract<Result, { kind: 'ok' }> {
+    return result.kind === 'ok'
+}
+
+export function notAReference(text: string): string {
+    return `"${text}" is not a Participant reference. Use one like q-42.`
+}
+
+// The replies every reference command shares when it can't act.
+export function refusalFor(
+    result: Refusal,
     reference: number,
-    spec: { requirement: string; succeeded: (participant: string) => string }
+    requirement?: string
 ): string {
     switch (result.kind) {
         case 'unlinked':
@@ -95,8 +147,11 @@ function replyFor(
         case 'unknown_reference':
             return `Nobody in the queue has the reference ${formatReference(reference)}.`
         case 'wrong_state':
-            return `${formatReference(reference)} ${TURN_STATE_WORDING[result.status]}. ${spec.requirement}`
-        case 'ok':
-            return spec.succeeded(describeParticipant(result.participant))
+            return [
+                `${formatReference(reference)} ${TURN_STATE_WORDING[result.status]}.`,
+                requirement,
+            ]
+                .filter(Boolean)
+                .join(' ')
     }
 }
