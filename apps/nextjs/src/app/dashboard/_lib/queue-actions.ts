@@ -3,6 +3,7 @@
 import { api } from '@nxt/backend/api'
 import { useMutation } from '@nxt/backend/react'
 import { toast } from 'sonner'
+import { reorderWaiting } from './queue-reorder'
 
 type TurnTarget = { reference: number; username: string }
 // Where a Move puts a waiting Participant: after a neighbour or the front.
@@ -39,7 +40,21 @@ export function useQueueActions() {
     const doneMutation = useMutation(api.queue.done)
     const pingOneMutation = useMutation(api.queue.pingOne)
     const removeMutation = useMutation(api.queue.remove)
-    const moveMutation = useMutation(api.queue.move)
+    // The Queue view reorders straight away. Convex drops the optimistic
+    // view once the server answers, so a Move that did not happen snaps back.
+    const moveMutation = useMutation(api.queue.move).withOptimisticUpdate(
+        (store, args) => {
+            const view = store.getQuery(api.queue.view, {})
+            if (!view || 'position' in args.to) return
+            const waiting = reorderWaiting(
+                view.waiting,
+                args.reference,
+                args.to
+            )
+            if (waiting)
+                store.setQuery(api.queue.view, {}, { ...view, waiting })
+        }
+    )
     const clearMutation = useMutation(api.queue.clear)
 
     return {
