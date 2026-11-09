@@ -363,6 +363,29 @@ export const pingResult = v.union(
     v.object({ kind: v.literal('note_too_long'), max: v.number() })
 )
 
+// The note a Ping carries: the typed note, else the Saved ping note.
+async function pingNote(
+    ctx: MutationCtx,
+    queue: QueueDoc,
+    typed: string | null
+) {
+    if (typed !== null) return typed
+    const community = await ctx.db.get('communities', queue.communityId)
+    return community?.savedPingNote ?? null
+}
+
+// Calls one waiting Participant: Pinged, logged, and announced.
+async function call(
+    ctx: MutationCtx,
+    queue: QueueDoc,
+    participant: Doc<'participants'>,
+    note: string | null
+) {
+    await ctx.db.patch('participants', participant._id, { status: 'notified' })
+    await logTurn(ctx, participant, 'pinged')
+    await announcePinged(ctx, queue.communityId, participant, note)
+}
+
 // Pings the front `count` waiting Participants (at least one). A typed note
 // replaces the Community's Saved ping note for this Ping.
 export async function ping(
@@ -380,15 +403,9 @@ export async function ping(
     )
     if (front.length === 0) return { kind: 'empty' as const }
 
-    const community = await ctx.db.get('communities', queue.communityId)
-    const note = typed.note ?? community?.savedPingNote ?? null
-
+    const note = await pingNote(ctx, queue, typed.note)
     for (const participant of front) {
-        await ctx.db.patch('participants', participant._id, {
-            status: 'notified',
-        })
-        await logTurn(ctx, participant, 'pinged')
-        await announcePinged(ctx, queue.communityId, participant, note)
+        await call(ctx, queue, participant, note)
     }
     return { kind: 'ok' as const, pinged: front.map(toEntry) }
 }
@@ -447,6 +464,28 @@ async function turn(
 
     await apply(participant)
     return { kind: 'ok' as const, participant: toEntry(participant) }
+}
+
+export const targetedPingResult = v.union(
+    turnResult,
+    v.object({ kind: v.literal('note_too_long'), max: v.number() })
+)
+
+// A targeted Ping (ADR-0007): calls one waiting Participant wherever they are
+// in the Queue. Otherwise the same as Ping.
+export async function pingOne(
+    ctx: MutationCtx,
+    queue: QueueDoc,
+    reference: number,
+    typedNote?: string
+) {
+    const typed = parsePingNote(typedNote ?? '')
+    if (typed.kind === 'note_too_long') return typed
+
+    return await turn(ctx, queue, reference, 'waiting', async (participant) => {
+        const note = await pingNote(ctx, queue, typed.note)
+        await call(ctx, queue, participant, note)
+    })
 }
 
 // Pinged → Playing.
@@ -605,6 +644,35 @@ function insertionIndex(
         }
     }
     return joinedBefore ? others.indexOf(joinedBefore) + 1 : beforeWaiting(1)
+}
+
+export const removeResult = v.union(
+    v.object({ kind: v.literal('ok'), participant: entry }),
+    v.object({ kind: v.literal('unknown_reference') })
+)
+
+// An Admin ends one entry, whatever its state (waiting, Pinged, or Playing).
+// Silent: no Activity log entry and no Announcement. Like leaving, it drops
+// any Announcement still owed to a Pinged Participant.
+export async function remove(
+    ctx: MutationCtx,
+    queue: QueueDoc,
+    reference: number
+) {
+    const participant = await ctx.db
+        .query('participants')
+        .withIndex('byQueueAndReference', (q) =>
+            q.eq('queueId', queue._id).eq('reference', reference)
+        )
+        .first()
+    if (!participant || !turnStateOf(participant)) {
+        return { kind: 'unknown_reference' as const }
+    }
+    if (participant.status === 'notified') {
+        await dropPendingForParticipant(ctx, queue.communityId, participant)
+    }
+    await ctx.db.delete('participants', participant._id)
+    return { kind: 'ok' as const, participant: toEntry(participant) }
 }
 
 // ---- Reading the Queue -----------------------------------------------------

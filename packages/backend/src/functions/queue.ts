@@ -61,6 +61,19 @@ export const ping = mutation({
         Queue.ping(ctx, await requireOwnedQueue(ctx), args.count),
 })
 
+// A targeted Ping (ADR-0007): calls one waiting Participant by reference.
+export const pingOne = mutation({
+    args: { reference: v.number(), note: v.optional(v.string()) },
+    returns: Queue.targetedPingResult,
+    handler: async (ctx, args) =>
+        Queue.pingOne(
+            ctx,
+            await requireOwnedQueue(ctx),
+            args.reference,
+            args.note
+        ),
+})
+
 export const play = mutation({
     args: { reference: v.number() },
     returns: Queue.turnResult,
@@ -89,6 +102,13 @@ export const move = mutation({
     returns: Queue.moveResult,
     handler: async (ctx, args) =>
         Queue.move(ctx, await requireOwnedQueue(ctx), args.reference, args.to),
+})
+
+export const remove = mutation({
+    args: { reference: v.number() },
+    returns: Queue.removeResult,
+    handler: async (ctx, args) =>
+        Queue.remove(ctx, await requireOwnedQueue(ctx), args.reference),
 })
 
 // How many Activity log entries the dashboard shows.
