@@ -2,10 +2,25 @@ import { internal } from '@nxt/backend/api'
 import {
     describeParticipant,
     TURN_STATE_WORDING,
+    type TurnState,
 } from '@nxt/backend/participant'
 import { formatReference, parseReference } from '@nxt/backend/reference'
 
 import type { TwitchCommand } from './types'
+
+// The replies every reference-targeting command gives when the reference
+// matches nobody, or a Participant in the wrong state for the command.
+export function unknownReference(reference: number): string {
+    return `Nobody in the queue has the reference ${formatReference(reference)}.`
+}
+
+export function wrongState(
+    reference: number,
+    status: TurnState,
+    requirement: string
+): string {
+    return `${formatReference(reference)} ${TURN_STATE_WORDING[status]}. ${requirement}`
+}
 
 // play, return and done share the backend's Turn mutation shape.
 type TurnMutation = typeof internal.platformQueue.play
@@ -38,9 +53,13 @@ function turnCommand(spec: {
                 case 'unlinked':
                     return null
                 case 'unknown_reference':
-                    return `Nobody in the queue has the reference ${formatReference(reference)}.`
+                    return unknownReference(reference)
                 case 'wrong_state':
-                    return `${formatReference(reference)} ${TURN_STATE_WORDING[result.status]}. ${spec.requirement}`
+                    return wrongState(
+                        reference,
+                        result.status,
+                        spec.requirement
+                    )
                 case 'ok':
                     return spec.succeeded(
                         describeParticipant(result.participant)
