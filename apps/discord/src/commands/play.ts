@@ -1,11 +1,11 @@
 import { internal } from '@nxt/backend/api'
 
-import { turnCommand } from '~/lib/turnCommand'
+import { referenceCommand } from '~/lib/referenceCommand'
 
-export const playQ = turnCommand({
+export const playQ = referenceCommand({
     name: 'playq',
     description: 'Move a Pinged Participant to Playing',
-    mutation: internal.platformQueue.play,
+    act: (convex, args) => convex.mutation(internal.platformQueue.play, args),
     requirement: 'Only a Pinged Participant can start playing.',
     succeeded: (participant) => `${participant} is now playing.`,
 })

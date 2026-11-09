@@ -1,11 +1,11 @@
 import { internal } from '@nxt/backend/api'
 
-import { turnCommand } from '~/lib/turnCommand'
+import { referenceCommand } from '~/lib/referenceCommand'
 
-export const doneQ = turnCommand({
+export const doneQ = referenceCommand({
     name: 'doneq',
     description: "Finish a Playing Participant's turn",
-    mutation: internal.platformQueue.done,
+    act: (convex, args) => convex.mutation(internal.platformQueue.done, args),
     requirement: 'Only a Playing Participant can finish.',
     succeeded: (participant) => `${participant} is done.`,
 })

@@ -1,5 +1,5 @@
 import { internal } from '@nxt/backend/api'
-import { describeParticipant } from '@nxt/backend/participant'
+import { describeParticipant, type Participant } from '@nxt/backend/participant'
 import { PING_NOTE_MAX_LENGTH } from '@nxt/backend/pingNote'
 import { parseReference } from '@nxt/backend/reference'
 import type { CommandInteraction } from 'discord.js'
@@ -11,7 +11,7 @@ import {
     NOT_CONNECTED,
     runQueueCommand,
 } from '~/lib/queueGate'
-import { notAReference, refusalFor } from '~/lib/turnCommand'
+import { notAReference, refusalFor } from '~/lib/referenceCommand'
 import type { Command } from '~/lib/types'
 
 const MAX_COUNT = 25
@@ -136,7 +136,7 @@ async function pingOne(
     )
 }
 
-function pinged(participants: Parameters<typeof describeParticipant>[0][]) {
+function pinged(participants: Participant[]) {
     return `Pinged ${participants.map(describeParticipant).join(', ')}.`
 }
 

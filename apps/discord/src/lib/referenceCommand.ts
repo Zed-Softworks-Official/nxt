@@ -1,7 +1,6 @@
-import type { internal } from '@nxt/backend/api'
 import {
     describeParticipant,
-    type Platform,
+    type Participant,
     TURN_STATE_WORDING,
     type TurnState,
 } from '@nxt/backend/participant'
@@ -17,15 +16,6 @@ import {
     runQueueCommand,
 } from '~/lib/queueGate'
 import type { Command } from '~/lib/types'
-
-// playq, returnq and doneq share the backend's Turn mutation shape.
-type TurnMutation = typeof internal.platformQueue.play
-
-type Participant = {
-    reference: number
-    username: string
-    platform: Platform
-}
 
 type Refusal =
     | { kind: 'unknown_reference' }
@@ -106,23 +96,6 @@ export function referenceCommand<
             })
         },
     }
-}
-
-// A Turn command: playq, returnq, doneq.
-export function turnCommand(spec: {
-    name: string
-    description: string
-    mutation: TurnMutation
-    requirement: string
-    succeeded: (participant: string) => string
-}): Command {
-    return referenceCommand({
-        name: spec.name,
-        description: spec.description,
-        act: (convex, args) => convex.mutation(spec.mutation, args),
-        requirement: spec.requirement,
-        succeeded: spec.succeeded,
-    })
 }
 
 function isOk<Result extends { kind: string }>(

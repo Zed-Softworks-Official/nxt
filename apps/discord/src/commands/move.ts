@@ -1,7 +1,7 @@
 import { internal } from '@nxt/backend/api'
 import type { CommandInteraction } from 'discord.js'
 
-import { referenceCommand } from '~/lib/turnCommand'
+import { referenceCommand } from '~/lib/referenceCommand'
 
 // Move by Position. A Position past the end moves them to the back.
 export const moveQ = referenceCommand({

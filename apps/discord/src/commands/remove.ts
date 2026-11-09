@@ -1,6 +1,6 @@
 import { internal } from '@nxt/backend/api'
 
-import { referenceCommand } from '~/lib/turnCommand'
+import { referenceCommand } from '~/lib/referenceCommand'
 
 // Remove (silent): ends one entry whatever its state.
 export const removeQ = referenceCommand({
