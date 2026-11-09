@@ -1,7 +1,7 @@
 import { internal } from '@nxt/backend/api'
 import { describeParticipant } from '@nxt/backend/participant'
 
-import { readReference, unknownReference } from './turn'
+import { readReference, refusalFor } from './turn'
 import type { TwitchCommand } from './types'
 
 // Ends one Participant's entry, whatever its state. Silent: the reply names
@@ -9,20 +9,14 @@ import type { TwitchCommand } from './types'
 export const remove: TwitchCommand = {
     admin: true,
     async run({ convex, link, arg }) {
-        const reference = readReference('removeq', arg)
-        if (typeof reference === 'string') return reference
+        const read = readReference('removeq', arg)
+        if (read.kind === 'refused') return read.reply
 
         const result = await convex.mutation(internal.platformQueue.remove, {
             link,
-            reference,
+            reference: read.reference,
         })
-        switch (result.kind) {
-            case 'unlinked':
-                return null
-            case 'unknown_reference':
-                return unknownReference(reference)
-            case 'ok':
-                return `Removed ${describeParticipant(result.participant)}.`
-        }
+        if (result.kind !== 'ok') return refusalFor(result, read.reference)
+        return `Removed ${describeParticipant(result.participant)}.`
     },
 }

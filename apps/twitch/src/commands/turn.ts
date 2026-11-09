@@ -8,27 +8,55 @@ import { formatReference, parseReference } from '@nxt/backend/reference'
 
 import type { TwitchCommand } from './types'
 
-// Reads the reference a command targets, or returns the usage reply.
-export function readReference(name: string, arg: string): number | string {
-    if (arg === '') return `Use !${name} <reference>, such as !${name} q-42.`
-    return (
-        parseReference(arg) ??
-        `"${arg}" is not a Participant reference. Use one like q-42.`
-    )
+// The reference a command targets, or the reply refusing what was typed.
+type ReadReference =
+    | { kind: 'reference'; reference: number }
+    | { kind: 'refused'; reply: string }
+
+export function readReference(name: string, arg: string): ReadReference {
+    if (arg === '') {
+        return {
+            kind: 'refused',
+            reply: `Use !${name} <reference>, such as !${name} q-42.`,
+        }
+    }
+    const reference = parseReference(arg)
+    return reference === null
+        ? { kind: 'refused', reply: notAReference(arg) }
+        : { kind: 'reference', reference }
 }
 
-// The replies every reference-targeting command gives when the reference
-// matches nobody, or a Participant in the wrong state for the command.
-export function unknownReference(reference: number): string {
-    return `Nobody in the queue has the reference ${formatReference(reference)}.`
+export function notAReference(text: string): string {
+    return `"${text}" is not a Participant reference. Use one like q-42.`
 }
 
-export function wrongState(
+type Refusal =
+    | { kind: 'unlinked' }
+    | { kind: 'unknown_reference' }
+    | { kind: 'wrong_state'; status: TurnState }
+
+// The replies every reference-targeting command gives when it can't act: none
+// when the channel isn't linked, and the same wording for a reference that
+// matches nobody or a Participant in the wrong state for the command.
+export function refusalFor(
+    result: Refusal,
     reference: number,
-    status: TurnState,
-    requirement: string
-): string {
-    return `${formatReference(reference)} ${TURN_STATE_WORDING[status]}. ${requirement}`
+    // Why the wrong-state reply is a refusal.
+    requirement = ''
+): string | null {
+    switch (result.kind) {
+        case 'unlinked':
+            return null
+        case 'unknown_reference':
+            return `Nobody in the queue has the reference ${formatReference(reference)}.`
+        case 'wrong_state':
+            return [
+                `${formatReference(reference)} ${TURN_STATE_WORDING[result.status]}.`,
+                requirement,
+            ]
+                .filter(Boolean)
+                .join(' ')
+    }
 }
 
 // play, return and done share the backend's Turn mutation shape.
@@ -46,29 +74,17 @@ function turnCommand(spec: {
     return {
         admin: true,
         async run({ convex, link, arg }) {
-            const reference = readReference(spec.name, arg)
-            if (typeof reference === 'string') return reference
+            const read = readReference(spec.name, arg)
+            if (read.kind === 'refused') return read.reply
 
             const result = await convex.mutation(spec.mutation, {
                 link,
-                reference,
+                reference: read.reference,
             })
-            switch (result.kind) {
-                case 'unlinked':
-                    return null
-                case 'unknown_reference':
-                    return unknownReference(reference)
-                case 'wrong_state':
-                    return wrongState(
-                        reference,
-                        result.status,
-                        spec.requirement
-                    )
-                case 'ok':
-                    return spec.succeeded(
-                        describeParticipant(result.participant)
-                    )
+            if (result.kind !== 'ok') {
+                return refusalFor(result, read.reference, spec.requirement)
             }
+            return spec.succeeded(describeParticipant(result.participant))
         },
     }
 }

@@ -224,14 +224,14 @@ test('!pingq on an unknown or non-waiting reference is refused and calls nobody'
 test.each([
     'q-0',
     'q-x',
-])('!pingq %s is refused with the usage and pings nobody', async (arg) => {
+])('!pingq %s is refused as not a reference and pings nobody', async (arg) => {
     const backend = await channelWithThreeWaiting()
     const { handle, sent } = twitchBot(backend)
 
     await handle(chatMessage(`!pingq ${arg}`, MODERATOR))
 
     expect(sent.map((entry) => entry.text)).toEqual([
-        '@ada Use !pingq, !pingq <count>, !pingq <count> <note>, or !pingq q-<n> <note>, with a count from 1 to 10.',
+        `@ada "${arg}" is not a Participant reference. Use one like q-42.`,
     ])
     expect(await statuses(backend)).toEqual([
         [1, 'waiting'],
