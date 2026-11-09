@@ -82,6 +82,13 @@ export const done = mutation({
         Queue.done(ctx, await requireOwnedQueue(ctx), args.reference),
 })
 
+export const remove = mutation({
+    args: { reference: v.number() },
+    returns: Queue.removeResult,
+    handler: async (ctx, args) =>
+        Queue.remove(ctx, await requireOwnedQueue(ctx), args.reference),
+})
+
 // How many Activity log entries the dashboard shows.
 const ACTIVITY_LOG_LIMIT = 50
 

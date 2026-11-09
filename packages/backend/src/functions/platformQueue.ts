@@ -206,6 +206,15 @@ export const done = internalMutation({
         ),
 })
 
+export const remove = internalMutation({
+    args: turnArgs,
+    returns: v.union(Queue.removeResult, Queue.unlinked),
+    handler: async (ctx, args) =>
+        onLinkedQueue(ctx, args.link, (queue) =>
+            Queue.remove(ctx, queue, args.reference)
+        ),
+})
+
 export const position = internalQuery({
     args: { link: Queue.platformLink, platformUserId: v.string() },
     returns: v.union(Queue.positionResult, Queue.unlinked),
