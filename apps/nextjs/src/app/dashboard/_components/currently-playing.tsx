@@ -22,6 +22,7 @@ import {
 } from '~/components/ui/item'
 import { useQueueActions } from '../_lib/queue-actions'
 import { PlatformBadge, ReferenceBadge } from './participant-badges'
+import { ParticipantContextMenu } from './participant-context-menu'
 import { ParticipantRowsSkeleton } from './skeletons'
 
 export function CurrentlyPlaying() {
@@ -63,41 +64,46 @@ export function CurrentlyPlaying() {
                 ) : (
                     <ItemGroup>
                         {playing.map((participant) => (
-                            <Item
+                            <ParticipantContextMenu
                                 key={participant.reference}
-                                variant="outline"
-                                className="border-chart-2/30 bg-chart-2/5 shadow-xs transition-all hover:border-chart-2/50 hover:bg-chart-2/10"
+                                participant={participant}
+                                state={{ kind: 'playing' }}
                             >
-                                <ItemContent className="gap-2">
-                                    <div className="flex items-center justify-between gap-3">
-                                        <div className="flex min-w-0 items-center gap-3">
-                                            <div className="flex size-2 shrink-0 rounded-full bg-chart-2 ring-2 ring-chart-2/30" />
-                                            <ReferenceBadge
-                                                reference={
-                                                    participant.reference
-                                                }
+                                <Item
+                                    variant="outline"
+                                    className="border-chart-2/30 bg-chart-2/5 shadow-xs transition-all hover:border-chart-2/50 hover:bg-chart-2/10"
+                                >
+                                    <ItemContent className="gap-2">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div className="flex min-w-0 items-center gap-3">
+                                                <div className="flex size-2 shrink-0 rounded-full bg-chart-2 ring-2 ring-chart-2/30" />
+                                                <ReferenceBadge
+                                                    reference={
+                                                        participant.reference
+                                                    }
+                                                />
+                                                <ItemTitle className="text-sm font-semibold">
+                                                    {participant.username}
+                                                </ItemTitle>
+                                            </div>
+                                            <PlatformBadge
+                                                platform={participant.platform}
                                             />
-                                            <ItemTitle className="text-sm font-semibold">
-                                                {participant.username}
-                                            </ItemTitle>
                                         </div>
-                                        <PlatformBadge
-                                            platform={participant.platform}
-                                        />
-                                    </div>
-                                </ItemContent>
-                                <ItemActions className="shrink-0">
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="h-7 gap-1.5 border-emerald-500/40 bg-emerald-500/10 px-2 text-xs text-emerald-400 hover:border-emerald-500/60 hover:bg-emerald-500/20 hover:text-emerald-300"
-                                        onClick={() => done(participant)}
-                                    >
-                                        <CheckCheck className="size-3" />
-                                        Done
-                                    </Button>
-                                </ItemActions>
-                            </Item>
+                                    </ItemContent>
+                                    <ItemActions className="shrink-0">
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="h-7 gap-1.5 border-emerald-500/40 bg-emerald-500/10 px-2 text-xs text-emerald-400 hover:border-emerald-500/60 hover:bg-emerald-500/20 hover:text-emerald-300"
+                                            onClick={() => done(participant)}
+                                        >
+                                            <CheckCheck className="size-3" />
+                                            Done
+                                        </Button>
+                                    </ItemActions>
+                                </Item>
+                            </ParticipantContextMenu>
                         ))}
                     </ItemGroup>
                 )}
