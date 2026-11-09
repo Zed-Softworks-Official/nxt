@@ -220,6 +220,15 @@ export const done = internalMutation({
         ),
 })
 
+export const move = internalMutation({
+    args: { ...turnArgs, to: Queue.moveDestination },
+    returns: v.union(Queue.moveResult, Queue.unlinked),
+    handler: async (ctx, args) =>
+        onLinkedQueue(ctx, args.link, (queue) =>
+            Queue.move(ctx, queue, args.reference, args.to)
+        ),
+})
+
 export const remove = internalMutation({
     args: turnArgs,
     returns: v.union(Queue.removeResult, Queue.unlinked),

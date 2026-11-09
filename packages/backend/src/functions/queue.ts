@@ -95,6 +95,15 @@ export const done = mutation({
         Queue.done(ctx, await requireOwnedQueue(ctx), args.reference),
 })
 
+// Move a waiting Participant: after another Participant, to the front, or to a
+// Position (past the end means the back).
+export const move = mutation({
+    args: { reference: v.number(), to: Queue.moveDestination },
+    returns: Queue.moveResult,
+    handler: async (ctx, args) =>
+        Queue.move(ctx, await requireOwnedQueue(ctx), args.reference, args.to),
+})
+
 export const remove = mutation({
     args: { reference: v.number() },
     returns: Queue.removeResult,

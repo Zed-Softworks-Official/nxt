@@ -16,6 +16,7 @@ import type * as deck from '../deck.js'
 import type * as discordGuild from '../discordGuild.js'
 import type * as http from '../http.js'
 import type * as linkStates from '../linkStates.js'
+import type * as migrations from '../migrations.js'
 import type * as pairedDecks from '../pairedDecks.js'
 import type * as platformLinks from '../platformLinks.js'
 import type * as platformQueue from '../platformQueue.js'
@@ -39,6 +40,7 @@ declare const fullApi: ApiFromModules<{
     discordGuild: typeof discordGuild
     http: typeof http
     linkStates: typeof linkStates
+    migrations: typeof migrations
     pairedDecks: typeof pairedDecks
     platformLinks: typeof platformLinks
     platformQueue: typeof platformQueue
